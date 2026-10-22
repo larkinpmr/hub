@@ -17,10 +17,10 @@
 :root {
   /* Default look: Miami Vice (purple night, hot pink, sunset orange, neon cyan) */
   --bg: #FBF6FB; --surface: #FFFFFF; --raised: #F4EAF4; --ink: #22103F; --muted: #6A5880; --line: #EADCEB;
-  --accent: #C41F6E; --accent-soft: #FCE2EF; --on-accent: #FFFFFF; --sun: #C2571E; --sun-soft: #FFE7D6;
+  --accent: #C41F6E; --accent-soft: #FCE2EF; --on-accent: #FFFFFF; --sun: #0A8C96; --sun-soft: #D9F4F5;
   --warn-soft: #FFEBDD; --warn-line: #E59A6A; --chip-l: 91%; --chip-s: 48%; --chip-fg-l: 26%;
-  --stripe: linear-gradient(90deg, #2A0E5A, #C41F6E 35%, #FF8A4C 65%, #1FC8CF);
-  --hero-grad: linear-gradient(95deg, #C41F6E, #F0613C 55%, #0FA9B4);
+  --stripe: linear-gradient(90deg, #C41F6E 0 50%, #12B5BF 50% 100%);
+  --hero-grad: linear-gradient(#C41F6E, #C41F6E);
   --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
   --body: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -29,18 +29,18 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #140A2B; --surface: #1D1039; --raised: #281749; --ink: #F5EDFF; --muted: #B6A4D4; --line: #34225A;
-    --accent: #FF6BB5; --accent-soft: #3D1645; --on-accent: #2A0820; --sun: #FFB067; --sun-soft: #43281F;
+    --accent: #FF6BB5; --accent-soft: #3D1645; --on-accent: #2A0820; --sun: #3BE0E3; --sun-soft: #123744;
     --warn-soft: #3D2018; --warn-line: #B36A45; --chip-l: 24%; --chip-s: 38%; --chip-fg-l: 86%;
-    --stripe: linear-gradient(90deg, #7B2FF2, #FF4FA3 35%, #FF9A5C 65%, #22D3D6);
-    --hero-grad: linear-gradient(95deg, #FF6BB5, #FFA05C 55%, #3BE0E3); color-scheme: dark;
+    --stripe: linear-gradient(90deg, #FF6BB5 0 50%, #3BE0E3 50% 100%);
+    --hero-grad: linear-gradient(#FF6BB5, #FF6BB5); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
     --bg: #140A2B; --surface: #1D1039; --raised: #281749; --ink: #F5EDFF; --muted: #B6A4D4; --line: #34225A;
-    --accent: #FF6BB5; --accent-soft: #3D1645; --on-accent: #2A0820; --sun: #FFB067; --sun-soft: #43281F;
+    --accent: #FF6BB5; --accent-soft: #3D1645; --on-accent: #2A0820; --sun: #3BE0E3; --sun-soft: #123744;
     --warn-soft: #3D2018; --warn-line: #B36A45; --chip-l: 24%; --chip-s: 38%; --chip-fg-l: 86%;
-    --stripe: linear-gradient(90deg, #7B2FF2, #FF4FA3 35%, #FF9A5C 65%, #22D3D6);
-    --hero-grad: linear-gradient(95deg, #FF6BB5, #FFA05C 55%, #3BE0E3); color-scheme: dark;
+    --stripe: linear-gradient(90deg, #FF6BB5 0 50%, #3BE0E3 50% 100%);
+    --hero-grad: linear-gradient(#FF6BB5, #FF6BB5); color-scheme: dark;
 }
 /* Alternative color schemes share the original calm neutrals */
 :root[data-accent]:not([data-accent="vice"]) {
@@ -148,7 +148,7 @@ main { padding-block: 28px 64px; }
 .hero p { margin: 6px 0 0; color: var(--muted); max-width: 72ch; }
 .today { justify-self: end; text-align: right; display: grid; gap: 2px; padding-left: 24px; position: relative; }
 .today::before { content: ""; position: absolute; left: 0; top: 2px; bottom: 2px; width: 3px; border-radius: 3px; background: var(--stripe); background-size: 100% 100%; }
-:root:not([data-accent]) .today::before, :root[data-accent="vice"] .today::before { background: linear-gradient(180deg, #C41F6E, #FF8A4C, #1FC8CF); }
+:root:not([data-accent]) .today::before, :root[data-accent="vice"] .today::before { background: linear-gradient(180deg, var(--accent) 0 50%, var(--sun) 50% 100%); }
 .today b { display: block; font: 700 20px/1.15 var(--display); white-space: nowrap; }
 .today .muted { font-size: 14px; }
 .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; align-items: start; }
@@ -391,7 +391,7 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
       <div><h3>Appearance</h3><div class="seg" role="group" aria-label="Appearance">
         <button type="button" data-th="auto">Auto</button><button type="button" data-th="light">Light</button><button type="button" data-th="dark">Dark</button></div></div>
       <div><h3>Color scheme</h3><div class="swatches" role="group" aria-label="Color scheme">
-        <button type="button" class="swatch" data-ac="vice" title="Miami Vice" aria-label="Miami Vice" style="background:linear-gradient(135deg,#2A0E5A,#E0358F 50%,#FF9A5C 75%,#22D3D6)"></button>
+        <button type="button" class="swatch" data-ac="vice" title="Miami Vice" aria-label="Miami Vice" style="background:linear-gradient(135deg,#E0358F 0 50%,#22C3CC 50% 100%)"></button>
         <button type="button" class="swatch" data-ac="teal" title="Biscayne teal" aria-label="Biscayne teal" style="background:#0B6B6B"></button>
         <button type="button" class="swatch" data-ac="ocean" title="Ocean blue" aria-label="Ocean blue" style="background:#1D5FA6"></button>
         <button type="button" class="swatch" data-ac="coral" title="Coral" aria-label="Coral" style="background:#B4472F"></button>
