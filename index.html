@@ -314,6 +314,62 @@ a.dead { color: inherit; text-decoration: none; pointer-events: none; }
 .result small { display: block; color: var(--muted); font-size: 13px; }
 .result mark { background: var(--sun-soft); color: inherit; border-radius: 3px; }
 
+/* personal "my month" strip */
+.mycard { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); margin-bottom: 20px; overflow: hidden; }
+.mycard > div { padding: 12px 16px; min-width: 0; display: grid; gap: 3px; align-content: start; }
+.mycard > div + div { border-left: 1px solid var(--line); }
+.mycard .hi { background: var(--accent-soft); }
+.mycard .hi b { font: 700 18px/1.2 var(--display); }
+.mycard .hi button { all: unset; cursor: pointer; color: var(--accent); font-size: 13px; text-decoration: underline; }
+.mycard .k { font: 600 11px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.mycard .v { font-weight: 600; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.mycard .v a { color: var(--ink); text-decoration: none; }
+.mycard .v a:hover { color: var(--accent); }
+.mycard .n { font-size: 13px; color: var(--muted); }
+.mycard.pick { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.mycard.pick > div + div { border-left: 0; }
+.mycard.pick select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; max-width: 100%; }
+.tag.you { background: var(--accent); color: var(--on-accent); }
+table.sched tr.me th.name { color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+table.sched tr.me td { background: color-mix(in srgb, var(--accent-soft) 55%, transparent); }
+/* didactics: one line per talk */
+#dlist .talks { gap: 6px; }
+#dlist .talks li { display: flex; flex-wrap: wrap; column-gap: 10px; align-items: baseline; }
+#dlist .day { padding: 10px 0; }
+#dlist .dmeta { margin-bottom: 4px; }
+.cal { padding: 10px 14px; margin-bottom: 14px; }
+.cal .ct b { display: inline; margin-right: 8px; }
+/* contacts tap targets */
+.contact .how a { color: var(--muted); text-decoration: none; border-bottom: 1px dotted currentColor; }
+.contact .how a:hover { color: var(--accent); }
+/* phone bottom bar */
+.bottomnav { display: none; }
+@media (max-width: 640px) {
+  nav.tabs { display: none; }
+  header.top .top-row { padding-block: 10px 10px; }
+  .bottomnav { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; z-index: 12; background: var(--surface); border-top: 1px solid var(--line);
+    padding: 4px max(4px, env(safe-area-inset-right, 0px)) calc(4px + env(safe-area-inset-bottom, 0px)) max(4px, env(safe-area-inset-left, 0px)); }
+  .bottomnav a { display: grid; justify-items: center; gap: 2px; padding: 6px 0 4px; text-decoration: none; color: var(--muted); font: 600 10.5px/1.1 var(--body); border-radius: 8px; }
+  .bottomnav a svg { width: 22px; height: 22px; }
+  .bottomnav a[aria-current="page"] { color: var(--accent); }
+  .bottomnav a[aria-current="page"] svg { stroke-width: 2.4; }
+  body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+  .toast { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+  .mycard { grid-template-columns: 1fr 1fr; }
+  .mycard .hi { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding-block: 10px; }
+  .mycard > div + div { border-left: 0; border-top: 1px solid var(--line); }
+  .mycard > div:nth-child(3) { border-left: 1px solid var(--line); }
+  .mycard .lec { grid-column: 1 / -1; }
+  .mycard.pick { grid-template-columns: 1fr; }
+  .where { gap: 0; }
+  .where .site { padding-block: 7px; gap: 2px; }
+  .where .names { font-size: 13px; }
+  .cal .ct span { display: none; }
+  table.sched th.name { min-width: 0; width: 34%; white-space: normal; font-size: 13.5px; padding-left: 10px; }
+  table.sched th, table.sched td { padding: 6px 3px; }
+  table.sched .code { font-size: 10.5px; padding: 2px 4px; min-width: 0; }
+  main { padding-block: 18px 32px; }
+}
 footer { border-top: 1px solid var(--line); padding-block: 22px 40px; color: var(--muted); font-size: 14px; }
 footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
 
@@ -410,6 +466,7 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
   </div>
 </header>
 
+<nav class="bottomnav" aria-label="Sections"><a href="#home" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/></svg>Home</a><a href="#didactics" data-tab="didactics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>Lectures</a><a href="#schedule" data-tab="schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 9h17M9 9v11M15 9v11"/></svg>Schedule</a><a href="#rotations" data-tab="rotations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>Guides</a><a href="#policies" data-tab="policies"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10.5A.5.5 0 0 1 6.5 20V4a.5.5 0 0 1 .5-.5z"/><path d="M14 3.5V8h4M9.5 12.5h5M9.5 16h5"/></svg>Policies</a><a href="#templates" data-tab="templates"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 13.5h7M8.5 17h4"/></svg>Templates</a></nav>
 <main class="wrap" id="main" tabindex="-1"><p class="muted">Loading the hub…</p></main>
 
 <footer>
@@ -793,7 +850,7 @@ function route(keepScroll) {
 function render(html, tab, keepScroll) {
   const main = $("#main");
   main.innerHTML = `<div class="view">${html}</div>`;
-  document.querySelectorAll("nav.tabs a").forEach(a => { if (a.dataset.tab === tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  document.querySelectorAll("nav.tabs a, .bottomnav a").forEach(a => { if (a.dataset.tab === tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
   if (!keepScroll) window.scrollTo(0, 0);
   bindView();
 }
@@ -824,6 +881,34 @@ function fallbackCopy(text) {
 function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 1600); }
 
 /* ----------------------------------------------------------- views */
+/* ----------------------------------------------------------- personal view */
+let ME = store.get("hub.me") || "";
+function meResident() { return ME ? S.residents.find(p => p.name === ME) : null; }
+function presentsTalk(speaker, name) {
+  if (!speaker || !name) return false;
+  const toks = name.split(/\s+/).slice(1).filter(t => t.length >= 3);
+  return toks.some(t => new RegExp("\\b" + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "i").test(speaker));
+}
+function meCard() {
+  const p = meResident();
+  if (!p) {
+    const pgys = [...new Set(S.residents.map(r => r.pgy))];
+    return `<section class="mycard pick"><div><b>See your own rotation first</b><span class="n">Pick your name once and this device will show your rotation, what's next, and your upcoming lectures here.</span></div>
+      <div><select id="mesel" aria-label="Choose your name"><option value="">Choose your name…</option>${pgys.map(g => `<optgroup label="${esc(g)}">${S.residents.filter(r => r.pgy === g).map(r => `<option>${esc(r.name)}</option>`).join("")}</optgroup>`).join("")}</select></div></section>`;
+  }
+  const mi = curMonth, r0 = p.rots[mi], raw0 = p.months[mi];
+  let j = mi + 1; while (j < 12 && (p.months[j] || "") === (raw0 || "")) j++;
+  const until = j - 1 > mi ? ` · through ${MON[(j - 1 + 6) % 12]}` : "";
+  const nextR = j < 12 ? p.rots[j] : null, nextRaw = j < 12 ? p.months[j] : "";
+  const lec = S.didactics.find(t => t.date >= todayISO && presentsTalk(t.speaker, p.name));
+  const rotLink = (r, raw) => r ? `${chipSpan(r)}<a href="#rot-${r.id}">${esc(r.short)}</a>` : (raw ? esc(raw) : "—");
+  return `<section class="mycard">
+    <div class="hi"><b>Hi, ${esc(p.name.split(" ")[0])}</b><span class="n">${esc(p.pgy)}</span><button type="button" id="mechange">Not you?</button></div>
+    <div><span class="k">This month</span><span class="v">${rotLink(r0, raw0)}</span><span class="n">${MONTH_FULL[mi]}${until}</span></div>
+    <div><span class="k">Next</span><span class="v">${j < 12 ? rotLink(nextR, nextRaw) : "End of year"}</span><span class="n">${j < 12 ? "Starts " + MONTH_FULL[j] : ""}</span></div>
+    <div class="lec"><span class="k">Your next lecture</span>${lec ? `<span class="v"><a href="#didactics">${esc(lec.topic)}</a></span><span class="n">${fmtDate(lec.date)}${lec.location ? " · " + esc(lec.location) : ""}</span>` : `<span class="n">None on the calendar</span>`}</div>
+  </section>`;
+}
 function viewHome() {
   const days = nextSessions();
   const [nd, talks] = days[0] || [];
@@ -840,6 +925,7 @@ function viewHome() {
     </div>
     <div class="today"><span class="eyebrow">Today</span><b>${d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</b><span class="muted">Block month: ${MONTH_FULL[mi]}</span></div>
   </section>
+  ${meCard()}
   ${ann}
   <div class="cols">
     <div class="col">
@@ -866,7 +952,7 @@ function viewHome() {
         <h2>Key contacts</h2>
         <p class="sub">Program leadership and chiefs</p>
         <div class="contacts">${S.contacts.map(c => `<div class="contact"><span class="role">${esc(c.role)}</span><span class="name">${esc(c.name)}</span>
-          <span class="how">${c.phone ? `<span>${esc(c.phone)}</span>` : ""}${c.email ? `<span>${esc(c.email)}</span>` : ""}</span></div>`).join("")}</div>
+          <span class="how">${c.phone ? `<a href="tel:+1${esc(c.phone.replace(/\D/g, "").slice(-10))}">${esc(c.phone)}</a>` : ""}${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ""}</span></div>`).join("")}</div>
       </section>
       <section class="panel">
         <h2>Quick links</h2>
@@ -900,7 +986,7 @@ function calPanel() {
     <div class="cb"><span class="btn small" aria-disabled="true">Google Calendar</span><span class="btn small ghost" aria-disabled="true">Apple Calendar</span><span class="btn small ghost" aria-disabled="true">Outlook</span></div></div>`;
   const ics = base + (base.includes("?") ? "&" : "?") + "calendar=didactics";
   const webcal = ics.replace(/^https?:/, "webcal:");
-  return `<div class="cal"><div class="ct"><b>Add didactics to your calendar</b><span>Subscribe once and it stays in sync with the didactic sheet. Google refreshes subscribed calendars every few hours; Apple and Outlook about hourly.</span></div>
+  return `<div class="cal"><div class="ct"><b>Add didactics to your calendar</b><span>Stays in sync with the didactic sheet (Google updates every few hours; Apple and Outlook about hourly).</span></div>
     <div class="cb"><a class="btn small" href="https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcal)}" target="_blank" rel="noopener">Google Calendar</a>
     <a class="btn small ghost" href="${esc(webcal)}">Apple Calendar</a>
     <a class="btn small ghost" href="https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(ics)}&name=${encodeURIComponent("Larkin PM&R Didactics")}" target="_blank" rel="noopener">Outlook</a>
@@ -922,12 +1008,12 @@ function didacticList() {
       <div class="dlabel"><small>${DOW[d.getDay()]} · ${MON[d.getMonth()]}</small><b>${d.getDate()}</b></div>
       <div style="min-width:0">
         ${off ? "" : `<div class="dmeta"><span>${esc(talks[0].location || "Location TBA")}</span>${talks[0].time ? `<span>${esc(talks[0].time)}</span>` : ""}</div>`}
-        <ul class="talks">${talks.map(t => `<li><span class="t">${esc(t.topic)}${KIND_LABEL[t.kind] ? `<span class="tag ${t.kind === "off" ? "off" : t.kind === "jc" ? "jc" : ""}">${KIND_LABEL[t.kind]}</span>` : ""}</span>${t.speaker ? `<span class="s">${esc(t.speaker)}</span>` : ""}</li>`).join("")}</ul>
+        <ul class="talks">${talks.map(t => `<li><span class="t">${esc(t.topic)}${KIND_LABEL[t.kind] ? `<span class="tag ${t.kind === "off" ? "off" : t.kind === "jc" ? "jc" : ""}">${KIND_LABEL[t.kind]}</span>` : ""}${ME && presentsTalk(t.speaker, ME) ? `<span class="tag you">You</span>` : ""}</span>${t.speaker ? `<span class="s">${esc(t.speaker)}</span>` : ""}</li>`).join("")}</ul>
       </div></div>`;
   }).join("");
 }
 
-let sState = { pgy: store.get("hub.s.pgy") || "all", view: "grid", month: curMonth, who: "" };
+let sState = { pgy: store.get("hub.s.pgy") || "all", view: "grid", month: curMonth, who: "", span: window.innerWidth < 640 ? "3" : "12" };
 function viewSchedule() {
   const pgys = [...new Set(S.residents.map(p => p.pgy))];
   const head = `
@@ -938,7 +1024,8 @@ function viewSchedule() {
       <button data-sview="grid" aria-pressed="${sState.view === "grid"}">By resident</button>
       <button data-sview="site" aria-pressed="${sState.view === "site"}">By site</button>
     </div>
-    ${sState.view === "grid" ? `<div class="seg" role="group" aria-label="PGY">${["all", ...pgys].map(p => `<button data-pgy="${p}" aria-pressed="${sState.pgy === p}">${p === "all" ? "All years" : esc(p)}</button>`).join("")}</div>
+    ${sState.view === "grid" ? `<div class="seg" role="group" aria-label="Months shown"><button data-span="3" aria-pressed="${sState.span === "3"}">Next 3 months</button><button data-span="12" aria-pressed="${sState.span === "12"}">Full year</button></div>
+      <div class="seg" role="group" aria-label="PGY">${["all", ...pgys].map(p => `<button data-pgy="${p}" aria-pressed="${sState.pgy === p}">${p === "all" ? "All years" : esc(p)}</button>`).join("")}</div>
       <input id="swho" type="search" placeholder="Find a resident" value="${esc(sState.who)}" aria-label="Find a resident">`
     : `<select id="smonth" aria-label="Month">${MONTH_FULL.map((m, i) => `<option value="${i}" ${sState.month === i ? "selected" : ""}>${m}${i === curMonth ? " (now)" : ""}</option>`).join("")}</select>`}
   </div>`;
@@ -951,13 +1038,14 @@ function viewSchedule() {
       ${unknown.length ? `<div class="panel"><b>Other</b><ul>${unknown.map(p => `<li>${esc(p.name)} <span class="pg">${esc(p.months[mi])}</span></li>`).join("")}</ul></div>` : ""}</div>`;
   }
   const groups = sState.pgy === "all" ? pgys : [sState.pgy];
+  const cols = sState.span === "3" ? [curMonth, curMonth + 1, curMonth + 2].filter(i => i < 12) : MONTHS.map((_, i) => i);
   const who = sState.who.toLowerCase();
-  const rows = groups.map(g => `<tr class="pgy"><th colspan="13">${esc(g)}</th></tr>` + S.residents.filter(p => p.pgy === g).map(p => {
+  const rows = groups.map(g => `<tr class="pgy"><th colspan="${cols.length + 1}">${esc(g)}</th></tr>` + S.residents.filter(p => p.pgy === g).map(p => {
     const match = who && p.name.toLowerCase().includes(who);
-    return `<tr class="${who ? (match ? "hl" : "dim") : ""}"><th class="name" scope="row">${esc(p.name)}</th>${p.months.map((m, i) => `<td class="${i === curMonth ? "now" : ""}">${chipRaw(m, p.rots[i])}</td>`).join("")}</tr>`;
+    return `<tr class="${who ? (match ? "hl" : "dim") : ""}${p.name === ME ? " me" : ""}"><th class="name" scope="row">${esc(p.name)}</th>${cols.map(i => `<td class="${i === curMonth ? "now" : ""}">${chipRaw(p.months[i], p.rots[i])}</td>`).join("")}</tr>`;
   }).join("")).join("");
   const used = S.rotations.filter(r => S.residents.some(p => p.rots.includes(r)));
-  return head + `<div class="sched-wrap"><table class="sched"><thead><tr><th class="name">Resident</th>${MONTHS.map((m, i) => `<th class="${i === curMonth ? "now" : ""}">${m}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
+  return head + `<div class="sched-wrap"><table class="sched"><thead><tr><th class="name">Resident</th>${cols.map(i => `<th class="${i === curMonth ? "now" : ""}">${MONTHS[i]}${i === curMonth ? " · now" : ""}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
   <div class="legend">${used.map(r => `<a href="#rot-${r.id}">${chipSpan(r)}<span>${esc(r.title)}</span></a>`).join("")}</div>`;
 }
 
@@ -1137,11 +1225,19 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && document.q
 document.addEventListener("click", e => { const b = e.target.closest("button.addr"); if (b) { e.preventDefault(); openMaps(b); } });
 
 function bindView() {
+  const ms = $("#mesel"); if (ms) ms.onchange = () => { ME = ms.value; store.set("hub.me", ME); route(true); };
+  const mc = $("#mechange"); if (mc) mc.onclick = () => { ME = ""; store.set("hub.me", ""); route(true); };
+  const sw2 = $(".sched-wrap");
+  if (sw2 && sw2.scrollWidth > sw2.clientWidth) {
+    const th = sw2.querySelector("thead th.now"), nm = sw2.querySelector("thead th.name");
+    if (th && nm) sw2.scrollLeft = Math.max(0, th.offsetLeft - nm.offsetWidth - 6);
+  }
   document.querySelectorAll(".prose").forEach(linkAddresses);
   document.querySelectorAll("[data-scope]").forEach(b => b.onclick = () => { dState.scope = b.dataset.scope; dState.month = "all"; store.set("hub.d.scope", dState.scope); route(true); });
   const dm = $("#dmonth"); if (dm) dm.onchange = () => { dState.month = dm.value; $("#dlist").innerHTML = didacticList(); };
   const dq = $("#dq"); if (dq) dq.oninput = () => { dState.q = dq.value; $("#dlist").innerHTML = didacticList(); };
   document.querySelectorAll("[data-sview]").forEach(b => b.onclick = () => { sState.view = b.dataset.sview; route(true); });
+  document.querySelectorAll("[data-span]").forEach(b => b.onclick = () => { sState.span = b.dataset.span; route(true); });
   document.querySelectorAll("[data-pgy]").forEach(b => b.onclick = () => { sState.pgy = b.dataset.pgy; store.set("hub.s.pgy", sState.pgy); route(true); });
   const sw = $("#swho"); if (sw) sw.oninput = () => { sState.who = sw.value; const pos = sw.selectionStart; route(true); const n = $("#swho"); n.focus(); n.setSelectionRange(pos, pos); };
   const sm = $("#smonth"); if (sm) sm.onchange = () => { sState.month = +sm.value; route(true); };
