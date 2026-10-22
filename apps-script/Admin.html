@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+  :root { --bg:#F3F6F5; --surface:#fff; --raised:#EAF0EE; --ink:#10282C; --muted:#56696C; --line:#D6E0DE; --accent:#0B6B6B; --soft:#DCEDEA; --warn:#FCEBDD; --warn-line:#E2A274; --ok:#2E7D57; --bad:#B3261E; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif; }
+  header { background: var(--surface); border-bottom: 1px solid var(--line); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding-left: 16px; padding-right: 16px; }
+  .top { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; padding-block: 14px 0; }
+  .top b { font-size: 19px; }
+  .top .who { margin-left: auto; color: var(--muted); font-size: 14px; }
+  nav { display: flex; gap: 4px; overflow-x: auto; padding-top: 8px; }
+  nav button { border: 0; background: none; font: inherit; font-weight: 600; color: var(--muted); padding: 8px 12px 10px; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+  nav button[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); }
+  main { padding-block: 22px 60px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  .lede { color: var(--muted); margin: 0 0 16px; max-width: 70ch; }
+  .notice { background: var(--warn); border-left: 3px solid var(--warn-line); border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 0 0 18px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; }
+  th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td input, td textarea { width: 100%; min-width: 140px; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+  td textarea { min-height: 38px; resize: vertical; }
+  td.act { white-space: nowrap; width: 1%; }
+  button.sm { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 5px 8px; cursor: pointer; font: inherit; font-size: 13px; color: var(--muted); }
+  button.sm:hover { color: var(--ink); border-color: var(--muted); }
+  .bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+  .btn { border: 1px solid var(--accent); background: var(--accent); color: #fff; border-radius: 8px; padding: 8px 16px; font: inherit; font-weight: 600; cursor: pointer; }
+  .btn.ghost { background: transparent; color: var(--accent); }
+  .btn.danger { border-color: var(--bad); color: var(--bad); background: transparent; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .msg { font-size: 14px; }
+  .msg.ok { color: var(--ok); } .msg.bad { color: var(--bad); }
+  .pages { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start; }
+  .plist { display: grid; gap: 2px; max-height: 70vh; overflow: auto; }
+  .plist .grp { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 12px 0 4px; font-weight: 700; }
+  .plist button { text-align: left; border: 0; background: none; padding: 6px 8px; border-radius: 6px; font: inherit; cursor: pointer; color: var(--ink); display: flex; gap: 6px; align-items: baseline; }
+  .plist button:hover { background: var(--raised); }
+  .plist button[aria-current="true"] { background: var(--soft); color: var(--accent); font-weight: 600; }
+  .tag { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: var(--raised); color: var(--muted); white-space: nowrap; }
+  .tag.ed { background: var(--soft); color: var(--accent); } .tag.hid { background: var(--warn); color: var(--ink); }
+  label.f { display: grid; gap: 4px; font-weight: 600; font-size: 14px; margin-bottom: 12px; }
+  label.f input { font: inherit; font-weight: 400; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; }
+  .tools { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--raised); }
+  .tools button { border: 1px solid transparent; background: none; border-radius: 5px; padding: 4px 8px; font: inherit; font-size: 13px; cursor: pointer; }
+  .tools button:hover { background: var(--surface); border-color: var(--line); }
+  .editor { min-height: 360px; max-height: 70vh; overflow: auto; border: 1px solid var(--line); border-radius: 0 0 8px 8px; background: var(--surface); padding: 14px 18px; outline: none; }
+  .editor:focus { border-color: var(--accent); }
+  .editor img { max-width: 240px; height: auto; }
+  .editor pre { background: var(--raised); padding: 10px; font: 13px/1.45 ui-monospace, Menlo, monospace; white-space: pre; overflow-x: auto; }
+  .editor table { border-collapse: collapse; } .editor td, .editor th { border: 1px solid var(--line); padding: 4px 8px; }
+  .callout { background: var(--soft); padding: 8px 12px; border-radius: 6px; }
+  textarea.raw { width: 100%; min-height: 360px; font: 13px/1.45 ui-monospace, Menlo, monospace; border: 1px solid var(--line); border-radius: 0 0 8px 8px; padding: 10px; }
+  .chk { display: flex; gap: 8px; align-items: center; margin: 4px 0 12px; font-size: 14px; }
+  .empty { padding: 28px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; }
+  @media (max-width: 760px) { .pages { grid-template-columns: 1fr; } .plist { max-height: 260px; } }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="top"><b>Larkin South Miami PM&amp;R Hub · Editor</b><span class="who" id="who">Checking your Google account…</span></div>
+  <nav id="nav" aria-label="Editor sections">
+    <button data-v="Contacts" aria-pressed="true">Contacts</button>
+    <button data-v="Quick Links">Quick links</button>
+    <button data-v="Announcements">Announcements</button>
+    <button data-v="Rotations">Rotations</button>
+    <button data-v="Pages">Pages</button>
+    <button data-v="Settings">Settings</button>
+  </nav>
+</div></header>
+<main class="wrap" id="main"><p class="lede">Loading…</p></main>
+
+<script>
+var D = null, view = 'Contacts', cur = null, rawMode = false;
+var HELP = {
+  'Contacts': 'People shown under Key contacts on the home page. Update when chiefs, the program director or the coordinator change.',
+  'Quick Links': 'Links shown on the home page. Paste full addresses starting with https://.',
+  'Announcements': 'Banners at the top of the home page. "Show until" hides one automatically after that date (for example 12/31/2026).',
+  'Rotations': 'The rotation list and the codes used in the resident schedule sheet. "Schedule codes" are separated by semicolons. "Handbook heading contains" links each rotation to its section of the Program Handbook.',
+  'Settings': 'Where the hub finds its Google files. Paste a new link here at the start of each academic year.'
+};
+function $(s) { return document.querySelector(s); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function slug(s) { return String(s).toLowerCase().replace(/&/g, 'and').replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48); }
+function run(fn, args, ok, fail) {
+  var r = google.script.run.withSuccessHandler(ok).withFailureHandler(function (e) { (fail || showErr)(e && e.message ? e.message : String(e)); });
+  r[fn].apply(r, args || []);
+}
+function showErr(m) { $('#main').innerHTML = '<div class="notice"><b>Can’t open the editor.</b> ' + esc(m) + '</div>'; $('#who').textContent = 'Not signed in as the chief account'; }
+function flash(el, text, good) { el.className = 'msg ' + (good ? 'ok' : 'bad'); el.textContent = text; }
+
+function load() {
+  run('adminLoad', [], function (d) { D = d; $('#who').textContent = 'Signed in as ' + d.me; render(); });
+}
+document.getElementById('nav').addEventListener('click', function (e) {
+  var b = e.target.closest('button'); if (!b) return;
+  view = b.dataset.v; [].forEach.call(document.querySelectorAll('#nav button'), function (x) { x.setAttribute('aria-pressed', x === b); });
+  render();
+});
+
+function render() {
+  if (!D) return;
+  if (view === 'Pages') return renderPages();
+  var rows = (D.tabs[view] || []).map(function (r) { return r.slice(); });
+  if (!rows.length) rows = [['Column 1', 'Column 2']];
+  var head = rows[0], body = rows.slice(1);
+  var long = /details|key attendings|location|value|what it does|url|handbook/i;
+  var html = '<h1>' + esc(view === 'Quick Links' ? 'Quick links' : view) + '</h1><p class="lede">' + esc(HELP[view] || '') + '</p>' +
+    (view === 'Rotations' || view === 'Settings' ? '<div class="notice">Changes here affect how the whole site reads your Google files. Double-check links and codes before saving.</div>' : '') +
+    '<div class="card"><div class="scroll"><table><thead><tr>' + head.map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('') + '<th></th></tr></thead><tbody id="tb">' +
+    body.map(function (r, i) { return rowHtml(head, r, long); }).join('') + '</tbody></table></div>' +
+    '<div class="bar"><button class="btn ghost" id="add">Add row</button><button class="btn" id="save">Save ' + esc(view === 'Quick Links' ? 'quick links' : view.toLowerCase()) + '</button><span class="msg" id="msg"></span></div></div>' +
+    '<p class="lede" style="margin-top:14px">These edits are stored in the <a href="' + esc(D.panelUrl) + '">Hub Control Panel</a> sheet.</p>';
+  $('#main').innerHTML = html;
+  $('#add').onclick = function () { $('#tb').insertAdjacentHTML('beforeend', rowHtml(head, [], long)); };
+  $('#tb').onclick = function (e) {
+    var b = e.target.closest('button'); if (!b) return; var tr = b.closest('tr');
+    if (b.dataset.a === 'del') tr.remove();
+    if (b.dataset.a === 'up' && tr.previousElementSibling) tr.parentNode.insertBefore(tr, tr.previousElementSibling);
+    if (b.dataset.a === 'down' && tr.nextElementSibling) tr.parentNode.insertBefore(tr.nextElementSibling, tr);
+  };
+  $('#save').onclick = function () {
+    var out = [head].concat([].map.call(document.querySelectorAll('#tb tr'), function (tr) { return [].map.call(tr.querySelectorAll('input,textarea'), function (i) { return i.value.trim(); }); })
+      .filter(function (r) { return r.some(function (c) { return c; }); }));
+    var btn = $('#save'); btn.disabled = true; flash($('#msg'), 'Saving…', true);
+    run('adminSaveTab', [view, out], function (m) { D.tabs[view] = out; btn.disabled = false; flash($('#msg'), m, true); }, function (m) { btn.disabled = false; flash($('#msg'), m, false); });
+  };
+}
+function rowHtml(head, r, long) {
+  return '<tr>' + head.map(function (h, i) {
+    var v = esc(r[i] || '');
+    return '<td>' + (long.test(h) ? '<textarea aria-label="' + esc(h) + '">' + v + '</textarea>' : '<input aria-label="' + esc(h) + '" value="' + v + '">') + '</td>';
+  }).join('') + '<td class="act"><button class="sm" data-a="up" title="Move up" type="button">↑</button> <button class="sm" data-a="down" title="Move down" type="button">↓</button> <button class="sm" data-a="del" title="Delete row" type="button">Delete</button></td></tr>';
+}
+
+/* ---------------- pages */
+function allPages() {
+  var map = {}, list = [];
+  (D.pages || []).forEach(function (p) { var x = { id: p.id, type: p.type, title: p.title, html: p.html, orig: p.html, origTitle: p.title }; map[p.id] = x; list.push(x); });
+  (D.edits || []).forEach(function (e) {
+    var x = map[e.id];
+    if (!x) { x = { id: e.id, type: e.type || (e.id.indexOf('tpl-') === 0 ? 'Template' : 'Policy'), title: e.title, html: '', orig: '', isNew: true }; map[e.id] = x; list.push(x); }
+    x.edit = e; if (e.html) x.html = e.html; if (e.title) x.title = e.title; x.hidden = e.hidden;
+  });
+  return list;
+}
+function absUrls(h) { if (!D.siteUrl) return h; var base = D.siteUrl.replace(/\/?$/, '/'); return h.replace(/(src|href)="(assets\/[^"]+)"/g, function (m, a, u) { return a + '="' + base + u + '"'; }); }
+function relUrls(h) { if (!D.siteUrl) return h; var base = D.siteUrl.replace(/\/?$/, '/'); return h.split(base + 'assets/').join('assets/'); }
+
+function renderPages() {
+  var list = allPages();
+  var groups = ['Notice', 'Rotation guide', 'Extra guide', 'Policy', 'Template'];
+  var side = groups.map(function (g) {
+    var items = list.filter(function (p) { return p.type === g; });
+    if (!items.length) return '';
+    return '<div class="grp">' + esc(g === 'Notice' ? 'Banners' : g + 's') + '</div>' + items.map(function (p) {
+      return '<button data-id="' + esc(p.id) + '" aria-current="' + (cur && cur.id === p.id) + '"><span>' + esc(p.title) + '</span>' + (p.hidden ? '<span class="tag hid">Hidden</span>' : p.isNew ? '<span class="tag ed">New</span>' : p.edit ? '<span class="tag ed">Edited</span>' : '') + '</button>';
+    }).join('');
+  }).join('');
+  var html = '<h1>Pages</h1><p class="lede">Quick fixes to rotation guides, policies, templates and the readiness banner. Edited pages are marked; you can always restore the original.</p>' +
+    '<div class="notice"><b>For lasting changes to rotation or policy content, edit the Program Handbook</b>' + (D.handbookUrl ? ' (<a href="' + esc(D.handbookUrl) + '">open the Handbook doc</a>)' : '') + '. Its live version appears on each guide’s “Program Handbook” tab. Use this editor for personnel, small corrections and content that isn’t in the Handbook.</div>' +
+    (D.siteError ? '<div class="notice">' + esc(D.siteError) + '</div>' : '') +
+    '<div class="pages"><div class="card plist" id="plist">' + side +
+    '<div class="bar"><button class="btn ghost" id="newtpl" type="button">New template</button><button class="btn ghost" id="newpol" type="button">New policy</button></div></div>' +
+    '<div id="pedit">' + (cur ? editorHtml(cur) : '<div class="empty">Choose a page on the left to edit it.</div>') + '</div></div>';
+  $('#main').innerHTML = html;
+  $('#plist').onclick = function (e) {
+    var b = e.target.closest('button[data-id]'); if (!b) return;
+    cur = list.filter(function (p) { return p.id === b.dataset.id; })[0]; rawMode = false; renderPages();
+  };
+  $('#newtpl').onclick = function () { newPage('Template'); };
+  $('#newpol').onclick = function () { newPage('Policy'); };
+  if (cur) bindEditor();
+}
+function newPage(type) {
+  cur = { id: '', type: type, title: '', html: '<p></p>', orig: '', isNew: true, draft: true }; rawMode = false; renderPages();
+}
+function editorHtml(p) {
+  return '<div class="card"><label class="f">Page title<input id="ptitle" value="' + esc(p.title) + '"></label>' +
+    (p.isNew ? '' : '<label class="chk"><input type="checkbox" id="phidden"' + (p.hidden ? ' checked' : '') + '> Hide this page from the website (for example a template that is no longer used)</label>') +
+    '<div class="tools" id="tools">' +
+      '<button type="button" data-c="bold"><b>B</b></button><button type="button" data-c="italic"><i>I</i></button>' +
+      '<button type="button" data-c="formatBlock" data-v="h2">Heading</button><button type="button" data-c="formatBlock" data-v="h3">Subheading</button><button type="button" data-c="formatBlock" data-v="p">Paragraph</button>' +
+      '<button type="button" data-c="insertUnorderedList">• List</button><button type="button" data-c="insertOrderedList">1. List</button>' +
+      '<button type="button" data-c="link">Link</button><button type="button" data-c="formatBlock" data-v="pre">Plain-text block</button>' +
+      '<button type="button" data-c="removeFormat">Clear formatting</button><button type="button" data-c="raw">' + (rawMode ? 'Back to editor' : 'Edit HTML') + '</button></div>' +
+    (rawMode ? '<textarea class="raw" id="praw">' + esc(p.html) + '</textarea>' : '<div class="editor" id="ped" contenteditable="true">' + absUrls(p.html) + '</div>') +
+    '<div class="bar"><button class="btn" id="psave" type="button">Save page</button>' + (p.edit ? '<button class="btn danger" id="prevert" type="button">' + (p.isNew ? 'Delete page' : 'Restore original') + '</button>' : '') +
+    '<span class="msg" id="pmsg"></span></div>' +
+    '<p class="lede" style="margin-top:10px;font-size:14px">Tip: for CPRS templates use “Plain-text block” so spacing is kept exactly.' + (p.edit && p.edit.updated ? ' Last edited ' + esc(p.edit.updated) + '.' : '') + '</p></div>';
+}
+function currentHtml() { return rawMode ? $('#praw').value : relUrls($('#ped').innerHTML); }
+function bindEditor() {
+  if (cur.baseline == null || cur.baselineMode !== rawMode) { cur.baseline = currentHtml(); cur.baselineMode = rawMode; cur.baseTitle = $('#ptitle').value.trim(); }
+  $('#tools').onclick = function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.c === 'raw') { cur.html = currentHtml(); rawMode = !rawMode; renderPages(); return; }
+    if (rawMode) return;
+    $('#ped').focus();
+    if (b.dataset.c === 'link') { var u = window.prompt ? window.prompt('Link address (https://…)') : null; if (u) document.execCommand('createLink', false, u); return; }
+    document.execCommand(b.dataset.c, false, b.dataset.v ? '<' + b.dataset.v + '>' : null);
+  };
+  $('#psave').onclick = function () {
+    var title = $('#ptitle').value.trim();
+    if (!title) return flash($('#pmsg'), 'Give the page a title first.', false);
+    if (!cur.id) cur.id = (cur.type === 'Template' ? 'tpl-' : 'pol-') + slug(title);
+    var page = { id: cur.id, type: cur.type, title: title, hidden: $('#phidden') ? $('#phidden').checked : false, html: currentHtml() };
+    if (!cur.draft && page.title === cur.baseTitle && page.html === cur.baseline && page.hidden === !!cur.hidden) return flash($('#pmsg'), 'No changes to save.', true);
+    var btn = $('#psave'); btn.disabled = true; flash($('#pmsg'), 'Saving…', true);
+    run('adminSavePage', [page], function (m) {
+      var e = { id: page.id, type: page.type, title: page.title, hidden: page.hidden, html: page.html, updated: 'just now' };
+      D.edits = (D.edits || []).filter(function (x) { return x.id !== page.id; }).concat([e]);
+      cur = allPages().filter(function (p) { return p.id === page.id; })[0]; rawMode = false; renderPages(); flash($('#pmsg'), m, true);
+    }, function (m) { btn.disabled = false; flash($('#pmsg'), m, false); });
+  };
+  var rv = $('#prevert'); if (rv) rv.onclick = function () {
+    if (rv.dataset.sure !== '1') { rv.dataset.sure = '1'; rv.textContent = 'Click again to confirm'; return; }
+    run('adminRevertPage', [cur.id], function (m) {
+      var wasNew = cur.isNew; D.edits = (D.edits || []).filter(function (x) { return x.id !== cur.id; });
+      cur = wasNew ? null : allPages().filter(function (p) { return p.id === cur.id; })[0]; renderPages();
+      if ($('#pmsg')) flash($('#pmsg'), m, true);
+    }, function (m) { flash($('#pmsg'), m, false); });
+  };
+}
+load();
+</script>
+</body>
+</html>

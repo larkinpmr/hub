@@ -1,4 +1,13 @@
-# Larkin PM&R Hub — one-time setup
+# Larkin South Miami PM&R Hub
+
+**Live site:** https://larkinpmr.github.io  
+**Owner:** the shared chief Google account (larkinpmrchief@gmail.com) and the `larkinpmr` GitHub account. Hand both logins to the next chiefs each year.
+
+Content (schedules, Handbook, contacts, links, announcements) is edited in Google Drive or the chief editor and appears on the site automatically. Only design changes touch this repository. The Google script that feeds the site is kept in `apps-script/` for reference.
+
+---
+
+# One-time setup
 
 Everything below is done **once**, signed in as the shared chief Gmail (larkinpmrchief@gmail.com). After that, nobody touches code: the site reads the Handbook Doc, the two schedule Sheets, and the Hub Control Panel directly.
 
@@ -15,15 +24,15 @@ Everything below is done **once**, signed in as the shared chief Gmail (larkinpm
 5. **Chief editor link:** click **Deploy ▸ New deployment** again, **Web app**, **Execute as: Me**, but this time **Who has access: Only myself**. Deploy, copy that URL, and add `?page=admin` to the end. Only the chief Google account can open it; anyone else gets a Google "no access" page, and the script also refuses saves from any other account.
 
 ## Part B — GitHub (about 10 minutes)
-1. Go to github.com and **Sign up** with the chief Gmail. Pick a short username (for example `larkinpmr`). The site address will be `https://larkinpmr.github.io/hub/`.
-2. Click **New repository**. Name it `hub`, set it to **Public** (free Pages hosting requires it), and create it.
+1. Go to github.com and **Sign up** with the chief Gmail. Pick a short username (for example `larkinpmr`).
+2. Click **New repository**. Name it exactly `<username>.github.io` (for us, `larkinpmr.github.io`) so the site lives at `https://larkinpmr.github.io`. Set it to **Public** (free Pages hosting requires it), and create it.
 3. Click **uploading an existing file**. Unzip **larkin-pmr-hub-site.zip** on your computer and drag in everything inside it (index.html, robots.txt, the `data` and `assets` folders, including the PDFs and Word file in `assets/files`). Click **Commit changes**. If GitHub complains about the number of files, upload the `assets/files` folder in a second batch.
 4. Open `data/config.json` in the repo, click the pencil icon, and paste both links from Part A:
    `{ "liveDataUrl": "https://script.google.com/macros/s/…(public)…/exec", "adminUrl": "https://script.google.com/macros/s/…(editor)…/exec?page=admin" }`. Commit.
 5. Go to **Settings ▸ Pages**. Under *Build and deployment*, choose **Deploy from a branch**, branch **main**, folder **/ (root)**, then **Save**. After a minute or two the site is live.
 
 ## Part C — Check it
-0. In the Control Panel's **Settings** tab, put the site address (for example `https://larkinpmr.github.io/hub/`) next to **Website address**. The editor uses it to load pages.
+0. In the Control Panel's **Settings** tab, put the site address (`https://larkinpmr.github.io/`) next to **Website address**. The editor uses it to load pages.
 1. Open the site. The footer should say **Live from Google Drive**. If it says **Saved copy**, run `testHub` again (Part A step 3) and read the error it logs.
 2. On the **Didactics** page, click **Google Calendar** under "Add didactics to your calendar" and confirm the lecture days appear in your calendar. (In the script editor, `testCalendar` prints the feed if you want to check it there.)
 
