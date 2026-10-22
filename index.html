@@ -314,6 +314,15 @@ a.dead { color: inherit; text-decoration: none; pointer-events: none; }
 .result small { display: block; color: var(--muted); font-size: 13px; }
 .result mark { background: var(--sun-soft); color: inherit; border-radius: 3px; }
 
+/* resources */
+.res { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.reslist { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.reslist li + li { border-top: 1px solid var(--line); }
+.reslist a { display: grid; gap: 2px; padding: 11px 16px; text-decoration: none; color: var(--ink); }
+.reslist a:hover { background: var(--raised); }
+.reslist .rt { font-weight: 600; }
+.reslist .rs { font-size: 13.5px; color: var(--muted); line-height: 1.4; }
+.res-back { display: none; }
 /* personal "my month" strip */
 .mycard { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); margin-bottom: 20px; overflow: hidden; }
 .mycard > div { padding: 12px 16px; min-width: 0; display: grid; gap: 3px; align-content: start; }
@@ -347,7 +356,7 @@ table.sched tr.me td { background: color-mix(in srgb, var(--accent-soft) 55%, tr
 @media (max-width: 640px) {
   nav.tabs { display: none; }
   header.top .top-row { padding-block: 10px 10px; }
-  .bottomnav { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; z-index: 12; background: var(--surface); border-top: 1px solid var(--line);
+  .bottomnav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; z-index: 12; background: var(--surface); border-top: 1px solid var(--line);
     padding: 4px max(4px, env(safe-area-inset-right, 0px)) calc(4px + env(safe-area-inset-bottom, 0px)) max(4px, env(safe-area-inset-left, 0px)); }
   .bottomnav a { display: grid; justify-items: center; gap: 2px; padding: 6px 0 4px; text-decoration: none; color: var(--muted); font: 600 10.5px/1.1 var(--body); border-radius: 8px; }
   .bottomnav a svg { width: 22px; height: 22px; }
@@ -397,6 +406,8 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
   .guide-layout { grid-template-columns: 1fr; }
   .side { display: none; }
   .cols { grid-template-columns: 1fr; }
+  .res { grid-template-columns: 1fr; gap: 18px; }
+  .res-back { display: inline-block; }
   .dir-list a { grid-template-columns: 84px minmax(0, 1fr); }
   .dir-list .dp, .dir-list .ar { display: none; }
   .search { max-width: none; order: 3; flex-basis: 100%; }
@@ -460,13 +471,12 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
       <a href="#didactics" data-tab="didactics">Didactics</a>
       <a href="#schedule" data-tab="schedule">Resident Schedule</a>
       <a href="#rotations" data-tab="rotations">Rotation Guides</a>
-      <a href="#policies" data-tab="policies">Policies</a>
-      <a href="#templates" data-tab="templates">Note Templates</a>
+      <a href="#resources" data-tab="resources">Resources</a>
     </nav>
   </div>
 </header>
 
-<nav class="bottomnav" aria-label="Sections"><a href="#home" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/></svg>Home</a><a href="#didactics" data-tab="didactics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>Lectures</a><a href="#schedule" data-tab="schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 9h17M9 9v11M15 9v11"/></svg>Schedule</a><a href="#rotations" data-tab="rotations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>Guides</a><a href="#policies" data-tab="policies"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10.5A.5.5 0 0 1 6.5 20V4a.5.5 0 0 1 .5-.5z"/><path d="M14 3.5V8h4M9.5 12.5h5M9.5 16h5"/></svg>Policies</a><a href="#templates" data-tab="templates"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 13.5h7M8.5 17h4"/></svg>Templates</a></nav>
+<nav class="bottomnav" aria-label="Sections"><a href="#home" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/></svg>Home</a><a href="#didactics" data-tab="didactics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>Lectures</a><a href="#schedule" data-tab="schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 9h17M9 9v11M15 9v11"/></svg>Schedule</a><a href="#rotations" data-tab="rotations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>Guides</a><a href="#resources" data-tab="resources"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5A1.5 1.5 0 0 1 5.5 5H10l2 2.5h6.5A1.5 1.5 0 0 1 20 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z"/><path d="M8.5 13.5h7M8.5 16.5h4.5"/></svg>Resources</a></nav>
 <main class="wrap" id="main" tabindex="-1"><p class="muted">Loading the hub…</p></main>
 
 <footer>
@@ -831,7 +841,7 @@ function demote(html, extra = 0) {
 }
 
 /* ----------------------------------------------------------- router */
-const VIEWS = { home: viewHome, didactics: viewDidactics, schedule: viewSchedule, rotations: viewRotations, policies: viewPolicies, templates: viewTemplates };
+const VIEWS = { home: viewHome, didactics: viewDidactics, schedule: viewSchedule, rotations: viewRotations, resources: viewResources, policies: viewResources, templates: viewResources };
 function route(keepScroll) {
   if (!S) return;
   $("#ayear").textContent = S.academicYear;
@@ -842,9 +852,9 @@ function route(keepScroll) {
   let tab = h, html;
   if (h.startsWith("rot-")) { tab = "rotations"; html = viewRotation(h.slice(4)); }
   else if (h.startsWith("sub-")) { tab = "rotations"; html = viewSubpage(h); }
-  else if (h.startsWith("pol-") || h.startsWith("hb-")) { tab = "policies"; html = viewPolicy(h); }
-  else if (h.startsWith("tpl-")) { tab = "templates"; html = viewTemplate(h.slice(4)); }
-  else { if (!VIEWS[h]) tab = "home"; html = VIEWS[tab](); }
+  else if (h.startsWith("pol-") || h.startsWith("hb-")) { tab = "resources"; html = viewPolicy(h); }
+  else if (h.startsWith("tpl-")) { tab = "resources"; html = viewTemplate(h.slice(4)); }
+  else { if (!VIEWS[h]) tab = "home"; html = VIEWS[tab](); if (tab === "policies" || tab === "templates") tab = "resources"; }
   render(html, tab, keepScroll);
 }
 function render(html, tab, keepScroll) {
@@ -1128,32 +1138,45 @@ function viewSubpage(h) {
     <h1 style="font-size:clamp(28px,4vw,40px);letter-spacing:-.02em;margin:6px 0 14px">${esc(sp.title)}</h1>
     <div class="prose">${sp.html}</div></article></div>`;
 }
-function polSide(active) {
-  const extra = S.extraSections || [];
-  return `<nav class="side" aria-label="Policies"><div class="grp">Policies</div>${S.policies.map(p => `<a href="#pol-${p.id}" ${"pol-" + p.id === active ? 'aria-current="page"' : ""}>${esc(p.title)}</a>`).join("")}
-  ${extra.length ? `<div class="grp">More from the Handbook</div>` + extra.map(p => `<a href="#${p.id}" ${p.id === active ? 'aria-current="page"' : ""}>${esc(p.title)}</a>`).join("") : ""}</nav>`;
+function summaryOf(html, title) {
+  const d = document.createElement("div"); d.innerHTML = html;
+  d.querySelectorAll("pre, table, h1, h2, h3, h4, figure, .faces").forEach(n => n.remove());
+  let t = d.textContent.replace(/\s+/g, " ").trim();
+  if (title && t.toLowerCase().startsWith(title.toLowerCase())) t = t.slice(title.length).trim();
+  if (!t) return "";
+  const cut = t.slice(0, 120);
+  return cut.length < t.length ? cut.replace(/\s+\S*$/, "").replace(/[\s.,;:–—-]+$/, "") + "…" : cut;
 }
-function viewPolicies() {
+function resSide(active) {
   const extra = S.extraSections || [];
-  return `<div class="view-head"><div><div class="eyebrow">Policies &amp; Protocols</div><h1>Policies</h1><p>PTO, attendance, coverage, leave and due process.</p></div></div>
-  <div class="cards">${S.policies.map(p => `<a class="card" href="#pol-${p.id}"><h3>${esc(p.title)}</h3><span class="meta">${p.source === "handbook" ? "From the Program Handbook" : "Program policy"}</span></a>`).join("")}</div>
-  ${extra.length ? `<h2 class="eyebrow" style="margin:28px 0 10px">More from the Handbook</h2><div class="cards">${extra.map(p => `<a class="card" href="#${p.id}"><h3>${esc(p.title)}</h3></a>`).join("")}</div>` : ""}`;
+  const link = (href, title) => `<a href="#${href}" ${href === active ? 'aria-current="page"' : ""}>${esc(title)}</a>`;
+  return `<nav class="side" aria-label="Resources"><a class="crumb" href="#resources" style="padding-left:8px">← All resources</a>
+    <div class="grp">Policies</div>${S.policies.map(p => link("pol-" + p.id, p.title)).join("")}
+    ${extra.length ? `<div class="grp">From the Handbook</div>` + extra.map(p => link(p.id, p.title)).join("") : ""}
+    <div class="grp">Note templates</div>${S.templates.map(t => link("tpl-" + t.id, t.title)).join("")}</nav>`;
+}
+function polSide(active) { return resSide(active); }
+function viewResources() {
+  const extra = S.extraSections || [];
+  const row = (href, title, html, tag) => `<li><a href="#${href}"><span class="rt">${esc(title)}${tag ? `<span class="tag">${tag}</span>` : ""}</span><span class="rs">${esc(summaryOf(html, title))}</span></a></li>`;
+  return `<div class="view-head"><div><div class="eyebrow">Resources</div><h1>Resources</h1><p>Program policies and copy-ready note templates.</p></div></div>
+  <div class="res">
+    <section><h2 class="dir-h">Policies &amp; protocols</h2><ul class="reslist">${S.policies.map(p => row("pol-" + p.id, p.title, p.html, p.edited ? "Updated" : "")).join("")}
+      ${extra.map(p => row(p.id, p.title, p.html, "Handbook")).join("")}</ul></section>
+    <section><h2 class="dir-h">Note templates</h2><ul class="reslist">${S.templates.map(t => row("tpl-" + t.id, t.title, t.html, "")).join("")}</ul></section>
+  </div>`;
 }
 function viewPolicy(h) {
   const p = h.startsWith("pol-") ? S.policies.find(x => "pol-" + x.id === h) : (S.extraSections || []).find(x => x.id === h);
-  if (!p) return `<div class="empty">That page wasn't found. <a href="#policies">See all policies</a>.</div>`;
-  return `<div class="guide-layout">${polSide(h)}<article style="min-width:0"><div class="eyebrow">Policies</div>
+  if (!p) return `<div class="empty">That page wasn't found. <a href="#resources">See all resources</a>.</div>`;
+  return `<div class="guide-layout">${polSide(h)}<article style="min-width:0"><a class="crumb res-back" href="#resources">← All resources</a><div class="eyebrow">Resources · Policy</div>
     <h1 style="font-size:clamp(28px,4vw,40px);letter-spacing:-.02em;margin:6px 0 14px">${esc(p.title)}</h1>${guideBody(p)}</article></div>`;
-}
-function viewTemplates() {
-  return `<div class="view-head"><div><div class="eyebrow">Commonly Used Templates</div><h1>Note templates</h1><p>Starting points for H&amp;Ps, progress notes and consults at each site. Open one and copy it into the EMR.</p></div></div>
-  <div class="cards">${S.templates.map(t => `<a class="card" href="#tpl-${t.id}"><h3>${esc(t.title)}</h3><span class="meta">Open and copy</span></a>`).join("")}</div>`;
 }
 function viewTemplate(id) {
   const t = S.templates.find(x => x.id === id);
-  if (!t) return `<div class="empty">That template wasn't found. <a href="#templates">See all templates</a>.</div>`;
-  return `<div class="guide-layout"><nav class="side" aria-label="Templates"><div class="grp">Templates</div>${S.templates.map(x => `<a href="#tpl-${x.id}" ${x.id === id ? 'aria-current="page"' : ""}>${esc(x.title)}</a>`).join("")}</nav>
-  <article style="min-width:0"><div class="eyebrow">Note template</div><h1 style="font-size:clamp(28px,4vw,40px);letter-spacing:-.02em;margin-top:6px">${esc(t.title)}</h1>
+  if (!t) return `<div class="empty">That template wasn't found. <a href="#resources">See all resources</a>.</div>`;
+  return `<div class="guide-layout">${resSide("tpl-" + id)}
+  <article style="min-width:0"><a class="crumb res-back" href="#resources">← All resources</a><div class="eyebrow">Resources · Note template</div><h1 style="font-size:clamp(28px,4vw,40px);letter-spacing:-.02em;margin-top:6px">${esc(t.title)}</h1>
   <div class="tpl-actions"><button class="btn" id="copytpl" type="button">Copy whole template</button></div>
   <p class="muted" style="margin:0 0 14px;font-size:14px">Each gray block also has its own Copy button. Spacing is kept exactly, so tables line up when pasted into CPRS or other plain-text notes.</p>
   <div class="prose" id="tplbody">${t.html}</div></article></div>`;
