@@ -5,6 +5,13 @@
 
 Content (schedules, Handbook, contacts, links, announcements) is edited in Google Drive or the chief editor and appears on the site automatically. Only design changes touch this repository. The Google script that feeds the site is kept in `apps-script/` for reference.
 
+## Features residents use
+- **Pick your name** (home page) to see your rotation, what's next, your next lecture, and onboarding steps. Stored only on that device.
+- **Onboarding reminders**: inpatient rehab rotations and the WPB VA start 7 weeks ahead (follow-up at 6); all other rotations 3 weeks ahead (follow-up at 2). To change a rotation's timing, add a column to the Control Panel's **Rotations** tab named `Onboarding reminders (weeks before)` and enter e.g. `8, 6`.
+- **Calendars**: "Add didactics to your calendar" (everyone) and "Add my calendar" (your rotations, onboarding reminders, lectures you present). Both update automatically.
+- **Install as an app**: gear menu ▸ "Use it like an app". Works offline with the last data it loaded.
+- **Directory**: Resources ▸ Directory, built automatically from the Key Contacts tables in the rotation guides.
+
 ---
 
 # One-time setup

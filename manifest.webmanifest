@@ -1,0 +1,28 @@
+{
+ "name": "Larkin South Miami PM&R Hub",
+ "short_name": "PM&R Hub",
+ "description": "Rotation guides, didactics, block schedules and resources for Larkin South Miami PM&R residents.",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#FBF6FB",
+ "theme_color": "#2A0E5A",
+ "icons": [
+  {
+   "src": "assets/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "assets/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "assets/icon-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}

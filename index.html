@@ -9,6 +9,11 @@
 <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#2A0E5A">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PM&amp;R Hub">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@500;600&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap">
@@ -85,6 +90,8 @@
 .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
 .swatch { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); cursor: pointer; }
 .swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+.install { display: grid; gap: 6px; font-size: 14px; color: var(--muted); }
+.install .btn { justify-self: start; }
 .prefs .edit { border-top: 1px solid var(--line); padding-top: 14px; font-size: 14px; color: var(--muted); }
 .prefs .edit a { font-weight: 600; }
 header.top .wrap { position: relative; }
@@ -314,6 +321,32 @@ a.dead { color: inherit; text-decoration: none; pointer-events: none; }
 .result small { display: block; color: var(--muted); font-size: 13px; }
 .result mark { background: var(--sun-soft); color: inherit; border-radius: 3px; }
 
+/* onboarding */
+.mycard .onb { grid-column: 1 / -1; border-left: 0 !important; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--sun-soft) 70%, transparent); }
+.mycard .onb .k { color: var(--sun); }
+.mycard .onb ul { margin: 6px 0 2px; padding-left: 18px; font-size: 14px; display: grid; gap: 3px; }
+.mycard .onb .more { font-size: 14px; font-weight: 600; }
+.mycard .calrow { grid-column: 1 / -1; border-left: 0 !important; border-top: 1px solid var(--line); display: flex !important; flex-wrap: wrap; gap: 6px 12px; align-items: center; padding-block: 10px; }
+.onbgrp + .onbgrp { margin-top: 12px; }
+.onbdate { font: 600 12px/1.3 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--sun); margin-bottom: 4px; }
+.onbdate span { color: var(--muted); text-transform: none; letter-spacing: 0; }
+.onblist { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); column-gap: 14px; }
+.onblist li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); font-size: 14px; min-width: 0; }
+.onblist .who { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.onblist a { text-decoration: none; flex: none; }
+.onblist li.mine .who { color: var(--accent); }
+/* directory */
+.dirpromo { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 14px; align-items: center; background: var(--accent-soft); border-radius: var(--r); padding: 14px 18px; margin-bottom: 20px; text-decoration: none; color: var(--ink); }
+.dirpromo b { font: 700 18px/1.2 var(--display); }
+.dirpromo span { color: var(--muted); font-size: 14px; }
+.dirpromo .ar { color: var(--accent); font-size: 20px; }
+.dir-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 18px; align-items: start; }
+.dirgroup .dir-h a { color: inherit; text-decoration: none; }
+.dirlist { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.dirlist li { padding: 9px 14px; display: grid; gap: 2px; font-size: 14.5px; }
+.dirlist li + li { border-top: 1px solid var(--line); }
+.dirlist .dc { font: 500 13px/1.45 var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.dirlist .dc a { color: var(--accent); }
 /* resources */
 .res { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
 .reslist { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
@@ -407,6 +440,8 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
   .side { display: none; }
   .cols { grid-template-columns: 1fr; }
   .res { grid-template-columns: 1fr; gap: 18px; }
+  .dirpromo { grid-template-columns: minmax(0, 1fr) auto; } .dirpromo span:not(.ar) { grid-column: 1; }
+  .dir-grid { grid-template-columns: 1fr; }
   .res-back { display: inline-block; }
   .dir-list a { grid-template-columns: 84px minmax(0, 1fr); }
   .dir-list .dp, .dir-list .ar { display: none; }
@@ -464,6 +499,7 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
         <button type="button" class="swatch" data-ac="coral" title="Coral" aria-label="Coral" style="background:#B4472F"></button>
         <button type="button" class="swatch" data-ac="plum" title="Plum" aria-label="Plum" style="background:#6E3F8F"></button>
         <button type="button" class="swatch" data-ac="forest" title="Everglades green" aria-label="Everglades green" style="background:#2F6B33"></button></div></div>
+      <div id="install-box"><h3>Use it like an app</h3><div id="install-body" class="install"></div></div>
       <div class="edit" id="prefs-edit">Chief residents: <span id="edit-link">editing turns on once the hub is connected to Google.</span></div>
     </div>
     <nav class="tabs" aria-label="Sections">
@@ -537,6 +573,25 @@ function showEditLink() {
   if (!CFG.adminUrl) return;
   $("#edit-link").innerHTML = `<a href="${esc(CFG.adminUrl)}" target="_blank" rel="noopener">Open the hub editor →</a> <span style="display:block;margin-top:4px">Requires signing in as the chief Google account.</span>`;
   $("#foot-edit").innerHTML = ` · <a href="${esc(CFG.adminUrl)}" target="_blank" rel="noopener">Chief editor</a>`;
+}
+
+/* ----------------------------------------------------------- install as app */
+let installEvt = null;
+const standalone = () => window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+function renderInstall() {
+  const box = $("#install-box"), body = $("#install-body"); if (!box) return;
+  if (standalone()) { box.hidden = true; return; }
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  body.innerHTML = installEvt ? `<button type="button" class="btn small" id="install-btn">Install the hub</button><span>Adds an icon to your home screen or desktop.</span>`
+    : ios ? `<span>In Safari, tap <b>Share</b> <svg width="13" height="15" viewBox="0 0 13 15" aria-hidden="true" style="vertical-align:-2px"><path d="M6.5 1v8M3.5 4l3-3 3 3M1.5 7v6.5h10V7" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> then <b>Add to Home Screen</b>.</span>`
+    : `<span>In your browser menu (⋮), choose <b>Install app</b> or <b>Add to Home screen</b>.</span>`;
+  const b = $("#install-btn"); if (b) b.onclick = async () => { installEvt.prompt(); await installEvt.userChoice; installEvt = null; renderInstall(); };
+}
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; renderInstall(); });
+window.addEventListener("appinstalled", () => { installEvt = null; renderInstall(); toast("Installed"); });
+renderInstall();
+if ("serviceWorker" in navigator && location.protocol === "https:" && !/claude/.test(location.hostname)) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
 
 /* ----------------------------------------------------------- data loading */
@@ -665,7 +720,8 @@ function mergeLive(snap, live) {
       const prev = old.find(o => o.codes.some(c => codes.map(norm).includes(norm(c)))) || old.find(o => o.title === r.rotation) || {};
       return { id: prev.id || slug(r.rotation), title: r.rotation, short: r["short name"] || prev.short || r.rotation, codes,
         category: r.category || "", pgy: r.pgy || r["pgy level"] || "", location: r.location || "", attendings: r["key attendings"] || "",
-        handbookMatch: r["handbook heading contains"] || prev.handbookMatch || "", html: prev.html || "", type: prev.type || "" };
+        handbookMatch: r["handbook heading contains"] || prev.handbookMatch || "", html: prev.html || "", type: prev.type || "",
+        lead: (r["onboarding reminders (weeks before)"] || "").split(/[,;\s]+/).map(Number).filter(n => n > 0) };
     });
   }
   // Schedules
@@ -854,6 +910,7 @@ function route(keepScroll) {
   else if (h.startsWith("sub-")) { tab = "rotations"; html = viewSubpage(h); }
   else if (h.startsWith("pol-") || h.startsWith("hb-")) { tab = "resources"; html = viewPolicy(h); }
   else if (h.startsWith("tpl-")) { tab = "resources"; html = viewTemplate(h.slice(4)); }
+  else if (h === "directory") { tab = "resources"; html = viewDirectory(); }
   else { if (!VIEWS[h]) tab = "home"; html = VIEWS[tab](); if (tab === "policies" || tab === "templates") tab = "resources"; }
   render(html, tab, keepScroll);
 }
@@ -891,6 +948,114 @@ function fallbackCopy(text) {
 function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 1600); }
 
 /* ----------------------------------------------------------- views */
+/* ----------------------------------------------------------- onboarding reminders */
+const DAY = 86400000;
+function ayStartYear() { const m = String(S.academicYear || "").match(/(20\d\d)/); return m ? +m[1] : (today.getMonth() >= 6 ? today.getFullYear() : today.getFullYear() - 1); }
+function monthStart(i) { const y = ayStartYear() + (i >= 6 ? 1 : 0); return new Date(y, (i + 6) % 12, 1); }
+function leadWeeks(r) {
+  if (r && r.lead && r.lead.length) return [...r.lead].sort((a, b) => b - a);
+  const inpatient = r && (/inpatient/i.test(r.category || "") || r.codes.some(c => norm(c) === "WPB"));
+  return inpatient ? [7, 6] : [3, 2];
+}
+/** Rotation changes for one resident: [{i, start, rot, raw}] */
+function starts(p) {
+  const out = [];
+  p.months.forEach((m, i) => { if (m && (i === 0 || norm(m) !== norm(p.months[i - 1] || ""))) out.push({ i, start: monthStart(i), rot: p.rots[i], raw: m }); });
+  return out;
+}
+/** Upcoming starts whose reminder window is open today */
+function onboardingDue(p) {
+  return starts(p).filter(x => x.start > today).map(x => {
+    const lead = leadWeeks(x.rot), days = Math.round((x.start - today) / DAY);
+    return Object.assign(x, { lead, days, open: days <= lead[0] * 7 });
+  }).filter(x => x.open);
+}
+function onboardingSteps(r) {
+  if (!r) return [];
+  const d = document.createElement("div"); d.innerHTML = r.html || "";
+  const h = [...d.querySelectorAll("h2, h3")].find(x => /pre-rotation|credential|before you start|onboard|getting started/i.test(x.textContent));
+  let items = [];
+  if (h) { let n = h.nextElementSibling; while (n && !/^H[23]$/.test(n.tagName) && items.length < 5) { items.push(...[...n.querySelectorAll ? n.querySelectorAll("li") : []].map(li => li.textContent.trim())); if (n.tagName === "P") items.push(n.textContent.trim()); n = n.nextElementSibling; } }
+  if (!items.length) d.querySelectorAll(".callout").forEach(c => { if (/before rotating|credential|in advance|onboard|weeks/i.test(c.textContent)) items.push(c.textContent.trim().replace(/\s+/g, " ")); });
+  return items.filter(Boolean).slice(0, 4).map(t => t.length > 180 ? t.slice(0, 177).replace(/\s+\S*$/, "") + "…" : t);
+}
+const fmtDay = d => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+function onboardingPanel() {
+  const rows = [];
+  S.residents.forEach(p => onboardingDue(p).forEach(x => rows.push({ p, x })));
+  if (!rows.length) return "";
+  rows.sort((a, b) => a.x.start - b.x.start || a.p.name.localeCompare(b.p.name));
+  const dates = [...new Set(rows.map(r => +r.x.start))];
+  return `<section class="panel onbpanel"><h2>Onboarding due</h2><p class="sub">Inpatient rehab and WPB VA: 7 weeks ahead. Other rotations: 3 weeks ahead.</p>
+    ${dates.map(t => { const grp = rows.filter(r => +r.x.start === t), x0 = grp[0].x;
+      return `<div class="onbgrp"><div class="onbdate">Starts ${fmtDay(x0.start)} <span>· ${x0.days} days</span></div><ul class="onblist">${grp.map(({ p, x }) =>
+        `<li class="${p.name === ME ? "mine" : ""}"><span class="who">${esc(p.name)}</span>${x.rot ? `<a href="#rot-${x.rot.id}" title="${esc(x.rot.title)}">${chipSpan(x.rot)}</a>` : `<span class="code">${esc(x.raw)}</span>`}</li>`).join("")}</ul></div>`; }).join("")}
+  </section>`;
+}
+
+/* ----------------------------------------------------------- calendar sheet (subscribe) */
+function calLinks(ics, name) {
+  const webcal = ics.replace(/^https?:/, "webcal:");
+  return [["Google Calendar", `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcal)}`], ["Apple Calendar", webcal],
+    ["Outlook", `https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(ics)}&name=${encodeURIComponent(name)}`]];
+}
+function openCalSheet(ics, name, blurb) {
+  closeMaps();
+  const back = document.createElement("div"); back.className = "mapback";
+  const sheet = document.createElement("div"); sheet.className = "mapsheet"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-label", "Subscribe to calendar");
+  sheet.innerHTML = `<div class="where-to">Subscribe in…</div><div class="addr-text">${esc(name)}</div>${blurb ? `<div class="where-to" style="margin-bottom:4px">${esc(blurb)}</div>` : ""}
+    ${calLinks(ics, name).map(([l, h]) => `<a href="${esc(h)}" ${h.startsWith("webcal") ? "" : 'target="_blank" rel="noopener"'}>${l}</a>`).join("")}
+    <button type="button" data-copy>Copy link</button><button type="button" class="cancel" data-close>Cancel</button>`;
+  back.onclick = closeMaps;
+  sheet.addEventListener("click", e => { if (e.target.closest("[data-copy]")) { copyText(ics); closeMaps(); } else if (e.target.closest("[data-close]") || e.target.closest("a")) closeMaps(); });
+  document.body.append(back, sheet); sheet.querySelector("a").focus();
+}
+function myCalUrl(name) { const b = CFG.liveDataUrl; return b ? b + (b.includes("?") ? "&" : "?") + "calendar=me&name=" + encodeURIComponent(name) : ""; }
+
+/* ----------------------------------------------------------- directory */
+function directory() {
+  const out = [];
+  S.contacts.forEach(c => out.push({ group: "Program", gid: "", role: c.role, name: c.name, contact: [c.phone, c.email].filter(Boolean).join("; ") }));
+  S.rotations.forEach(r => {
+    const d = document.createElement("div"); d.innerHTML = (r.html || "") + (r.handbookHtml || "");
+    d.querySelectorAll("table").forEach(t => {
+      const head = [...t.querySelectorAll("tr:first-child th, tr:first-child td")].map(x => x.textContent.trim().toLowerCase());
+      const ci = head.findIndex(h => /contact|phone|email/.test(h)), ni = head.findIndex(h => /^name$|attending/.test(h)), ri = head.findIndex(h => /role|site/.test(h));
+      if (ci < 0 || ni < 0) return;
+      [...t.querySelectorAll("tr")].slice(1).forEach(tr => {
+        const c = [...tr.children].map(x => x.textContent.trim());
+        if (!c[ni] && !c[ci]) return;
+        if (!out.some(o => o.name === c[ni] && o.gid === r.id && o.contact === c[ci])) out.push({ group: r.short, gid: r.id, role: ri >= 0 ? c[ri] : "", name: c[ni] === "—" ? "" : c[ni], contact: c[ci] });
+      });
+    });
+    const phone = [...d.querySelectorAll("li")].map(li => li.textContent).find(t => /^\s*(main )?phone\s*:/i.test(t));
+    if (phone) out.push({ group: r.short, gid: r.id, role: "Site phone", name: "", contact: phone.replace(/^\s*(main )?phone\s*:\s*/i, "") });
+  });
+  return out;
+}
+function contactHtml(text) {
+  return esc(text).replace(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi, m => `<a href="mailto:${m}">${m}</a>`)
+    .replace(/(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g, m => `<a href="tel:+1${m.replace(/\D/g, "").slice(-10)}">${m}</a>`);
+}
+let dirQ = "";
+function viewDirectory() {
+  return `<div class="view-head"><div><div class="eyebrow">Resources · Directory</div><h1>Directory</h1><p>Attendings, coordinators and site phone numbers from every rotation guide. Tap a number or email to contact.</p></div></div>
+    <div class="filters"><input id="dirq" type="search" placeholder="Search name, role or site" value="${esc(dirQ)}" aria-label="Search the directory"><a class="crumb" href="#resources" style="margin:0">← All resources</a></div>
+    <div id="dirlist">${directoryList()}</div>`;
+}
+function directoryList() {
+  const q = dirQ.toLowerCase();
+  const all = directory().filter(e => !q || (e.name + " " + e.role + " " + e.group + " " + e.contact).toLowerCase().includes(q));
+  if (!all.length) return `<div class="empty">No one matches “${esc(dirQ)}”.</div>`;
+  const groups = [...new Set(all.map(e => e.group))];
+  return `<div class="dir-grid">${groups.map(g => {
+    const rows = all.filter(e => e.group === g), gid = rows[0].gid;
+    return `<section class="dirgroup"><h2 class="dir-h">${gid ? `<a href="#rot-${gid}">${esc(g)}</a>` : esc(g)}</h2><ul class="dirlist">${rows.map(e => `<li>
+      <div><b>${esc(e.name || e.role)}</b>${e.name && e.role ? `<span class="muted"> · ${esc(e.role)}</span>` : ""}</div>
+      <div class="dc">${contactHtml(e.contact || "")}</div></li>`).join("")}</ul></section>`;
+  }).join("")}</div>`;
+}
+
 /* ----------------------------------------------------------- personal view */
 let ME = store.get("hub.me") || "";
 function meResident() { return ME ? S.residents.find(p => p.name === ME) : null; }
@@ -911,12 +1076,21 @@ function meCard() {
   const until = j - 1 > mi ? ` · through ${MON[(j - 1 + 6) % 12]}` : "";
   const nextR = j < 12 ? p.rots[j] : null, nextRaw = j < 12 ? p.months[j] : "";
   const lec = S.didactics.find(t => t.date >= todayISO && presentsTalk(t.speaker, p.name));
+  const onb = onboardingDue(p);
   const rotLink = (r, raw) => r ? `${chipSpan(r)}<a href="#rot-${r.id}">${esc(r.short)}</a>` : (raw ? esc(raw) : "—");
   return `<section class="mycard">
     <div class="hi"><b>Hi, ${esc(p.name.split(" ")[0])}</b><span class="n">${esc(p.pgy)}</span><button type="button" id="mechange">Not you?</button></div>
     <div><span class="k">This month</span><span class="v">${rotLink(r0, raw0)}</span><span class="n">${MONTH_FULL[mi]}${until}</span></div>
     <div><span class="k">Next</span><span class="v">${j < 12 ? rotLink(nextR, nextRaw) : "End of year"}</span><span class="n">${j < 12 ? "Starts " + MONTH_FULL[j] : ""}</span></div>
     <div class="lec"><span class="k">Your next lecture</span>${lec ? `<span class="v"><a href="#didactics">${esc(lec.topic)}</a></span><span class="n">${fmtDate(lec.date)}${lec.location ? " · " + esc(lec.location) : ""}</span>` : `<span class="n">None on the calendar</span>`}</div>
+    ${onb.map(x => {
+      const steps = onboardingSteps(x.rot);
+      return `<div class="onb"><span class="k">Onboarding · start now</span><span class="v">${x.rot ? `${chipSpan(x.rot)}<a href="#rot-${x.rot.id}">${esc(x.rot.title)}</a>` : esc(x.raw)}</span>
+        <span class="n">Starts ${x.start.toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric" })} · ${x.days} days away</span>
+        ${steps.length ? `<ul>${steps.map(t => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}
+        ${x.rot ? `<a class="more" href="#rot-${x.rot.id}">Open the ${esc(x.rot.short)} guide →</a>` : ""}</div>`;
+    }).join("")}
+    ${CFG.liveDataUrl ? `<div class="calrow"><button type="button" class="btn small ghost" id="mycal">Add my calendar</button><span class="n">Your rotations, lectures you present, and onboarding reminders, kept in sync.</span></div>` : ""}
   </section>`;
 }
 function viewHome() {
@@ -958,9 +1132,10 @@ function viewHome() {
       </section>
     </div>
     <div class="col">
+      ${onboardingPanel()}
       <section class="panel">
         <h2>Key contacts</h2>
-        <p class="sub">Program leadership and chiefs</p>
+        <p class="sub">Program leadership and chiefs · <a href="#directory">Full directory →</a></p>
         <div class="contacts">${S.contacts.map(c => `<div class="contact"><span class="role">${esc(c.role)}</span><span class="name">${esc(c.name)}</span>
           <span class="how">${c.phone ? `<a href="tel:+1${esc(c.phone.replace(/\D/g, "").slice(-10))}">${esc(c.phone)}</a>` : ""}${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ""}</span></div>`).join("")}</div>
       </section>
@@ -1159,7 +1334,8 @@ function polSide(active) { return resSide(active); }
 function viewResources() {
   const extra = S.extraSections || [];
   const row = (href, title, html, tag) => `<li><a href="#${href}"><span class="rt">${esc(title)}${tag ? `<span class="tag">${tag}</span>` : ""}</span><span class="rs">${esc(summaryOf(html, title))}</span></a></li>`;
-  return `<div class="view-head"><div><div class="eyebrow">Resources</div><h1>Resources</h1><p>Program policies and copy-ready note templates.</p></div></div>
+  return `<div class="view-head"><div><div class="eyebrow">Resources</div><h1>Resources</h1><p>Program policies, copy-ready note templates and the contact directory.</p></div></div>
+  <a class="dirpromo" href="#directory"><b>Directory</b><span>Every attending, coordinator and site phone number from the rotation guides, tap to call or email.</span><span class="ar" aria-hidden="true">→</span></a>
   <div class="res">
     <section><h2 class="dir-h">Policies &amp; protocols</h2><ul class="reslist">${S.policies.map(p => row("pol-" + p.id, p.title, p.html, p.edited ? "Updated" : "")).join("")}
       ${extra.map(p => row(p.id, p.title, p.html, "Handbook")).join("")}</ul></section>
@@ -1248,6 +1424,8 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && document.q
 document.addEventListener("click", e => { const b = e.target.closest("button.addr"); if (b) { e.preventDefault(); openMaps(b); } });
 
 function bindView() {
+  const mcb = $("#mycal"); if (mcb) mcb.onclick = () => { const p = meResident(); if (p) openCalSheet(myCalUrl(p.name), "My PM&R calendar · " + p.name.split(" ")[0], "Rotations, your lectures, and onboarding reminders."); };
+  const dq2 = $("#dirq"); if (dq2) dq2.oninput = () => { dirQ = dq2.value; $("#dirlist").innerHTML = directoryList(); };
   const ms = $("#mesel"); if (ms) ms.onchange = () => { ME = ms.value; store.set("hub.me", ME); route(true); };
   const mc = $("#mechange"); if (mc) mc.onclick = () => { ME = ""; store.set("hub.me", ""); route(true); };
   const sw2 = $(".sched-wrap");

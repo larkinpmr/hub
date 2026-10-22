@@ -27,6 +27,13 @@ function doGet(e) {
   }
   const fresh = e && e.parameter && e.parameter.refresh;
   const cache = CacheService.getScriptCache();
+  if (e && e.parameter && e.parameter.calendar === 'me') {
+    const who = String(e.parameter.name || '').trim();
+    const key = 'me_' + Utilities.base64EncodeWebSafe(who).slice(0, 200);
+    let ics = fresh ? null : cache.get(key);
+    if (!ics) { ics = buildMyCalendar_(who); try { cache.put(key, ics, CACHE_SECONDS); } catch (err) { /* uncached */ } }
+    return ContentService.createTextOutput(ics).setMimeType(ContentService.MimeType.ICAL);
+  }
   if (e && e.parameter && e.parameter.calendar) {
     let ics = fresh ? null : cache.get('hub_ics');
     if (!ics) {
@@ -404,4 +411,132 @@ function adminRevertPage(id) {
   if (at > 0) sh.deleteRow(at + 1);
   clearCache_();
   return 'Restored the original version.';
+}
+
+
+/* ------------------------------------------------------------------ personal calendar (.ics)
+ * ?calendar=me&name=Full Name → that resident's rotation blocks, onboarding reminders and the lectures they present.
+ * Onboarding reminders: inpatient rehab rotations and the WPB VA at 7 and 6 weeks before the start;
+ * everything else at 3 and 2 weeks. Override per rotation with a Rotations-tab column
+ * "Onboarding reminders (weeks before)", e.g. "8, 6". */
+const MONTH_NAMES = ['July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May', 'June'];
+
+function normCode_(s) { return String(s || '').toUpperCase().replace(/\s*\/\s*/g, ' / ').replace(/\s+/g, ' ').trim(); }
+
+function rotationTable_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss && ss.getSheetByName('Rotations');
+  if (!sh) return [];
+  const v = values_(sh); if (v.length < 2) return [];
+  const h = v[0].map(x => String(x).trim().toLowerCase());
+  const col = name => h.indexOf(name);
+  return v.slice(1).filter(r => r[col('rotation')]).map(r => ({
+    name: String(r[col('rotation')]).trim(),
+    short: String(col('short name') >= 0 ? r[col('short name')] : '').trim(),
+    category: String(col('category') >= 0 ? r[col('category')] : ''),
+    codes: String(col('schedule codes') >= 0 ? r[col('schedule codes')] : '').split(';').map(normCode_).filter(Boolean),
+    lead: String(col('onboarding reminders (weeks before)') >= 0 ? r[col('onboarding reminders (weeks before)')] : '').split(/[,;\s]+/).map(Number).filter(n => n > 0)
+  }));
+}
+
+function leadWeeks_(rot) {
+  if (rot && rot.lead.length) return rot.lead.slice().sort((a, b) => b - a);
+  const inpatient = rot && (/inpatient/i.test(rot.category) || rot.codes.indexOf('WPB') >= 0);
+  return inpatient ? [7, 6] : [3, 2];
+}
+
+/** Same rules as the website: find "Resident | July … June" header rows, PGY labels above them. */
+function parseResidents_(rows) {
+  const isMonth = c => /^(jul|aug|sep|oct|nov|dec|jan|feb|mar|apr|may|jun)[a-z]*\.?(\s+\d{2,4})?$/i.test(c);
+  const out = []; let pgy = '', map = null;
+  rows.map(r => r.map(c => String(c == null ? '' : c).trim())).forEach(r => {
+    const pg = r.join(' ').match(/PGY[\s-]?([2-5])/i);
+    if (r.filter(isMonth).length >= 6) {
+      const first = r.findIndex(isMonth);
+      let ni = r.findIndex(c => /resident/i.test(c)); if (ni < 0 || ni > first) ni = Math.max(0, first - 1);
+      map = { name: ni, months: MONTH_NAMES.map(m => r.findIndex(c => isMonth(c) && c.slice(0, 3).toLowerCase() === m.slice(0, 3).toLowerCase())) };
+      if (pg) pgy = 'PGY-' + pg[1];
+      return;
+    }
+    if (!map) { if (pg) pgy = 'PGY-' + pg[1]; return; }
+    const name = r[map.name] || '';
+    const months = map.months.map(i => i >= 0 ? (r[i] || '').split(',')[0].trim() : '');
+    const filled = months.filter(Boolean).length;
+    if (pg && (filled < 6 || /pgy/i.test(name))) { pgy = 'PGY-' + pg[1]; return; }
+    if (name && filled >= 6 && !/key|resident/i.test(name)) out.push({ name: name, pgy: pgy, months: months });
+  });
+  return out;
+}
+
+function buildMyCalendar_(who) {
+  const settings = panelSettings_();
+  const idOf = key => idFromLink_(settings[key]) || FALLBACK[key];
+  const site = settings['Website address'] || '';
+  const yearMatch = String(settings['Academic Year'] || '').match(/(20\d\d)/);
+  const now = new Date();
+  const ay = yearMatch ? Number(yearMatch[1]) : (now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1);
+  const monthStart = i => new Date(Date.UTC(ay + (i >= 6 ? 1 : 0), (i + 6) % 12, 1));
+  const ymd = d => Utilities.formatDate(d, 'UTC', 'yyyyMMdd');
+  const stamp = Utilities.formatDate(now, 'UTC', "yyyyMMdd'T'HHmmss'Z'");
+
+  const people = parseResidents_(readSheet_(idOf('Resident Schedule Sheet'), settings['Resident Schedule tab']));
+  const lc = who.toLowerCase();
+  const me = people.find(p => p.name.toLowerCase() === lc) || people.find(p => p.name.toLowerCase().indexOf(lc) >= 0);
+  const uidBase = 'me-' + who.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const out = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Larkin PM&R Hub//My calendar//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    fold_('X-WR-CALNAME:' + esc_('PM&R · ' + (me ? me.name : who))), 'X-WR-TIMEZONE:' + TZ, 'REFRESH-INTERVAL;VALUE=DURATION:PT1H', 'X-PUBLISHED-TTL:PT1H'];
+  if (!me) { out.push('END:VCALENDAR'); return out.join('\r\n') + '\r\n'; }
+
+  const rots = rotationTable_();
+  const rotOf = raw => { const n = normCode_(raw), first = normCode_(String(raw).split(',')[0]); return rots.find(r => r.codes.indexOf(n) >= 0 || r.codes.indexOf(first) >= 0) || null; };
+  const allDay = (uid, start, endExcl, summary, desc, alarm) => {
+    const ev = ['BEGIN:VEVENT', 'UID:' + uid + '@larkin-pmr-hub', 'DTSTAMP:' + stamp, 'DTSTART;VALUE=DATE:' + ymd(start), 'DTEND;VALUE=DATE:' + ymd(endExcl),
+      fold_('SUMMARY:' + esc_(summary)), 'TRANSP:TRANSPARENT'];
+    if (desc) ev.push(fold_('DESCRIPTION:' + esc_(desc)));
+    if (alarm) ev.push('BEGIN:VALARM', 'ACTION:DISPLAY', fold_('DESCRIPTION:' + esc_(summary)), 'TRIGGER;RELATED=START:PT9H', 'END:VALARM');
+    ev.push('END:VEVENT'); Array.prototype.push.apply(out, ev);
+  };
+
+  // Rotation blocks (consecutive months with the same assignment)
+  let i = 0;
+  while (i < 12) {
+    const raw = me.months[i]; if (!raw) { i++; continue; }
+    let j = i; while (j + 1 < 12 && normCode_(me.months[j + 1]) === normCode_(raw)) j++;
+    const rot = rotOf(raw), label = rot ? (rot.short || rot.name) : raw;
+    const start = monthStart(i), end = monthStart(j + 1 < 12 ? j + 1 : 12);
+    allDay(uidBase + '-rot-' + i, start, end, 'Rotation: ' + label, (rot ? rot.name + '\n' : '') + MONTH_NAMES[i] + (j > i ? '–' + MONTH_NAMES[j] : '') + (site ? '\nGuide: ' + site + '#rotations' : ''), false);
+    // Onboarding reminders before each new rotation
+    leadWeeks_(rot).forEach((w, k) => {
+      const d = new Date(start.getTime() - w * 7 * 86400000), next = new Date(d.getTime() + 86400000);
+      allDay(uidBase + '-onb-' + i + '-' + w, d, next, (k === 0 ? 'Start onboarding: ' : 'Onboarding reminder: ') + label + ' (starts ' + Utilities.formatDate(start, 'UTC', 'MMM d') + ')',
+        'Your ' + (rot ? rot.name : label) + ' rotation starts ' + Utilities.formatDate(start, 'UTC', 'EEEE, MMMM d') + '. Complete credentialing, EMR and facility access, and arrange shadowing now.' + (site ? '\nGuide: ' + site + '#rotations' : ''), true);
+    });
+    i = j + 1;
+  }
+
+  // Lectures this resident presents
+  const talks = parseDidactics_(readSheet_(idOf('Didactic Schedule Sheet'), settings['Didactic Schedule tab']));
+  const toks = me.name.split(/\s+/).slice(1).filter(t => t.length >= 3);
+  const presents = sp => toks.some(t => new RegExp('\\b' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(sp || ''));
+  const hours = Number(settings['Didactics length (hours)']) || 3;
+  talks.filter(t => presents(t.speaker)).forEach((t, n) => {
+    const day = t.date.replace(/-/g, ''), tm = parseTime_(t.time);
+    const ev = ['BEGIN:VEVENT', 'UID:' + uidBase + '-talk-' + day + '-' + n + '@larkin-pmr-hub', 'DTSTAMP:' + stamp];
+    if (tm) ev.push('DTSTART;TZID=' + TZ + ':' + day + 'T' + hhmm_(tm.start), 'DTEND;TZID=' + TZ + ':' + day + 'T' + hhmm_(Math.min(tm.end != null ? tm.end : tm.start + hours * 60, 1439)));
+    else { const nd = new Date(t.date + 'T12:00:00Z'); nd.setUTCDate(nd.getUTCDate() + 1); ev.push('DTSTART;VALUE=DATE:' + day, 'DTEND;VALUE=DATE:' + ymd(nd)); }
+    ev.push(fold_('SUMMARY:' + esc_('You present: ' + t.topic)));
+    if (t.location) ev.push(fold_('LOCATION:' + esc_(t.location)));
+    ev.push('BEGIN:VALARM', 'ACTION:DISPLAY', fold_('DESCRIPTION:' + esc_('You present: ' + t.topic)), 'TRIGGER:-P7D', 'END:VALARM', 'END:VEVENT');
+    Array.prototype.push.apply(out, ev);
+  });
+  out.push('END:VCALENDAR');
+  return out.join('\r\n') + '\r\n';
+}
+
+/** Run from the editor: logs the personal calendar for one resident. */
+function testMyCalendar() {
+  const name = 'Courtney Baxter';
+  const ics = buildMyCalendar_(name);
+  Logger.log((ics.split('BEGIN:VEVENT').length - 1) + ' events for ' + name);
+  Logger.log(ics.split('\r\n').filter(l => /^(SUMMARY|DTSTART)/.test(l)).slice(0, 40).join('\n'));
 }
