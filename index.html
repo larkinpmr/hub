@@ -15,22 +15,12 @@
 <style>
 /* Layout: sticky header with section tabs; each view is a centered column (max 1120px); guide pages use a sidebar index + reading column. */
 :root {
-  --bg: #F3F6F5;
-  --surface: #FFFFFF;
-  --raised: #EAF0EE;
-  --ink: #10282C;
-  --muted: #56696C;
-  --line: #D6E0DE;
-  --accent: #0B6B6B;
-  --accent-soft: #DCEDEA;
-  --on-accent: #FFFFFF;
-  --sun: #B9740F;
-  --sun-soft: #FBEBCF;
-  --warn-soft: #FCEBDD;
-  --warn-line: #E2A274;
-  --chip-l: 90%;
-  --chip-s: 42%;
-  --chip-fg-l: 24%;
+  /* Default look: Miami Vice (purple night, hot pink, sunset orange, neon cyan) */
+  --bg: #FBF6FB; --surface: #FFFFFF; --raised: #F4EAF4; --ink: #22103F; --muted: #6A5880; --line: #EADCEB;
+  --accent: #C41F6E; --accent-soft: #FCE2EF; --on-accent: #FFFFFF; --sun: #C2571E; --sun-soft: #FFE7D6;
+  --warn-soft: #FFEBDD; --warn-line: #E59A6A; --chip-l: 91%; --chip-s: 48%; --chip-fg-l: 26%;
+  --stripe: linear-gradient(90deg, #2A0E5A, #C41F6E 35%, #FF8A4C 65%, #1FC8CF);
+  --hero-grad: linear-gradient(95deg, #C41F6E, #F0613C 55%, #0FA9B4);
   --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
   --body: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -38,16 +28,40 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0C1819; --surface: #122326; --raised: #182D30; --ink: #E3EDEB; --muted: #94A9AA; --line: #24393C;
-    --accent: #5CC6BD; --accent-soft: #163A3A; --on-accent: #052022; --sun: #F0B451; --sun-soft: #3A2C14;
-    --warn-soft: #3A2418; --warn-line: #A4623A; --chip-l: 22%; --chip-s: 30%; --chip-fg-l: 84%; color-scheme: dark;
+    --bg: #140A2B; --surface: #1D1039; --raised: #281749; --ink: #F5EDFF; --muted: #B6A4D4; --line: #34225A;
+    --accent: #FF6BB5; --accent-soft: #3D1645; --on-accent: #2A0820; --sun: #FFB067; --sun-soft: #43281F;
+    --warn-soft: #3D2018; --warn-line: #B36A45; --chip-l: 24%; --chip-s: 38%; --chip-fg-l: 86%;
+    --stripe: linear-gradient(90deg, #7B2FF2, #FF4FA3 35%, #FF9A5C 65%, #22D3D6);
+    --hero-grad: linear-gradient(95deg, #FF6BB5, #FFA05C 55%, #3BE0E3); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0C1819; --surface: #122326; --raised: #182D30; --ink: #E3EDEB; --muted: #94A9AA; --line: #24393C;
-  --accent: #5CC6BD; --accent-soft: #163A3A; --on-accent: #052022; --sun: #F0B451; --sun-soft: #3A2C14;
-  --warn-soft: #3A2418; --warn-line: #A4623A; --chip-l: 22%; --chip-s: 30%; --chip-fg-l: 84%; color-scheme: dark;
+    --bg: #140A2B; --surface: #1D1039; --raised: #281749; --ink: #F5EDFF; --muted: #B6A4D4; --line: #34225A;
+    --accent: #FF6BB5; --accent-soft: #3D1645; --on-accent: #2A0820; --sun: #FFB067; --sun-soft: #43281F;
+    --warn-soft: #3D2018; --warn-line: #B36A45; --chip-l: 24%; --chip-s: 38%; --chip-fg-l: 86%;
+    --stripe: linear-gradient(90deg, #7B2FF2, #FF4FA3 35%, #FF9A5C 65%, #22D3D6);
+    --hero-grad: linear-gradient(95deg, #FF6BB5, #FFA05C 55%, #3BE0E3); color-scheme: dark;
 }
+/* Alternative color schemes share the original calm neutrals */
+:root[data-accent]:not([data-accent="vice"]) {
+  --bg: #F3F6F5; --surface: #FFFFFF; --raised: #EAF0EE; --ink: #10282C; --muted: #56696C; --line: #D6E0DE;
+  --on-accent: #FFFFFF; --sun: #B9740F; --sun-soft: #FBEBCF; --warn-soft: #FCEBDD; --warn-line: #E2A274;
+  --chip-l: 90%; --chip-s: 42%; --chip-fg-l: 24%;
+  --stripe: linear-gradient(var(--line), var(--line)); --hero-grad: linear-gradient(var(--accent), var(--accent));
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent]:not([data-accent="vice"]) {
+    --bg: #0C1819; --surface: #122326; --raised: #182D30; --ink: #E3EDEB; --muted: #94A9AA; --line: #24393C;
+    --on-accent: #052022; --sun: #F0B451; --sun-soft: #3A2C14; --warn-soft: #3A2418; --warn-line: #A4623A;
+    --chip-l: 22%; --chip-s: 30%; --chip-fg-l: 84%; color-scheme: dark;
+} }
+:root[data-theme="dark"][data-accent]:not([data-accent="vice"]) {
+    --bg: #0C1819; --surface: #122326; --raised: #182D30; --ink: #E3EDEB; --muted: #94A9AA; --line: #24393C;
+    --on-accent: #052022; --sun: #F0B451; --sun-soft: #3A2C14; --warn-soft: #3A2418; --warn-line: #A4623A;
+    --chip-l: 22%; --chip-s: 30%; --chip-fg-l: 84%; color-scheme: dark;
+}
+:root[data-accent="teal"] { --accent: #0B6B6B; --accent-soft: #DCEDEA; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="teal"] { --accent: #5CC6BD; --accent-soft: #163A3A; } }
+:root[data-theme="dark"][data-accent="teal"] { --accent: #5CC6BD; --accent-soft: #163A3A; }
 :root[data-accent="ocean"] { --accent: #1D5FA6; --accent-soft: #DFE9F6; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="ocean"] { --accent: #7DB3F0; --accent-soft: #17304D; } }
 :root[data-theme="dark"][data-accent="ocean"] { --accent: #7DB3F0; --accent-soft: #17304D; }
@@ -95,7 +109,8 @@ h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.15;
 button { font: inherit; color: inherit; }
 
 /* header */
-header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); }
+header.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 3px; background: var(--stripe); }
 .top-row { display: flex; align-items: center; gap: 16px; padding-block: 12px 0; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); margin-right: auto; min-width: 0; flex: 1 1 auto; }
 .brand .logo { width: 34px; height: 34px; flex: none; border-radius: 9px; }
@@ -129,7 +144,7 @@ main { padding-block: 28px 64px; }
 /* home */
 .hero { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: end; margin-bottom: 28px; }
 .hero h1 { font-size: clamp(32px, 5.4vw, 56px); letter-spacing: -.03em; }
-.hero h1 em { font-style: normal; color: var(--accent); }
+.hero h1 em { font-style: normal; color: var(--accent); background: var(--hero-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .hero p { margin: 10px 0 0; color: var(--muted); max-width: 52ch; }
 .today { justify-self: end; text-align: right; }
 .today b { display: block; font: 700 26px/1.1 var(--display); }
@@ -371,6 +386,7 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
       <div><h3>Appearance</h3><div class="seg" role="group" aria-label="Appearance">
         <button type="button" data-th="auto">Auto</button><button type="button" data-th="light">Light</button><button type="button" data-th="dark">Dark</button></div></div>
       <div><h3>Color scheme</h3><div class="swatches" role="group" aria-label="Color scheme">
+        <button type="button" class="swatch" data-ac="vice" title="Miami Vice" aria-label="Miami Vice" style="background:linear-gradient(135deg,#2A0E5A,#E0358F 50%,#FF9A5C 75%,#22D3D6)"></button>
         <button type="button" class="swatch" data-ac="teal" title="Biscayne teal" aria-label="Biscayne teal" style="background:#0B6B6B"></button>
         <button type="button" class="swatch" data-ac="ocean" title="Ocean blue" aria-label="Ocean blue" style="background:#1D5FA6"></button>
         <button type="button" class="swatch" data-ac="coral" title="Coral" aria-label="Coral" style="background:#B4472F"></button>
@@ -423,11 +439,11 @@ function monthIndexOf(d) { return (d.getMonth() - 6 + 12) % 12; } // Jul=0
 const curMonth = monthIndexOf(today);
 
 /* ----------------------------------------------------------- display settings */
-const PREF = { fs: store.get("hub.fs") || "1", th: store.get("hub.th") || "auto", ac: store.get("hub.ac") || "teal" };
+const PREF = { fs: store.get("hub.fs") || "1", th: store.get("hub.th") || "auto", ac: store.get("hub.ac") || "vice" };
 function applyPrefs() {
   const root = document.documentElement;
   if (PREF.th === "auto") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", PREF.th);
-  if (PREF.ac === "teal") root.removeAttribute("data-accent"); else root.setAttribute("data-accent", PREF.ac);
+  if (PREF.ac === "vice") root.removeAttribute("data-accent"); else root.setAttribute("data-accent", PREF.ac);
   document.body.style.zoom = PREF.fs === "1" ? "" : PREF.fs;
   document.querySelectorAll("[data-fs]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fs === PREF.fs));
   document.querySelectorAll("[data-th]").forEach(b => b.setAttribute("aria-pressed", b.dataset.th === PREF.th));
