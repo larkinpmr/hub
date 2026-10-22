@@ -408,7 +408,7 @@
    "codes": [
     "HATGIS"
    ],
-   "handbookMatch": "interventional pain management|hatgis",
+   "handbookMatch": "hatgis",
    "category": "Elective",
    "pgy": "PGY-3, PGY-4",
    "attendings": "Jesse Hatgis, DO",
@@ -424,7 +424,7 @@
    "codes": [
     "ELECTIVE"
    ],
-   "handbookMatch": "electives|rheumatology|broward|wound care|hospice|orthopedic",
+   "handbookMatch": "electives|rheumatology|broward|wound care|hospice|orthopedic|davis",
    "category": "Elective",
    "pgy": "PGY-3, PGY-4",
    "attendings": "",
