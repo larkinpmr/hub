@@ -142,12 +142,15 @@ main { padding-block: 28px 64px; }
 .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
 
 /* home */
-.hero { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: end; margin-bottom: 28px; }
-.hero h1 { font-size: clamp(32px, 5.4vw, 56px); letter-spacing: -.03em; }
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 32px; align-items: center; margin-bottom: 20px; }
+.hero h1 { font-size: clamp(26px, 3.3vw, 40px); letter-spacing: -.025em; margin-top: 4px; }
 .hero h1 em { font-style: normal; color: var(--accent); background: var(--hero-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-.hero p { margin: 10px 0 0; color: var(--muted); max-width: 52ch; }
-.today { justify-self: end; text-align: right; }
-.today b { display: block; font: 700 26px/1.1 var(--display); }
+.hero p { margin: 6px 0 0; color: var(--muted); max-width: 72ch; }
+.today { justify-self: end; text-align: right; display: grid; gap: 2px; padding-left: 24px; position: relative; }
+.today::before { content: ""; position: absolute; left: 0; top: 2px; bottom: 2px; width: 3px; border-radius: 3px; background: var(--stripe); background-size: 100% 100%; }
+:root:not([data-accent]) .today::before, :root[data-accent="vice"] .today::before { background: linear-gradient(180deg, #C41F6E, #FF8A4C, #1FC8CF); }
+.today b { display: block; font: 700 20px/1.15 var(--display); white-space: nowrap; }
+.today .muted { font-size: 14px; }
 .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; align-items: start; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; min-width: 0; }
 .panel h2 { font-size: 20px; margin-bottom: 4px; }
@@ -331,7 +334,9 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 
 @media (max-width: 860px) {
   .hero { grid-template-columns: 1fr; }
-  .today { justify-self: start; text-align: left; }
+  .today { justify-self: start; text-align: left; padding-left: 12px; }
+  .today .eyebrow, .hero p { display: none; }
+  .today b { font-size: 17px; }
   .span-7, .span-5, .span-6, .span-4, .span-8 { grid-column: span 12; }
   .guide-layout { grid-template-columns: 1fr; }
   .side { display: none; }
