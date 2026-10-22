@@ -466,40 +466,65 @@ async function boot() {
   else setStatus();
 }
 
+const LIVE_KEY = "hub.live.v1";
+function readLiveCache() { try { return JSON.parse(localStorage.getItem(LIVE_KEY) || "null"); } catch { return null; } }
+function writeLiveCache(v) { try { localStorage.setItem(LIVE_KEY, JSON.stringify(v)); } catch {} }
+
 async function loadLive(url, snap) {
-  setStatus("connecting");
   const get = async (u, ms) => {
     const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
-    try { return await (await fetch(u, { signal: ctl.signal })).json(); } finally { clearTimeout(t); }
+    try { const r = await fetch(u, { signal: ctl.signal }); if (!r.ok) throw new Error("HTTP " + r.status); const j = await r.json(); if (!j || j.ok === false) throw new Error("bad data"); return j; }
+    finally { clearTimeout(t); }
   };
-  const sep = url.includes("?") ? "&" : "?";
-  const hbPromise = get(url + sep + "part=handbook", 90000).catch(() => null);   // large; arrives second
-  let core;
-  try { core = await get(url, 30000); }
-  catch (e) { source = { mode: "saved", when: snap.builtAt, failed: true }; setStatus(); return; }
-  const show = live => {
+  const show = (live, mode) => {
     S = prepare(mergeLive(snap, live));
-    source = { mode: "live", when: live.updated, errors: live.errors || [] };
+    source = { mode, when: live.updated, errors: live.errors || [] };
     route(true);
   };
-  show(core);
-  const hb = await hbPromise;
-  if (hb && (hb.handbookHtml || hb.templatesHtml)) show(Object.assign({}, core, { handbookHtml: hb.handbookHtml, templatesHtml: hb.templatesHtml, errors: (core.errors || []).concat(hb.errors || []) }));
+  // 1. Show the last live data this device saw, right away.
+  let cached = readLiveCache();
+  if (cached && cached.core) show(Object.assign({}, cached.core, cached.hb || {}), "cached"); else setStatus("connecting");
+  // 2. Fetch fresh data, retrying quietly.
+  const sep = url.includes("?") ? "&" : "?";
+  const attempt = async (n) => {
+    const hbPromise = get(url + sep + "part=handbook", 90000).catch(() => null);
+    try {
+      const core = await get(url, 45000);
+      cached = { core, hb: cached && cached.hb };
+      show(Object.assign({}, core, cached.hb || {}), "live");
+      writeLiveCache(cached);
+      const hb = await hbPromise;
+      if (hb && (hb.handbookHtml || hb.templatesHtml)) {
+        cached.hb = { handbookHtml: hb.handbookHtml, templatesHtml: hb.templatesHtml };
+        writeLiveCache(cached);
+        show(Object.assign({}, core, cached.hb, { errors: (core.errors || []).concat(hb.errors || []) }), "live");
+      }
+    } catch (e) {
+      if (n < 3) { setTimeout(() => attempt(n + 1), [3000, 10000, 30000][n]); if (!cached) setStatus("connecting"); return; }
+      if (!cached) { source = { mode: "saved", when: snap.builtAt, failed: true }; setStatus(); }
+      else { source.mode = "cached"; setStatus(); }
+      setTimeout(() => attempt(0), 120000);   // keep trying every couple of minutes
+    }
+  };
+  attempt(0);
 }
 
 function setStatus(state) {
   const el = $("#foot-status");
-  if (state === "connecting") { el.className = "status"; el.innerHTML = "<i></i>Checking Google for updates…"; return; }
+  if (state === "connecting") { el.className = "status"; el.innerHTML = "<i></i>Getting the latest from Google Drive…"; return; }
+  const t = source.when ? new Date(source.when) : null;
+  const when = t && !isNaN(t) ? (t.toDateString() === new Date().toDateString() ? t.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : t.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) : "";
   if (source.mode === "live") {
-    const t = new Date(source.when);
     el.className = "status live";
-    el.innerHTML = `<i></i>Live from Google Drive · checked ${t.toLocaleTimeString([], {hour: "numeric", minute: "2-digit"})}` + (source.errors?.length ? ` · ${source.errors.length} source(s) unavailable` : "");
+    el.innerHTML = `<i></i>Live from Google Drive · updated ${when}` + (source.errors?.length ? ` · ${source.errors.length} source(s) unavailable` : "");
+  } else if (source.mode === "cached") {
+    el.className = "status live";
+    el.innerHTML = `<i></i>From Google Drive · updated ${when} · checking for changes`;
   } else {
     el.className = "status saved";
-    el.innerHTML = `<i></i>Saved copy from ${esc(source.when)}` + (source.failed ? " · Google could not be reached" : "");
+    el.innerHTML = `<i></i>Saved copy from ${esc(source.when)}` + (source.failed ? " · reconnecting to Google Drive" : "");
   }
 }
-
 function prepare(d) {
   const codeMap = new Map();
   d.rotations.forEach((r, i) => {

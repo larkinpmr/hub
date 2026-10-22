@@ -46,6 +46,27 @@ function doGet(e) {
   return ContentService.createTextOutput(payload).setMimeType(ContentService.MimeType.JSON);
 }
 
+/* ------------------------------------------------------------------ keep data warm
+ * Run installAutoRefresh ONCE from the editor. Google then rebuilds the data every 5 minutes in the
+ * background, so visitors never wait for a cold start and edits appear within ~5 minutes. */
+function installAutoRefresh() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'autoRefresh').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('autoRefresh').timeBased().everyMinutes(5).create();
+  autoRefresh();
+  Logger.log('Auto-refresh is on: data is rebuilt every 5 minutes.');
+}
+
+function autoRefresh() {
+  const cache = CacheService.getScriptCache();
+  writeCache_(cache, 'core_', JSON.stringify(build_()), 900);
+  const hbAge = Date.now() - Number(cache.get('hb_at') || 0);
+  if (hbAge > 25 * 60 * 1000 || !cache.get('hb_n')) {
+    writeCache_(cache, 'hb_', JSON.stringify(buildHandbook_()), 3600);
+    cache.put('hb_at', String(Date.now()), 3600);
+  }
+  try { cache.put('hub_ics', buildCalendar_(), 900); } catch (err) { /* served uncached */ }
+}
+
 /** Run from the editor to preview the calendar feed in the log. */
 function testCalendar() {
   const ics = buildCalendar_();
@@ -301,7 +322,7 @@ function guard_() {
 }
 
 function clearCache_() {
-  const keys = ['core_n', 'hb_n', 'hub_ics']; for (let i = 0; i < 100; i++) keys.push('core_' + i, 'hb_' + i);
+  const keys = ['core_n', 'hb_n', 'hb_at', 'hub_ics']; for (let i = 0; i < 100; i++) keys.push('core_' + i, 'hb_' + i);
   CacheService.getScriptCache().removeAll(keys);
 }
 
