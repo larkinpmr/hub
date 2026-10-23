@@ -183,6 +183,20 @@ main { padding-block: 28px 64px; }
 .contact .how { font: 500 13px/1.5 var(--mono); color: var(--muted); grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 14px; word-break: break-all; }
 .copy { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; font: 600 12px/1 var(--body); padding: 5px 8px; cursor: pointer; color: var(--muted); }
 .copy:hover { color: var(--ink); border-color: var(--muted); }
+.qlinks { margin: 0 0 20px; }
+.ql-h { font-size: 13px; font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
+.ql-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.ql { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); text-decoration: none; color: var(--ink); min-width: 0; transition: border-color .15s, transform .15s; }
+.ql:hover { border-color: var(--accent); transform: translateY(-1px); }
+.ql-ic { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--raised); color: var(--accent); }
+.ql-ic svg { width: 20px; height: 20px; }
+.ql-ic.sheet { color: #1E8E3E; } .ql-ic.doc { color: #1A73E8; } .ql-ic.drive { color: #E37400; }
+:root[data-theme="dark"] .ql-ic.sheet { color: #6DD58C; } :root[data-theme="dark"] .ql-ic.doc { color: #8AB4F8; } :root[data-theme="dark"] .ql-ic.drive { color: #FDD663; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ql-ic.sheet { color: #6DD58C; } :root:not([data-theme="light"]) .ql-ic.doc { color: #8AB4F8; } :root:not([data-theme="light"]) .ql-ic.drive { color: #FDD663; } }
+.ql-t { min-width: 0; display: grid; }
+.ql-t b { font-weight: 600; font-size: 15px; line-height: 1.3; }
+.ql-t small { color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 480px) { .ql-grid { grid-template-columns: 1fr 1fr; gap: 8px; } .ql { padding: 10px; gap: 9px; } .ql-ic { width: 30px; height: 30px; border-radius: 8px; } .ql-ic svg { width: 17px; height: 17px; } .ql-t b { font-size: 13.5px; } .ql-t small { display: none; } }
 .linklist { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
 .linklist a { font-weight: 600; }
 .linklist small { display: block; color: var(--muted); }
@@ -1131,6 +1145,7 @@ function viewHome() {
   </section>
   ${meCard()}
   ${ann}
+  ${quickLinks()}
   <div class="cols">
     <div class="col">
       <section class="panel">
@@ -1159,13 +1174,24 @@ function viewHome() {
         <div class="contacts">${S.contacts.map(c => `<div class="contact"><span class="role">${esc(c.role)}</span><span class="name">${esc(c.name)}</span>
           <span class="how">${c.phone ? `<a href="tel:+1${esc(c.phone.replace(/\D/g, "").slice(-10))}">${esc(c.phone)}</a>` : ""}${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ""}</span></div>`).join("")}</div>
       </section>
-      <section class="panel">
-        <h2>Quick links</h2>
-        <p class="sub">Google Drive sources</p>
-        <ul class="linklist">${S.links.map(l => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>${l.note ? `<small>${esc(l.note)}</small>` : ""}</li>`).join("")}</ul>
-      </section>
     </div>
   </div>`;
+}
+
+/** Quick links: a compact row of tiles under the welcome area (edited in the Control Panel "Quick Links" tab). */
+function quickLinks() {
+  if (!S.links || !S.links.length) return "";
+  const kind = u => /docs\.google\.com\/spreadsheets/.test(u) ? ["sheet", "Sheet"] : /docs\.google\.com\/document/.test(u) ? ["doc", "Doc"]
+    : /drive\.google\.com/.test(u) ? ["drive", "Drive"] : /docs\.google\.com\/forms|forms\.gle/.test(u) ? ["form", "Form"] : ["web", "Link"];
+  const icon = {
+    sheet: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 9v12"/>',
+    doc: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',
+    drive: '<path d="M8 4h8l5 9-4 7H7l-4-7z"/><path d="M8 4l5 9h8M3 13h10l-6 7"/>',
+    form: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+    web: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>' };
+  return `<section class="qlinks" aria-label="Quick links"><h2 class="ql-h">Quick links</h2><div class="ql-grid">${S.links.map(l => { const [k, lab] = kind(l.url);
+    return `<a class="ql" href="${esc(l.url)}" target="_blank" rel="noopener"><span class="ql-ic ${k}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icon[k]}</svg></span>
+      <span class="ql-t"><b>${esc(l.label)}</b><small>${esc(l.note || lab)}</small></span></a>`; }).join("")}</div></section>`;
 }
 
 let dState = { scope: store.get("hub.d.scope") || "upcoming", month: "all", q: "" };
