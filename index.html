@@ -257,6 +257,10 @@ table.sched tr.dim { opacity: .35; }
 .prose li { margin: 3px 0; }
 .prose li.lvl1 { margin-left: 22px; } .prose li.lvl2 { margin-left: 44px; } .prose li.lvl3 { margin-left: 66px; }
 .prose hr { border: 0; border-top: 1px solid var(--line); margin: 26px 0; }
+.prose img:not(a img) { cursor: zoom-in; }
+.zoom { position: fixed; inset: 0; z-index: 100; background: rgba(10, 4, 24, .88); display: flex; align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; }
+.zoom img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; background: #fff; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+.zoom button { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 12px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255,255,255,.16); color: #fff; font-size: 26px; line-height: 1; cursor: pointer; }
 .prose img { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); display: block; margin: 8px 0 14px; }
 .prose code, .prose pre { font-family: var(--mono); font-size: 13px; }
 .prose pre { background: var(--raised); padding: 14px 16px; border-radius: 8px; overflow-x: auto; white-space: pre; line-height: 1.45; tab-size: 4; margin: 0; }
@@ -872,8 +876,6 @@ function cleanGoogleHtml(raw) {
   });
   body.querySelectorAll("img").forEach(i => {
     i.setAttribute("loading", "lazy");
-    // Big pictures (maps, charts) open full size when tapped.
-    if (/^https:/.test(i.getAttribute("src") || "") && !i.closest("a")) { const a = doc.createElement("a"); a.href = i.getAttribute("src"); a.target = "_blank"; a.rel = "noopener"; i.replaceWith(a); a.appendChild(i); }
   });
   body.querySelectorAll("table").forEach(t => { const w = doc.createElement("div"); w.className = "tbl"; t.replaceWith(w); w.appendChild(t); });
   body.querySelectorAll("p, h1, h2, h3, h4, h5, h6, li").forEach(p => { if (!p.textContent.replace(/ /g, " ").trim() && !p.querySelector("img")) p.remove(); });
@@ -1470,6 +1472,19 @@ function bindView() {
   }));
 }
 
+/* Tap any picture in a guide or policy to see it full screen; tap again, ✕ or Escape to close. */
+function closeZoom() { const z = document.querySelector(".zoom"); if (z) { z.remove(); document.body.style.overflow = ""; } }
+document.addEventListener("click", e => {
+  const img = e.target.closest(".prose img");
+  if (!img || img.closest("a")) return;
+  e.preventDefault();
+  const z = document.createElement("div"); z.className = "zoom"; z.setAttribute("role", "dialog"); z.setAttribute("aria-label", "Picture");
+  const big = document.createElement("img"); big.src = img.currentSrc || img.src; big.alt = img.alt || "";
+  const x = document.createElement("button"); x.type = "button"; x.setAttribute("aria-label", "Close"); x.textContent = "×";
+  z.append(big, x); z.addEventListener("click", closeZoom);
+  document.body.appendChild(z); document.body.style.overflow = "hidden"; x.focus();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeZoom(); });
 boot();
 })();
 </script>
