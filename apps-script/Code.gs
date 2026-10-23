@@ -611,10 +611,21 @@ function checkHandbookLinks() {
   });
   const list = Object.keys(links).map(k => links[k]);
   const opts = u => ({ url: u, muteHttpExceptions: true, followRedirects: false, headers: { 'User-Agent': 'Mozilla/5.0 (Larkin PM&R Hub link check)' } });
-  const fetchSafe = reqs => { try { return UrlFetchApp.fetchAll(reqs); } catch (e) { return reqs.map(r => { try { return UrlFetchApp.fetch(r.url, r); } catch (err) { return { error: String(err.message || err) }; } }); } };
-  for (let i = 0; i < list.length; i += 20) {
-    const batch = list.slice(i, i + 20);
+  // fetch in parallel; if one link fails outright, split the group so the rest still run in parallel
+  const fetchSafe = reqs => {
+    try { return UrlFetchApp.fetchAll(reqs); }
+    catch (e) {
+      if (reqs.length === 1) return [{ error: String(e.message || e) }];
+      const half = Math.ceil(reqs.length / 2);
+      return fetchSafe(reqs.slice(0, half)).concat(fetchSafe(reqs.slice(half)));
+    }
+  };
+  const started = Date.now(), outOfTime = () => Date.now() - started > 4.5 * 60 * 1000;   // Google stops scripts at 6 minutes
+  list.forEach(l => { l.status = 'Check'; l.code = ''; l.note = 'Not checked (ran out of time); run checkHandbookLinks again'; });
+  for (let i = 0; i < list.length && !outOfTime(); i += 25) {
+    const batch = list.slice(i, i + 25);
     fetchSafe(batch.map(l => opts(l.url))).forEach((r, j) => {
+      batch[j].note = '';
       const l = batch[j];
       if (r.error) { l.status = 'Broken'; l.code = ''; l.note = r.error; return; }
       l.code = r.getResponseCode();
@@ -629,8 +640,8 @@ function checkHandbookLinks() {
   }
   // follow ordinary redirects to their final page
   const redirected = list.filter(l => l.status === 'Check' && l.redirect);
-  for (let i = 0; i < redirected.length; i += 20) {
-    const batch = redirected.slice(i, i + 20);
+  for (let i = 0; i < redirected.length && !outOfTime(); i += 25) {
+    const batch = redirected.slice(i, i + 25);
     fetchSafe(batch.map(l => Object.assign(opts(l.url), { followRedirects: true }))).forEach((r, j) => {
       const l = batch[j];
       if (r.error) { l.status = 'Broken'; l.note = r.error; return; }
