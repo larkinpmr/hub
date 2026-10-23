@@ -340,19 +340,26 @@ function setupHandbooksFolder() {
     }
     // tidy: drop the blank first line of a new doc and blank lines at the end
     const isBlank = el => el.getType() === DocumentApp.ElementType.PARAGRAPH && !el.asParagraph().getText().trim() && el.asParagraph().getNumChildren() <= 1 && !/INLINE_IMAGE|HORIZONTAL_RULE/.test(String(el.asParagraph().getNumChildren() ? el.asParagraph().getChild(0).getType() : ''));
-    if (nb.getNumChildren() > 1 && isBlank(nb.getChild(0))) nb.getChild(0).removeFromParent();
-    while (nb.getNumChildren() > 2 && isBlank(nb.getChild(nb.getNumChildren() - 2)) && isBlank(nb.getChild(nb.getNumChildren() - 1))) nb.getChild(nb.getNumChildren() - 1).removeFromParent();
+    // Google won't remove some paragraphs (e.g. the one after a table, or the last one): those are simply left in place
+    const tryRemove = el => { try { el.removeFromParent(); return true; } catch (e) { return false; } };
+    if (nb.getNumChildren() > 1 && isBlank(nb.getChild(0))) tryRemove(nb.getChild(0));
+    while (nb.getNumChildren() > 2 && isBlank(nb.getChild(nb.getNumChildren() - 2)) && isBlank(nb.getChild(nb.getNumChildren() - 1))) {
+      if (!tryRemove(nb.getChild(nb.getNumChildren() - 1))) break;
+    }
   };
   const makeDoc = (name, folder, fill) => {
     if (exists(folder, name)) return 'skipped';
     const d = DocumentApp.create(name), nb = d.getBody();
     nb.setMarginTop(body.getMarginTop()).setMarginBottom(body.getMarginBottom()).setMarginLeft(body.getMarginLeft()).setMarginRight(body.getMarginRight());
-    fill(nb);
-    const c0 = nb.getChild(0);
-    if (nb.getNumChildren() > 1 && c0.getType() === DocumentApp.ElementType.PARAGRAPH && !c0.asParagraph().getText().trim() && !c0.asParagraph().getNumChildren()) c0.removeFromParent();
+    let note = 'made';
+    try {
+      fill(nb);
+      const c0 = nb.getChild(0);
+      if (nb.getNumChildren() > 1 && c0.getType() === DocumentApp.ElementType.PARAGRAPH && !c0.asParagraph().getText().trim() && !c0.asParagraph().getNumChildren()) { try { c0.removeFromParent(); } catch (e) { } }
+    } catch (e) { note = 'made, but check it: ' + e.message; }
     d.saveAndClose();
-    DriveApp.getFileById(d.getId()).moveTo(folder);
-    return 'made';
+    DriveApp.getFileById(d.getId()).moveTo(folder);   // always file it in the folder, even if something above went wrong
+    return note;
   };
   const log = [];
   // how-to and every-rotation note
