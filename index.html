@@ -183,7 +183,7 @@ main { padding-block: 28px 64px; }
 .contact .how { font: 500 13px/1.5 var(--mono); color: var(--muted); grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 14px; word-break: break-all; }
 .copy { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; font: 600 12px/1 var(--body); padding: 5px 8px; cursor: pointer; color: var(--muted); }
 .copy:hover { color: var(--ink); border-color: var(--muted); }
-.qlinks { margin: 0 0 20px; }
+.qlinks { margin: 24px 0 0; }
 .ql-h { font-size: 13px; font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
 .ql-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
 .ql { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); text-decoration: none; color: var(--ink); min-width: 0; transition: border-color .15s, transform .15s; }
@@ -1145,7 +1145,6 @@ function viewHome() {
   </section>
   ${meCard()}
   ${ann}
-  ${quickLinks()}
   <div class="cols">
     <div class="col">
       <section class="panel">
@@ -1175,7 +1174,8 @@ function viewHome() {
           <span class="how">${c.phone ? `<a href="tel:+1${esc(c.phone.replace(/\D/g, "").slice(-10))}">${esc(c.phone)}</a>` : ""}${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ""}</span></div>`).join("")}</div>
       </section>
     </div>
-  </div>`;
+  </div>
+  ${quickLinks()}`;
 }
 
 /** Quick links: a compact row of tiles under the welcome area (edited in the Control Panel "Quick Links" tab). */
