@@ -586,3 +586,74 @@ function testMyCalendar() {
   Logger.log((ics.split('BEGIN:VEVENT').length - 1) + ' events for ' + name);
   Logger.log(ics.split('\r\n').filter(l => /^(SUMMARY|DTSTART)/.test(l)).slice(0, 40).join('\n'));
 }
+
+/* ------------------------------------------------------------------ link checker
+ * Run checkHandbookLinks from the editor (e.g. at each quarterly review). It opens every link in the
+ * Handbook and writes the results to a "Link Check" tab in this Control Panel: problems first. */
+function checkHandbookLinks() {
+  const settings = panelSettings_();
+  const docId = idFromLink_(settings['Handbook Doc']) || FALLBACK['Handbook Doc'];
+  const res = UrlFetchApp.fetch('https://docs.google.com/document/d/' + docId + '/export?format=html',
+    { headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true });
+  if (res.getResponseCode() !== 200) throw new Error('Could not open the Handbook (HTTP ' + res.getResponseCode() + ')');
+  const html = res.getContentText();
+  const text = s => s.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#39;|&rsquo;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
+  // section titles (Heading 1) and where they start, so each link says which rotation it is in
+  const heads = []; html.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/g, (m, t, i) => { heads.push({ at: i, title: text(t.replace(/<br\s*\/?>/g, ' ')) }); return m; });
+  const sectionAt = i => { let t = 'Front pages'; heads.forEach(h => { if (h.at < i) t = h.title; }); return t; };
+  const links = {}; 
+  html.replace(/<a [^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g, (m, href, inner, i) => {
+    let url = href.replace(/&amp;/g, '&');
+    const g = url.match(/^https:\/\/www\.google\.com\/url\?q=([^&]+)/); if (g) url = decodeURIComponent(g[1]);
+    if (!/^https?:/i.test(url)) return m;
+    if (!links[url]) links[url] = { url: url, label: text(inner) || url, section: sectionAt(i) };
+    return m;
+  });
+  const list = Object.keys(links).map(k => links[k]);
+  const opts = u => ({ url: u, muteHttpExceptions: true, followRedirects: false, headers: { 'User-Agent': 'Mozilla/5.0 (Larkin PM&R Hub link check)' } });
+  const fetchSafe = reqs => { try { return UrlFetchApp.fetchAll(reqs); } catch (e) { return reqs.map(r => { try { return UrlFetchApp.fetch(r.url, r); } catch (err) { return { error: String(err.message || err) }; } }); } };
+  for (let i = 0; i < list.length; i += 20) {
+    const batch = list.slice(i, i + 20);
+    fetchSafe(batch.map(l => opts(l.url))).forEach((r, j) => {
+      const l = batch[j];
+      if (r.error) { l.status = 'Broken'; l.code = ''; l.note = r.error; return; }
+      l.code = r.getResponseCode();
+      const loc = String((r.getHeaders() || {}).Location || (r.getHeaders() || {}).location || '');
+      if (l.code >= 300 && l.code < 400 && /accounts\.google\.com|ServiceLogin/.test(loc)) { l.status = 'Private'; l.note = 'Opens a Google sign-in page: share it as "Anyone with the link" so every resident can open it'; }
+      else if (l.code >= 300 && l.code < 400) { l.status = 'Check'; l.redirect = loc; }
+      else if (l.code === 401 || l.code === 403) { l.status = 'Private'; l.note = 'Needs a login or blocks automatic checks; open it yourself to confirm'; }
+      else if (l.code === 404 || l.code === 410) { l.status = 'Broken'; l.note = 'Page not found'; }
+      else if (l.code >= 400) { l.status = 'Check'; l.note = 'The site answered ' + l.code + '; open it yourself to confirm'; }
+      else l.status = 'OK';
+    });
+  }
+  // follow ordinary redirects to their final page
+  const redirected = list.filter(l => l.status === 'Check' && l.redirect);
+  for (let i = 0; i < redirected.length; i += 20) {
+    const batch = redirected.slice(i, i + 20);
+    fetchSafe(batch.map(l => Object.assign(opts(l.url), { followRedirects: true }))).forEach((r, j) => {
+      const l = batch[j];
+      if (r.error) { l.status = 'Broken'; l.note = r.error; return; }
+      l.code = r.getResponseCode();
+      l.status = l.code < 400 ? 'OK' : (l.code === 404 || l.code === 410 ? 'Broken' : 'Check');
+      if (l.status !== 'OK') l.note = 'The site answered ' + l.code + ' after redirecting';
+    });
+  }
+  const order = { Broken: 0, Private: 1, Check: 2, OK: 3 };
+  list.sort((a, b) => order[a.status] - order[b.status]);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName('Link Check') || ss.insertSheet('Link Check');
+  sh.clear();
+  const when = Utilities.formatDate(new Date(), TZ, 'MMM d, yyyy h:mm a');
+  const rows = [['Status', 'Code', 'Rotation / section', 'Link text', 'Link', 'What to do']]
+    .concat(list.map(l => [l.status, l.code, l.section, l.label, l.url, l.note || '']));
+  sh.getRange(1, 1, rows.length, 6).setValues(rows);
+  sh.getRange(1, 1, 1, 6).setFontWeight('bold');
+  sh.setFrozenRows(1);
+  sh.getRange(rows.length + 2, 1).setValue('Checked ' + when + ' · ' + list.length + ' links. Fix links in the Handbook doc, then run checkHandbookLinks again.');
+  const colors = { Broken: '#F8D7DA', Private: '#FFF3CD', Check: '#FFF3CD', OK: '#FFFFFF' };
+  if (list.length) sh.getRange(2, 1, list.length, 6).setBackgrounds(list.map(l => Array(6).fill(colors[l.status])));
+  sh.autoResizeColumns(1, 4);
+  const count = s => list.filter(l => l.status === s).length;
+  Logger.log(list.length + ' links checked: ' + count('OK') + ' OK · ' + count('Broken') + ' broken · ' + count('Private') + ' private · ' + count('Check') + ' to check by hand. See the "Link Check" tab.');
+}
