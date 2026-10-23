@@ -16,7 +16,7 @@ const FALLBACK = {
 };
 const CACHE_SECONDS = 300;      // schedules/contacts: edits show on the site within ~5 minutes
 const HANDBOOK_CACHE = 1800;    // the Handbook changes quarterly: rebuilt at most every 30 minutes
-const PICTURE_LIMIT = 60000;    // pictures larger than this become a link to the Handbook
+const PICTURE_LIMIT = 20000;    // pictures larger than this are saved as image files (Drive folder "Hub pictures") and shown from there
 const CHUNK = 90000;            // CacheService stores at most 100 KB per key
 
 function doGet(e) {
@@ -150,14 +150,39 @@ function slimDocHtml_(html, docId) {
     return m;
   });
   const body = (html.match(/<body[^>]*>([\s\S]*)<\/body>/i) || [])[1] || html;
-  const link = 'https://docs.google.com/document/d/' + docId + '/edit';
   const slim = body
     .replace(/\sstyle="[^"]*"/g, '')
     .replace(/\sid="[^"]*"/g, '')
-    .replace(/<img[^>]*src="(data:[^"]+)"[^>]*>/g, (m, src) => src.length < PICTURE_LIMIT ? '<img src="' + src + '">' : '<em>[Picture: see the <a href="' + link + '">Program Handbook</a>]</em>')
+    .replace(/<img[^>]*src="(data:[^"]+)"[^>]*>/g, (m, src) => '<img src="' + (src.length < PICTURE_LIMIT ? src : pictureUrl_(src)) + '">')
     .replace(/<span>([^<]*)<\/span>/g, '$1')
     .replace(/<p class="[^"]*"><\/p>/g, '');
   return '<html><head><style>' + keep.join('') + '</style></head><body>' + slim + '</body></html>';
+}
+
+/** Saves a big picture from the Handbook once (as a view-only image in the "Hub pictures" Drive folder)
+ *  and returns a web address for it, so the site shows every picture without a huge download.
+ *  The same picture is never saved twice. If anything fails, the picture is kept inline instead. */
+function pictureUrl_(dataUri) {
+  try {
+    const m = dataUri.match(/^data:([^;]+);base64,(.*)$/);
+    if (!m) return dataUri;
+    const hash = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, m[2]).map(b => ('0' + (b & 255).toString(16)).slice(-2)).join('');
+    const props = PropertiesService.getScriptProperties();
+    let id = props.getProperty('pic_' + hash);
+    if (id) { try { DriveApp.getFileById(id); } catch (e) { id = null; } }
+    if (!id) {
+      const folders = DriveApp.getFoldersByName('Hub pictures');
+      const folder = folders.hasNext() ? folders.next() : DriveApp.createFolder('Hub pictures');
+      const ext = (m[1].split('/')[1] || 'png').replace('jpeg', 'jpg');
+      const file = folder.createFile(Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], 'handbook-' + hash.slice(0, 10) + '.' + ext));
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      id = file.getId();
+      props.setProperty('pic_' + hash, id);
+    }
+    return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w2000';
+  } catch (err) {
+    return dataUri;
+  }
 }
 
 function readSheet_(sheetId, tabName) {
