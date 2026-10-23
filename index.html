@@ -257,7 +257,7 @@ table.sched tr.dim { opacity: .35; }
 .prose li { margin: 3px 0; }
 .prose li.lvl1 { margin-left: 22px; } .prose li.lvl2 { margin-left: 44px; } .prose li.lvl3 { margin-left: 66px; }
 .prose hr { border: 0; border-top: 1px solid var(--line); margin: 26px 0; }
-.prose img { max-width: min(100%, 520px); height: auto; border-radius: 8px; border: 1px solid var(--line); display: block; margin: 8px 0 14px; }
+.prose img { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); display: block; margin: 8px 0 14px; }
 .prose code, .prose pre { font-family: var(--mono); font-size: 13px; }
 .prose pre { background: var(--raised); padding: 14px 16px; border-radius: 8px; overflow-x: auto; white-space: pre; line-height: 1.45; tab-size: 4; margin: 0; }
 .prose pre code { font-size: 13px; }
@@ -870,7 +870,11 @@ function cleanGoogleHtml(raw) {
   body.querySelectorAll("*").forEach(el => {
     [...el.attributes].forEach(at => { if (!["href","src","alt","colspan","rowspan","target","rel"].includes(at.name) && !(at.name === "class" && /^lvl\d$/.test(at.value))) el.removeAttribute(at.name); });
   });
-  body.querySelectorAll("img").forEach(i => i.setAttribute("loading", "lazy"));
+  body.querySelectorAll("img").forEach(i => {
+    i.setAttribute("loading", "lazy");
+    // Big pictures (maps, charts) open full size when tapped.
+    if (/^https:/.test(i.getAttribute("src") || "") && !i.closest("a")) { const a = doc.createElement("a"); a.href = i.getAttribute("src"); a.target = "_blank"; a.rel = "noopener"; i.replaceWith(a); a.appendChild(i); }
+  });
   body.querySelectorAll("table").forEach(t => { const w = doc.createElement("div"); w.className = "tbl"; t.replaceWith(w); w.appendChild(t); });
   body.querySelectorAll("p, h1, h2, h3, h4, h5, h6, li").forEach(p => { if (!p.textContent.replace(/ /g, " ").trim() && !p.querySelector("img")) p.remove(); });
   return body;
