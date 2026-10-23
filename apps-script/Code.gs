@@ -146,7 +146,9 @@ function slimDocHtml_(html, docId) {
   const css = (html.match(/<style[^>]*>([\s\S]*?)<\/style>/i) || [])[1] || '';
   const keep = [];
   css.replace(/\.([\w-]+)\{([^}]*)\}/g, (m, c, b) => {
-    if (/font-weight:\s*(700|bold)|font-style:\s*italic/.test(b)) keep.push('.' + c + '{' + b.match(/(font-weight:\s*(700|bold)|font-style:\s*italic)/g).join(';') + '}');
+    // keep bold, italic and red text (the Handbook's warnings); drop every other style
+    const k = b.match(/(font-weight:\s*(700|bold)|font-style:\s*italic|(^|;)\s*color:\s*#(f00\b|ff0000|e06666|cc0000|c00000|e00\b|ea4335|d93025))/gi);
+    if (k) keep.push('.' + c + '{' + k.map(x => x.replace(/^;/, '')).join(';') + '}');
     return m;
   });
   const body = (html.match(/<body[^>]*>([\s\S]*)<\/body>/i) || [])[1] || html;

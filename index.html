@@ -261,6 +261,11 @@ table.sched tr.dim { opacity: .35; }
 .zoom { position: fixed; inset: 0; z-index: 100; background: rgba(10, 4, 24, .88); display: flex; align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; }
 .zoom img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; background: #fff; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
 .zoom button { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 12px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255,255,255,.16); color: #fff; font-size: 26px; line-height: 1; cursor: pointer; }
+.prose .warn { color: #C0262D; }
+:root[data-theme="dark"] .prose .warn { color: #FF8A8A; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .prose .warn { color: #FF8A8A; } }
+.hbnote { border-left: 4px solid var(--warn-line); background: var(--warn-soft); padding: 10px 14px; border-radius: 8px; margin: 14px 0; max-width: none; }
+.hbnote p { margin: 0; }
 .prose img { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); display: block; margin: 8px 0 14px; }
 .prose code, .prose pre { font-family: var(--mono); font-size: 13px; }
 .prose pre { background: var(--raised); padding: 14px 16px; border-radius: 8px; overflow-x: auto; white-space: pre; line-height: 1.45; tab-size: 4; margin: 0; }
@@ -737,6 +742,8 @@ function mergeLive(snap, live) {
     // rotation pages show only the Handbook instead of the old Notion guide.
     d.masterHandbook = /HOW TO EDIT THIS HANDBOOK/i.test(live.handbookHtml);
     const sections = splitSections(cleanGoogleHtml(live.handbookHtml));
+    // General notes at the top of the Handbook (e.g. "PLEASE NOTE: contact your site 6 weeks ahead") show on every rotation guide.
+    d.hbNotice = (sections.preface || []).filter(k => /please note/i.test(k.textContent)).map(k => k.outerHTML).join("");
     const used = new Set();
     const assign = (items, prefix) => items.forEach(it => {
       const terms = String(it.handbookMatch || "").toLowerCase().split("|").map(s => s.trim()).filter(Boolean);
@@ -850,17 +857,18 @@ function parseResidents(rows) {
 function cleanGoogleHtml(raw) {
   const doc = new DOMParser().parseFromString(raw, "text/html");
   const css = [...doc.querySelectorAll("style")].map(s => s.textContent).join("\n");
-  const bold = new Set(), ital = new Set();
-  css.replace(/\.([\w-]+)\{([^}]*)\}/g, (m, c, b) => { if (/font-weight:\s*(700|bold)/.test(b)) bold.add(c); if (/font-style:\s*italic/.test(b)) ital.add(c); return m; });
+  const bold = new Set(), ital = new Set(), red = new Set();
+  css.replace(/\.([\w-]+)\{([^}]*)\}/g, (m, c, b) => { if (/font-weight:\s*(700|bold)/.test(b)) bold.add(c); if (/font-style:\s*italic/.test(b)) ital.add(c); if (/(^|;)\s*color:\s*#(f00\b|ff0000|e06666|cc0000|c00000|e00|ea4335|d93025)/i.test(b)) red.add(c); return m; });
   const body = doc.body;
   body.querySelectorAll("style, script, meta").forEach(n => n.remove());
   body.querySelectorAll("span").forEach(sp => {
     const cls = [...sp.classList];
-    const isB = cls.some(c => bold.has(c)), isI = cls.some(c => ital.has(c));
+    const isB = cls.some(c => bold.has(c)), isI = cls.some(c => ital.has(c)), isR = cls.some(c => red.has(c));
     const frag = doc.createDocumentFragment(); while (sp.firstChild) frag.appendChild(sp.firstChild);
     let node = frag;
     if (isI) { const e = doc.createElement("em"); e.appendChild(node); node = e; }
     if (isB && !sp.closest("h1,h2,h3,h4,h5,h6")) { const s = doc.createElement("strong"); s.appendChild(node); node = s; }
+    if (isR && node.textContent.trim()) { const r = doc.createElement("span"); r.className = "warn"; r.appendChild(node); node = r; }   // the Handbook's red warnings stay red
     sp.replaceWith(node);
   });
   body.querySelectorAll("li").forEach(li => { const m = (li.parentElement?.className || "").match(/-(\d+)\b/); if (m && +m[1] > 0) li.className = "lvl" + Math.min(3, +m[1]); else li.removeAttribute("class"); });
@@ -868,11 +876,11 @@ function cleanGoogleHtml(raw) {
     let h = a.getAttribute("href") || "";
     try { const u = new URL(h); if (u.hostname.endsWith("google.com") && u.pathname === "/url") h = u.searchParams.get("q") || h; } catch {}
     if (!h || h.startsWith("#")) { a.replaceWith(...a.childNodes); return; }
-    if (h.startsWith("mailto:")) { a.replaceWith(...a.childNodes); return; }
+    if (h.startsWith("mailto:")) { a.setAttribute("href", h); return; }
     a.setAttribute("href", h); a.setAttribute("target", "_blank"); a.setAttribute("rel", "noopener");
   });
   body.querySelectorAll("*").forEach(el => {
-    [...el.attributes].forEach(at => { if (!["href","src","alt","colspan","rowspan","target","rel"].includes(at.name) && !(at.name === "class" && /^lvl\d$/.test(at.value))) el.removeAttribute(at.name); });
+    [...el.attributes].forEach(at => { if (!["href","src","alt","colspan","rowspan","target","rel","start"].includes(at.name) && !(at.name === "class" && /^(lvl\d|warn)$/.test(at.value))) el.removeAttribute(at.name); });
   });
   body.querySelectorAll("img").forEach(i => {
     i.setAttribute("loading", "lazy");
@@ -888,7 +896,7 @@ function splitSections(body) {
   let level = 0;
   for (let n = 1; n <= 3; n++) { if (kids.filter(k => k.tagName === "H" + n).length >= 3) { level = n; break; } }
   if (!level) return [];
-  const sections = []; let cur = null;
+  const sections = []; let cur = null; const preface = [];
   for (const k of kids) {
     const m = k.tagName.match(/^H(\d)$/);
     if (m && +m[1] <= level) {
@@ -898,9 +906,11 @@ function splitSections(body) {
       if (cur) sections.push(cur);
       continue;
     }
-    if (cur) cur.parts.push(k.outerHTML);
+    if (cur) cur.parts.push(k.outerHTML); else preface.push(k);
   }
-  return sections.map(s => ({ title: s.title, key: s.key, html: s.parts.join("") })).filter(s => s.html.length > 40);
+  const out = sections.map(s => ({ title: s.title, key: s.key, html: s.parts.join("") })).filter(s => s.html.length > 40);
+  out.preface = preface;
+  return out;
 }
 function demote(html, extra = 0) {
   return html.replace(/<(\/?)h([1-6])\b/gi, (m, sl, n) => `<${sl}h${Math.min(6, Math.max(2, +n + 1 + extra))}`);
@@ -1294,6 +1304,7 @@ function viewRotation(id) {
         <dd>${yearStrip(year)}</dd></div>
     </dl>
     ${attachBox(r)}
+    ${S.masterHandbook && S.hbNotice ? `<div class="prose hbnote">${S.hbNotice}</div>` : ""}
     ${guideBody(r)}
   </article></div>`;
 }
