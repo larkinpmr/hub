@@ -183,6 +183,22 @@ main { padding-block: 28px 64px; }
 .contact .how { font: 500 13px/1.5 var(--mono); color: var(--muted); grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 14px; word-break: break-all; }
 .copy { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; font: 600 12px/1 var(--body); padding: 5px 8px; cursor: pointer; color: var(--muted); }
 .copy:hover { color: var(--ink); border-color: var(--muted); }
+.gate { position: fixed; inset: 0; z-index: 200; background: var(--bg); display: grid; place-items: center; padding: 24px 16px; overflow-y: auto; }
+.gate::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: var(--stripe); }
+body.gated { overflow: hidden; }
+body.gated > :not(.gate) { visibility: hidden; }
+.gate-card { width: min(380px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 28px 24px; display: grid; gap: 12px; text-align: center; box-shadow: 0 12px 40px rgba(34, 16, 63, .12); }
+.gate-logo { width: 64px; height: 64px; margin: 0 auto; display: block; border-radius: 14px; }
+.gate-card h1 { font-size: 21px; margin: 4px 0 0; letter-spacing: -.01em; }
+.gate-card p { margin: 0; color: var(--muted); font-size: 14.5px; }
+.gate-card input { font: 500 17px/1.2 var(--body); padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); text-align: center; width: 100%; box-sizing: border-box; }
+.gate-card input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.gate-card .btn { width: 100%; justify-content: center; padding: 12px; font-size: 16px; }
+.gate-msg { min-height: 1.2em; color: #C0262D !important; font-weight: 600; }
+:root[data-theme="dark"] .gate-msg { color: #FF8A8A !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gate-msg { color: #FF8A8A !important; } }
+.gate-help { font-size: 13px !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .qlinks { margin: 24px 0 0; }
 .ql-h { font-size: 13px; font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
 .ql-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
@@ -628,9 +644,53 @@ async function boot() {
   S = prepare(snap);
   source = { mode: "saved", when: snap.builtAt };
   route();
-  if (cfg.liveDataUrl) loadLive(cfg.liveDataUrl, snap);
+  if (cfg.liveDataUrl) { gateCheck(false); loadLive(cfg.liveDataUrl, snap); }
   else setStatus();
 }
+
+/* ----------------------------------------------------------- passcode screen
+ * If the Control Panel's Settings tab has a "Site passcode", each device is asked for it once and then remembered.
+ * Changing the passcode asks every device again. It keeps casual visitors out; it is not real security. */
+const GATE_KEY = "hub.gate";
+let gateKnown = false;          // true once we have Settings from Google (live or this device's saved copy)
+async function gateHash(t) {
+  const norm = String(t).trim().toLowerCase();
+  try { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("larkin-hub:" + norm)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join(""); }
+  catch { return "plain:" + norm; }
+}
+async function gateCheck(known) {
+  if (known) gateKnown = true;
+  if (!gateKnown) { if (!store.get(GATE_KEY)) showGate(); return; }      // first visit: cover the page until we know
+  const pc = String(S.passcode || "").trim();
+  if (!pc) { hideGate(); return; }
+  if (store.get(GATE_KEY) === await gateHash(pc)) hideGate(); else showGate();
+}
+function showGate() {
+  if (document.querySelector(".gate")) return;
+  const g = document.createElement("div"); g.className = "gate"; g.setAttribute("role", "dialog"); g.setAttribute("aria-modal", "true"); g.setAttribute("aria-labelledby", "gate-h");
+  g.innerHTML = `<form class="gate-card" autocomplete="off">
+      <img class="gate-logo" src="assets/logo.svg" alt="" width="64" height="64">
+      <h1 id="gate-h">Larkin South Miami PM&amp;R Hub</h1>
+      <p>Enter the residents' passcode. You'll only need to do this once on this device.</p>
+      <label class="sr" for="gate-in">Passcode</label>
+      <input id="gate-in" type="password" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Passcode" required>
+      <button type="submit" class="btn">Continue</button>
+      <p class="gate-msg" role="alert"></p>
+      <p class="gate-help">Don't have it? Ask a chief resident.</p>
+    </form>`;
+  const form = g.querySelector("form"), input = g.querySelector("input"), msg = g.querySelector(".gate-msg");
+  form.onsubmit = async e => {
+    e.preventDefault();
+    if (!gateKnown) { msg.textContent = "Checking with Google Drive… try again in a few seconds."; return; }
+    const pc = String(S.passcode || "").trim();
+    if (!pc || (await gateHash(input.value)) === (await gateHash(pc))) { store.set(GATE_KEY, await gateHash(pc)); hideGate(); }
+    else { msg.textContent = "That passcode isn't right. Try again."; input.select(); }
+  };
+  document.body.appendChild(g); document.body.classList.add("gated");
+  setTimeout(() => input.focus(), 50);
+  setTimeout(() => { if (!gateKnown && document.querySelector(".gate")) msg.textContent = "Can't reach Google Drive to check the passcode. Check your connection, then reload the page."; }, 25000);
+}
+function hideGate() { document.querySelector(".gate")?.remove(); document.body.classList.remove("gated"); }
 
 const LIVE_KEY = "hub.live.v1";
 function readLiveCache() { try { return JSON.parse(localStorage.getItem(LIVE_KEY) || "null"); } catch { return null; } }
@@ -646,6 +706,7 @@ async function loadLive(url, snap) {
     S = prepare(mergeLive(snap, live));
     source = { mode, when: live.updated, errors: live.errors || [] };
     route(true);
+    gateCheck(true);
   };
   // 1. Show the last live data this device saw, right away.
   let cached = readLiveCache();
@@ -730,6 +791,7 @@ function mergeLive(snap, live) {
   const rowsOf = t => { if (!t || t.length < 2) return []; const h = t[0].map(x => String(x).trim().toLowerCase()); return t.slice(1).filter(r => r.some(c => String(c).trim())).map(r => Object.fromEntries(h.map((k, i) => [k, String(r[i] ?? "").trim()]))); };
   const settings = {}; (tab("settings") || []).forEach(r => { if (r[0]) settings[String(r[0]).trim().toLowerCase()] = String(r[1] ?? "").trim(); });
   if (settings["academic year"]) d.academicYear = settings["academic year"];
+  d.passcode = settings["site passcode"] || "";   // blank = no passcode screen
   const contacts = rowsOf(tab("contacts"));
   if (contacts.length) d.contacts = contacts.map(r => ({ role: r.role || "", name: r.name || "", phone: r.phone || "", email: r.email || "" }));
   const links = rowsOf(tab("quick links") || tab("links"));

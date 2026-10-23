@@ -23,6 +23,8 @@ The hub website (**https://larkinpmr.github.io**) is built from Google Drive. No
 | **Hub Control Panel** (Google Sheet) | Settings, Key Contacts, Quick Links, Announcements, the rotation list, page edits | Chiefs, or through the Chief editor |
 | **Hub pictures** (Drive folder) | The pictures from the Handbook that the site shows. **Do not delete or rename it.** It can be moved into another folder. | Nobody: the script fills it |
 
+**Site passcode:** the Control Panel **Settings** tab has a "Site passcode" row. Each phone or computer is asked for it once and then remembered. Change it each year (every device will be asked again); leave it blank to turn the passcode screen off. It keeps casual visitors out but is not real security, so keep patient information out of everything.
+
 **Chief editor:** open the gear menu on the site and choose "Chief editor". It only works when you are signed in as the chief Gmail, and it edits the Control Panel tabs without opening the sheet.
 
 # Editing the Handbook (the rules that keep the site working)
