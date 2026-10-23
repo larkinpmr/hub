@@ -1088,7 +1088,7 @@ function meCard() {
   const p = meResident();
   if (!p) {
     const pgys = [...new Set(S.residents.map(r => r.pgy))];
-    return `<section class="mycard pick"><div><b>See your own rotation first</b><span class="n">Pick your name once and this device will show your rotation, what's next, and your upcoming lectures here.</span></div>
+    return `<section class="mycard pick"><div><b>See your own rotation and get your personal calendar</b><span class="n">Pick your name once and this device will show your rotation, what's next and your upcoming lectures here, with a button to add your own calendar to your phone.</span></div>
       <div><select id="mesel" aria-label="Choose your name"><option value="">Choose your name…</option>${pgys.map(g => `<optgroup label="${esc(g)}">${S.residents.filter(r => r.pgy === g).map(r => `<option>${esc(r.name)}</option>`).join("")}</optgroup>`).join("")}</select></div></section>`;
   }
   const mi = curMonth, r0 = p.rots[mi], raw0 = p.months[mi];
