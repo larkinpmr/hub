@@ -17,7 +17,7 @@ The hub website (**https://larkinpmr.github.io**) is built from Google Drive. No
 
 | Google file (in the chief Drive) | What it controls on the site | Who edits it |
 |---|---|---|
-| **PM&R Program Handbook 2026-2027** (Google Doc) | Every rotation guide and policy page, including pictures, contacts and links | Residents (quarterly review); chiefs approve |
+| **Handbooks** (Drive folder of Google Docs) | Every rotation guide and policy page: one Google Doc per page, including pictures, contacts and links | Residents (quarterly review); chiefs approve |
 | **Didactic Schedule** (Google Sheet) | Lectures page, Home "next lecture", the didactics calendar | Chiefs |
 | **Resident Schedule** (Google Sheet) | Schedule page, "who is on this rotation", personal cards and calendars, onboarding reminders | Chiefs |
 | **Hub Control Panel** (Google Sheet) | Settings, Key Contacts, Quick Links, Announcements, the rotation list, page edits | Chiefs, or through the Chief editor |
@@ -27,15 +27,20 @@ The hub website (**https://larkinpmr.github.io**) is built from Google Drive. No
 
 **Chief editor:** open the gear menu on the site and choose "Chief editor". It only works when you are signed in as the chief Gmail, and it edits the Control Panel tabs without opening the sheet.
 
-# Editing the Handbook (the rules that keep the site working)
+# Editing the Handbooks (the rules that keep the site working)
 
-- Each rotation or policy starts with a big centered title in the **Heading 1** style. The site turns each Heading 1 into a page, so do not use Heading 1 for anything else.
-- **To add a rotation:** copy an existing title (it keeps the style), rename it, and write the content below it. Then add a row in the Control Panel **Rotations** tab. Put a word from the title in "Handbook heading contains" so the site knows which page is which.
-- Red text stays red on the site. Use it for warnings and "⚠ Confirm" notes.
-- Pictures can be added anywhere; they show on the site, and tapping one makes it full screen.
+The **Handbooks** folder holds one Google Doc per page. Its link is in the Control Panel **Settings** tab next to "Handbooks Folder".
+
+- **The doc's name is the page title.** Rename the doc to rename the page.
+- **The folder is the group** it appears under on the Rotation Guides page (Inpatient Rehab, Consult Service, Outpatient, EMG/EDX, Neurorehab, Elective). Move a doc to move it on the site. A new folder makes a new group.
+- **Policies** go in the **Policies** folder and appear under Resources.
+- **"Note shown on every rotation"** (in the Handbooks folder itself) appears at the top of every rotation guide. "How to edit these Handbooks" is instructions only.
+- **To add a rotation:** in the right folder, open an existing guide and use File ▸ Make a copy (keeps the look), rename it, and write the guide. It appears on the site automatically. To give it a **schedule code** (so it shows in the resident schedule, "who's on this rotation" and personal calendars), add a row in the Control Panel **Rotations** tab with **exactly the same name** as the doc.
+- **To remove a rotation:** move its doc to the trash (and delete its Rotations-tab row if it has one).
+- Red text stays red on the site. Use it for warnings and "⚠ Confirm" notes. Pictures, tables and links all carry over; tapping a picture on the site makes it full screen.
 - Keep patient information out. The website and its code are public.
 - Use **Suggesting** mode for big changes, so the chiefs can review them.
-- Never replace the Handbook with a new file. Edit the same Google Doc so its link stays the same. If you must switch files, paste the new link into the Control Panel **Settings** tab next to "Handbook Doc".
+- The old single "PM&R Program Handbook" doc is an archive: edits there no longer reach the site.
 
 # Start of each academic year (July)
 
@@ -44,12 +49,12 @@ The hub website (**https://larkinpmr.github.io**) is built from Google Drive. No
 3. **Settings tab:** update "Academic year".
 4. **Rotations tab:** check the schedule codes (for example WPB, SA, ISS) match the codes used in the new Resident Schedule. Any code the site doesn't recognize shows as plain text.
 5. **Contacts and Quick Links:** update names, phones and links.
-6. **Handbook:** update the title page year. Have residents review their rotations.
+6. **Handbooks:** have residents review their rotation docs.
 7. Run **checkHandbookLinks** (below) and fix anything red.
 
 # Quarterly Handbook review
 
-1. Residents update their rotation sections. Chiefs accept or reject suggestions.
+1. Residents update their rotation docs in the Handbooks folder. Chiefs accept or reject suggestions.
 2. Resolve every red **"⚠ Confirm"** note: either fix the fact or delete the note.
 3. In Apps Script, run **checkHandbookLinks**. Fix broken links in the Handbook. For "Private" links, open the Drive file and set sharing to "Anyone with the link".
 4. Run **refreshHandbookNow** so the site picks up the changes right away.
@@ -60,8 +65,9 @@ Open the **Hub Control Panel** sheet ▸ **Extensions ▸ Apps Script**. Choose 
 
 | Function | When to run it |
 |---|---|
-| **refreshHandbookNow** | After editing the Handbook, if you want the site updated immediately (it otherwise updates within about 30 minutes) |
-| **checkHandbookLinks** | Each quarter: tests every link in the Handbook and writes a **Link Check** tab in the Control Panel, problems first |
+| **refreshHandbookNow** | After editing a Handbooks doc, if you want the site updated immediately (it otherwise updates within about 30 minutes). The log lists every doc it found |
+| **checkHandbookLinks** | Each quarter: tests every link in every Handbooks doc and writes a **Link Check** tab in the Control Panel, problems first |
+| **setupHandbooksFolder** | Already done (October 2026): it split the old single Handbook into the Handbooks folder. Don't run it again unless you rebuild from scratch |
 | **testHub** | If the site says "Saved copy" or something looks missing: lists errors and sizes |
 | **testCalendar** / **testMyCalendar** | To preview the didactics calendar or one resident's personal calendar |
 | **installAutoRefresh** | Only if the automatic 5-minute refresh ever stops (check the clock icon, "Triggers", on the left) |
@@ -74,7 +80,7 @@ Open the **Hub Control Panel** sheet ▸ **Extensions ▸ Apps Script**. Choose 
 |---|---|
 | Site footer says **"Saved copy"** | Google could not be reached. Run **testHub** and read the "Errors" line. Most often a file link in Settings is wrong, or the file is not in the chief Drive. |
 | A Handbook change isn't on the site | Run **refreshHandbookNow**, then reload the site (⌘+Shift+R or Ctrl+Shift+R). |
-| A rotation page shows the wrong section, or none | Check that its title is **Heading 1** and that its Rotations-tab row has a matching "Handbook heading contains" word. |
+| A guide is missing, shows up twice, or has no schedule code | The doc name and the Rotations-tab name must match exactly (spaces and dashes are forgiven). Check the doc is a Google Doc (not a Word file) inside a folder in Handbooks. |
 | A picture is missing | Run **refreshHandbookNow** and read the "Picture problem" line, if any. Make sure the **Hub pictures** folder still exists. |
 | Chief editor says "Sorry, unable to open the file" | You are signed into more than one Google account. Use a private window signed in only as the chief Gmail. |
 | Script asks for permission again | Click Allow with the chief account. Google sometimes asks after code changes. |
@@ -83,4 +89,4 @@ Open the **Hub Control Panel** sheet ▸ **Extensions ▸ Apps Script**. Choose 
 
 The website's look and layout live in the GitHub repository **larkinpmr/larkinpmr.github.io** (one file, `index.html`). The repo has notes for Claude (`CLAUDE.md`), so the easiest way to change the design is to open Claude, connect the repo, and describe what you want.
 
-The site also keeps a **saved copy** of all content in the repo (`data/snapshot.json`), shown instantly and used if Google is down. It was last rebuilt from the master Handbook in October 2026. After big Handbook changes, ask Claude to "rebuild the hub's saved copy from the Handbook" and give it the Handbook downloaded as a Word file (File ▸ Download ▸ Microsoft Word). The tool for this is `tools/build_snapshot.py`.
+The site also keeps a **saved copy** of all content in the repo (`data/snapshot.json`), shown instantly and used if Google is down. After big changes, ask Claude to "rebuild the hub's saved copy" and give it the Handbooks folder downloaded from Drive (right-click ▸ Download; Drive turns the docs into Word files in a .zip). The tool for this is `tools/build_snapshot.py`.

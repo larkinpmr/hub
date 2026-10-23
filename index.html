@@ -198,6 +198,11 @@ body.gated > :not(.gate) { visibility: hidden; }
 :root[data-theme="dark"] .gate-msg { color: #FF8A8A !important; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gate-msg { color: #FF8A8A !important; } }
 .gate-help { font-size: 13px !important; }
+.gate.waiting .gate-card > :not(.gate-logo):not(h1):not(.gate-msg) { display: none; }
+.gate.waiting .gate-card { border-color: transparent; box-shadow: none; background: transparent; }
+.gate.waiting .gate-logo { animation: gatepulse 1.4s ease-in-out infinite; }
+@keyframes gatepulse { 50% { opacity: .55; transform: scale(.96); } }
+@media (prefers-reduced-motion: reduce) { .gate.waiting .gate-logo { animation: none; } }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .qlinks { margin: 24px 0 0; }
 .ql-h { font-size: 13px; font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
@@ -641,7 +646,7 @@ async function boot() {
   try { cfg = await (await fetch("data/config.json")).json(); } catch {}
   CFG = cfg || {};
   showEditLink();
-  S = prepare(snap);
+  S = prepare(snap.guides ? (() => { const d = JSON.parse(JSON.stringify(snap)); applyGuides(d, d.guides); return d; })() : snap);
   source = { mode: "saved", when: snap.builtAt };
   route();
   if (cfg.liveDataUrl) { gateCheck(false); loadLive(cfg.liveDataUrl, snap); }
@@ -660,14 +665,16 @@ async function gateHash(t) {
 }
 async function gateCheck(known) {
   if (known) gateKnown = true;
-  if (!gateKnown) { if (!store.get(GATE_KEY)) showGate(); return; }      // first visit: cover the page until we know
+  if (!gateKnown) { if (!store.get(GATE_KEY)) showGate(true); return; }  // first visit: a plain "loading" cover until we know if there is a passcode
   const pc = String(S.passcode || "").trim();
   if (!pc) { hideGate(); return; }
-  if (store.get(GATE_KEY) === await gateHash(pc)) hideGate(); else showGate();
+  if (store.get(GATE_KEY) === await gateHash(pc)) hideGate(); else showGate(false);
 }
-function showGate() {
-  if (document.querySelector(".gate")) return;
-  const g = document.createElement("div"); g.className = "gate"; g.setAttribute("role", "dialog"); g.setAttribute("aria-modal", "true"); g.setAttribute("aria-labelledby", "gate-h");
+function showGate(waiting) {
+  const cur = document.querySelector(".gate");
+  if (cur && (waiting || !cur.classList.contains("waiting"))) return;
+  if (cur) cur.remove();
+  const g = document.createElement("div"); g.className = "gate" + (waiting ? " waiting" : ""); g.setAttribute("role", "dialog"); g.setAttribute("aria-modal", "true"); g.setAttribute("aria-labelledby", "gate-h");
   g.innerHTML = `<form class="gate-card" autocomplete="off">
       <img class="gate-logo" src="assets/logo.svg" alt="" width="64" height="64">
       <h1 id="gate-h">Larkin South Miami PM&amp;R Hub</h1>
@@ -687,8 +694,8 @@ function showGate() {
     else { msg.textContent = "That passcode isn't right. Try again."; input.select(); }
   };
   document.body.appendChild(g); document.body.classList.add("gated");
-  setTimeout(() => input.focus(), 50);
-  setTimeout(() => { if (!gateKnown && document.querySelector(".gate")) msg.textContent = "Can't reach Google Drive to check the passcode. Check your connection, then reload the page."; }, 25000);
+  if (!waiting) setTimeout(() => input.focus(), 50);
+  if (waiting) setTimeout(() => { if (!gateKnown && document.querySelector(".gate.waiting")) hideGate(); }, 20000);   // Google unreachable: don't lock people out of the saved copy
 }
 function hideGate() { document.querySelector(".gate")?.remove(); document.body.classList.remove("gated"); }
 
@@ -721,8 +728,8 @@ async function loadLive(url, snap) {
       show(Object.assign({}, core, cached.hb || {}), "live");
       writeLiveCache(cached);
       const hb = await hbPromise;
-      if (hb && (hb.handbookHtml || hb.templatesHtml)) {
-        cached.hb = { handbookHtml: hb.handbookHtml, templatesHtml: hb.templatesHtml };
+      if (hb && (hb.handbookHtml || hb.templatesHtml || (hb.guides && hb.guides.length))) {
+        cached.hb = { handbookHtml: hb.handbookHtml, templatesHtml: hb.templatesHtml, guides: hb.guides };
         writeLiveCache(cached);
         show(Object.assign({}, core, cached.hb, { errors: (core.errors || []).concat(hb.errors || []) }), "live");
       }
@@ -753,6 +760,9 @@ function setStatus(state) {
   }
 }
 function prepare(d) {
+  // "Elective" and "Electives" (or different capitals) are one group on the Guides page
+  const catName = new Map();
+  d.rotations.forEach(r => { const k = String(r.category || "Other").trim().toLowerCase().replace(/s$/, ""); if (!catName.has(k)) catName.set(k, String(r.category || "Other").trim()); r.category = catName.get(k); });
   const codeMap = new Map();
   d.rotations.forEach((r, i) => {
     r.hue = [190, 28, 145, 260, 340, 210, 168, 48, 300, 95, 120, 12, 230, 75][i % 14];
@@ -812,8 +822,11 @@ function mergeLive(snap, live) {
   // Schedules
   if (live.didactics?.length) { const p = parseDidactics(live.didactics); if (p.length) d.didactics = p; }
   if (live.residents?.length) { const p = parseResidents(live.residents); if (p.length) d.residents = p; }
-  // Handbook
-  if (live.handbookHtml) {
+  // Handbooks folder: one Google Doc per rotation / policy
+  if (live.guides && live.guides.length) applyGuides(d, live.guides);
+  else if (!live.handbookHtml && d.guides && d.guides.length) applyGuides(d, d.guides);      // Google's Handbook part not loaded yet: use the saved copy
+  // Handbook (single document, older setup)
+  else if (live.handbookHtml) {
     // The merged master Handbook (Oct 2026) starts with a "How to edit this Handbook" note; once it is live,
     // rotation pages show only the Handbook instead of the old Notion guide.
     d.masterHandbook = /HOW TO EDIT THIS HANDBOOK/i.test(live.handbookHtml);
@@ -840,6 +853,37 @@ function mergeLive(snap, live) {
     if (t.length) d.templates = t.map(s => ({ id: slug(s.title), title: titleCase(s.title), html: demote(s.html), source: "doc" }));
   }
   return d;
+}
+/** Folder mode: each doc becomes one page. A doc matches a Control Panel "Rotations" row with the same name
+ *  (or one of its "Handbook heading contains" words); any other doc becomes a new guide under its folder's name. */
+const nameKey = s => String(s || "").toLowerCase().replace(/[’‘`]/g, "'").replace(/[—–]/g, "-").replace(/\s+/g, " ").trim();
+function guideHtml(raw) {
+  const body = cleanGoogleHtml(raw);
+  let root = body; while (root.children.length === 1 && root.firstElementChild.tagName === "DIV") root = root.firstElementChild;
+  // the doc's own big title repeats the page title: drop it (keep any subtitle under it)
+  const first = [...root.children].find(k => k.textContent.trim() || k.querySelector("img"));
+  if (first && /^H1$/.test(first.tagName)) first.remove();
+  return demote(root.innerHTML);
+}
+function applyGuides(d, guides) {
+  d.masterHandbook = true; d.extraSections = []; delete d.guides;
+  const docs = guides.filter(g => g.html).map(g => ({ name: String(g.name).trim(), folder: String(g.folder || "").trim(), key: nameKey(g.name), raw: g.html }));
+  const note = docs.filter(g => !g.folder);
+  d.hbNotice = note.map(g => guideHtml(g.raw)).join("");
+  const pick = (list, items, isPolicy) => {
+    const used = new Set();
+    const give = (it, g) => { used.add(g); it.handbookHtml = it.html = guideHtml(g.raw); it.source = "handbook"; if (!isPolicy && !it.category && g.folder) it.category = g.folder; };
+    items.forEach(it => { const g = list.find(x => !used.has(x) && x.key === nameKey(it.title)); if (g) give(it, g); });          // same name
+    items.forEach(it => { if (it.source === "handbook") return;                                                                  // or a matching word
+      const terms = String(it.handbookMatch || "").toLowerCase().split("|").map(t => t.trim()).filter(Boolean);
+      const g = list.find(x => !used.has(x) && terms.some(t => x.key.includes(t))); if (g) give(it, g); });
+    return list.filter(x => !used.has(x));
+  };
+  const policyDocs = docs.filter(g => /^polic/i.test(g.folder)), rotationDocs = docs.filter(g => g.folder && !/^polic/i.test(g.folder));
+  pick(policyDocs, d.policies, true).forEach(g => d.policies.push({ id: slug(g.name), title: g.name, handbookMatch: "", html: guideHtml(g.raw), source: "handbook" }));
+  pick(rotationDocs, d.rotations, false).sort((a, b) => a.name.localeCompare(b.name)).forEach(g => d.rotations.push({
+    id: slug(g.name), title: g.name, short: g.name, codes: [], category: g.folder || "Other", pgy: "", location: "", attendings: "",
+    handbookMatch: "", html: guideHtml(g.raw), handbookHtml: guideHtml(g.raw), source: "handbook", lead: [] }));
 }
 function safeHtml(h) {
   const doc = new DOMParser().parseFromString(String(h), "text/html");
@@ -1023,7 +1067,7 @@ $("#q").addEventListener("keydown", e => { if (e.key === "Escape") { e.target.va
 
 /* ----------------------------------------------------------- helpers */
 const chip = r => r ? `<a class="code" style="--h:${r.hue}" href="#rot-${r.id}" title="${esc(r.title)}">${esc(r.codes[0])}</a>` : "";
-const chipSpan = r => r ? `<span class="code" style="--h:${r.hue}">${esc(r.codes[0])}</span>` : "";
+const chipSpan = r => r && r.codes && r.codes[0] ? `<span class="code" style="--h:${r.hue}">${esc(r.codes[0])}</span>` : "";
 const chipRaw = (raw, r) => r ? `<a class="code" style="--h:${r.hue}" href="#rot-${r.id}" title="${esc(r.title)}">${esc(raw)}</a>` : (raw ? `<span class="code" style="--h:0">${esc(raw)}</span>` : `<span class="muted">—</span>`);
 function fmtDate(iso, opts) { return parseISO(iso).toLocaleDateString("en-US", opts || { weekday: "short", month: "short", day: "numeric" }); }
 function byDate(list) { const m = new Map(); list.forEach(t => { if (!m.has(t.date)) m.set(t.date, []); m.get(t.date).push(t); }); return [...m.entries()]; }
@@ -1353,7 +1397,7 @@ function viewRotations() {
     <p>Pick your rotation for site expectations, contacts, schedules, attachments and tips.</p></div></div>
   <div class="prose" style="max-width:none">${S.readinessHtml || ""}</div>
   ${cats.map(c => `<section class="dir"><h2 class="dir-h">${esc(c)}</h2><ul class="dir-list">${S.rotations.filter(r => (r.category || "Other") === c).map(r =>
-    `<li><a href="#rot-${r.id}">${chipSpan(r)}<span class="dn">${esc(r.title)}<span class="dl">${esc(r.location)}</span></span><span class="dp">${esc(r.pgy)}</span><span class="ar" aria-hidden="true">→</span></a></li>`).join("")}</ul></section>`).join("")}
+    `<li><a href="#rot-${r.id}">${chipSpan(r) || `<span aria-hidden="true"></span>`}<span class="dn">${esc(r.title)}<span class="dl">${esc(r.location)}</span></span><span class="dp">${esc(r.pgy)}</span><span class="ar" aria-hidden="true">→</span></a></li>`).join("")}</ul></section>`).join("")}
 `;
 }
 let gTab = "guide";
@@ -1383,14 +1427,14 @@ function viewRotation(id) {
     <a class="crumb" href="#rotations">← All rotation guides</a>
     <div class="eyebrow">${esc(r.category)} · ${esc(r.type || "Rotation")}</div>
     <h1 style="font-size:clamp(28px,4vw,40px);letter-spacing:-.02em;margin-top:6px">${esc(r.title)}</h1>
-    <dl class="facts">
+    ${r.codes.length ? `<dl class="facts">
       <div><dt>Schedule code</dt><dd>${r.codes.map(c => `<span class="code" style="--h:${r.hue}">${esc(c)}</span>`).slice(0, 3).join(" ")}</dd></div>
       <div><dt>PGY level</dt><dd>${esc(r.pgy || "—")}</dd></div>
       <div><dt>Location</dt><dd>${esc(r.location || "—")}</dd></div>
       <div><dt>Key attendings</dt><dd>${esc(r.attendings || "—")}</dd></div>
       <div class="who"><dt>On this rotation in ${MONTH_FULL[curMonth]}</dt><dd>${now.length ? now.map(p => `${esc(p.name)} <span class="muted">(${esc(p.pgy)})</span>`).join(", ") : "No one this month"}</dd>
         <dd>${yearStrip(year)}</dd></div>
-    </dl>
+    </dl>` : ""}
     ${attachBox(r)}
     ${S.masterHandbook && S.hbNotice ? `<div class="prose hbnote">${S.hbNotice}</div>` : ""}
     ${guideBody(r)}

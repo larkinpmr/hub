@@ -125,7 +125,18 @@ function buildHandbook_() {
   const out = { ok: true, updated: new Date().toISOString(), errors: [] };
   const settings = panelSettings_();
   const idOf = key => idFromLink_(settings[key]) || FALLBACK[key];
-  try { out.handbookHtml = exportDoc_(idOf('Handbook Doc')); } catch (err) { out.errors.push('Handbook Doc: ' + err.message); }
+  const folderId = folderIdFromLink_(settings['Handbooks Folder']);
+  if (folderId) {
+    // One Google Doc per rotation / policy, in the Handbooks folder (see setupHandbooksFolder)
+    try {
+      const docs = handbookDocs_(folderId);
+      const html = exportDocs_(docs.map(d => d.id));
+      out.guides = docs.map((d, i) => ({ name: d.name, folder: d.folder, updated: d.updated, html: html[i].html || '' }));
+      html.forEach((h, i) => { if (h.error) out.errors.push(docs[i].name + ': ' + h.error); });
+    } catch (err) { out.errors.push('Handbooks Folder: ' + err.message); }
+  } else {
+    try { out.handbookHtml = exportDoc_(idOf('Handbook Doc')); } catch (err) { out.errors.push('Handbook Doc: ' + err.message); }
+  }
   if (settings['Templates Doc']) {
     try { out.templatesHtml = exportDoc_(idOf('Templates Doc')); } catch (err) { out.errors.push('Templates Doc: ' + err.message); }
   }
@@ -197,13 +208,176 @@ function refreshHandbookNow() {
   const payload = JSON.stringify(hb);
   writeCache_(CacheService.getScriptCache(), 'hb_', payload, 3600);
   CacheService.getScriptCache().put('hb_at', String(Date.now()), 3600);
-  const html = hb.handbookHtml || '';
+  const html = hb.handbookHtml || (hb.guides || []).map(g => g.html).join('');
   Logger.log('Errors: ' + JSON.stringify(hb.errors));
+  if (hb.guides) Logger.log('Handbooks folder: ' + hb.guides.length + ' docs · ' + hb.guides.map(g => (g.folder ? g.folder + ' ▸ ' : '') + g.name).join(' | '));
   Logger.log('Pictures in the Handbook export: ' + (html.match(/<img/g) || []).length +
     ' · saved to "Hub pictures" now: ' + PIC_STATS.saved + ' · already saved: ' + PIC_STATS.reused +
     ' · kept inline: ' + (html.match(/<img src="data:/g) || []).length);
   if (PIC_STATS.failed.length) Logger.log('Picture problem: ' + PIC_STATS.failed[0]);
   Logger.log('Handbook download size: ' + Math.round(payload.length / 1024) + ' KB. "Program Handbook" notes left: ' + (html.match(/see the <a/g) || []).length);
+}
+
+/* ------------------------------------------------------------------ Handbooks folder
+ * Handbooks/                         ← link in Settings ▸ "Handbooks Folder"
+ *   Note shown on every rotation     (Google Doc: shown at the top of every rotation guide)
+ *   How to edit these Handbooks      (Google Doc: instructions only, not shown on the site)
+ *   Policies/                        (one Google Doc per policy → Resources)
+ *   Inpatient Rehab/, Consult Service/, Outpatient/, EMG/EDX/, Neurorehab/, Elective/, …
+ *                                    (one Google Doc per rotation; the folder name is its category on the site)
+ * The doc's name is the page title. A doc named like a row in the Control Panel "Rotations" tab gets that row's
+ * schedule codes and details; a new doc simply appears as a new guide. */
+function folderIdFromLink_(s) {
+  if (!s) return '';
+  const m = String(s).match(/folders\/([a-zA-Z0-9_-]{20,})/) || String(s).match(/[?&]id=([a-zA-Z0-9_-]{20,})/);
+  if (m) return m[1];
+  return /^[a-zA-Z0-9_-]{20,}$/.test(String(s).trim()) ? String(s).trim() : '';
+}
+function handbookDocs_(folderId) {
+  const root = DriveApp.getFolderById(folderId), out = [];
+  const add = (folder, name) => {
+    const it = folder.getFilesByType(MimeType.GOOGLE_DOCS);
+    while (it.hasNext()) { const f = it.next(); if (!f.isTrashed()) out.push({ id: f.getId(), name: f.getName(), folder: name, updated: f.getLastUpdated().toISOString() }); }
+  };
+  add(root, '');
+  const subs = root.getFolders();
+  while (subs.hasNext()) { const sf = subs.next(); if (!sf.isTrashed()) add(sf, sf.getName()); }
+  // root docs: only the "every rotation" note is shown on the site
+  return out.filter(d => d.folder || /every rotation|notice|note for all/i.test(d.name));
+}
+/** Exports several Docs at once (in parallel) and slims each one like exportDoc_. */
+function exportDocs_(ids) {
+  const token = ScriptApp.getOAuthToken(), out = [];
+  for (let i = 0; i < ids.length; i += 10) {
+    const batch = ids.slice(i, i + 10);
+    let res;
+    try { res = UrlFetchApp.fetchAll(batch.map(id => ({ url: 'https://docs.google.com/document/d/' + id + '/export?format=html', headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true }))); }
+    catch (e) { res = batch.map(id => { try { return UrlFetchApp.fetch('https://docs.google.com/document/d/' + id + '/export?format=html', { headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true }); } catch (err) { return null; } }); }
+    res.forEach((r, j) => {
+      if (!r) out.push({ error: 'could not export' });
+      else if (r.getResponseCode() !== 200) out.push({ error: 'could not export (HTTP ' + r.getResponseCode() + ')' });
+      else out.push({ html: slimDocHtml_(r.getContentText(), batch[j]) });
+    });
+  }
+  return out;
+}
+
+/* Which master-Handbook section goes to which doc (name, folder). Matched against the section's Heading 1 text. */
+const HB_SPLIT = [
+  [/departure/, 'Coverage & Departure Protocol', 'Policies'],
+  [/didactic/, 'Didactics Attendance Policy', 'Policies'],
+  [/\bpto\b/, 'PTO Policy', 'Policies'],
+  [/family and medical|fmla/, 'FMLA & Leave Policies', 'Policies'],
+  [/grievance/, 'Grievances & Due Process', 'Policies'],
+  [/disciplinary/, 'Disciplinary Actions for Academic Reasons', 'Policies'],
+  [/larkin south|waterford/, 'Larkin South Consults / Waterford SNF', 'Consult Service'],
+  [/west palm beach/, 'West Palm Beach VA', 'Consult Service'],
+  [/west gables/, 'West Gables Rehabilitation Hospital', 'Inpatient Rehab'],
+  [/catherine/, "St. Catherine's West Rehabilitation Hospital", 'Inpatient Rehab'],
+  [/encompass/, 'Encompass Health Rehabilitation Hospital - Sunrise', 'Inpatient Rehab'],
+  [/anthony/, "St. Anthony's Rehabilitation Hospital", 'Inpatient Rehab'],
+  [/pediatrics (1|i)\b/, 'Pediatric PM&R/ PED I', 'Inpatient Rehab'],
+  [/pediatrics ii/, 'PED II / Prosthetics & Orthotics', 'Outpatient'],
+  [/general outpatient|integrative spine/, 'ISS / Integrative Spine & Sports (Outpatient)', 'Outpatient'],
+  [/electrodiagnos/, 'Electrodiagnostics (EDX) - EMG Rotation', 'EMG/EDX'],
+  [/neurorehab/, 'Neurorehab / Design Neuroscience Center', 'Neurorehab'],
+  [/mouhanna/, 'Interventional Pain — Dr. Joseph Mouhanna', 'Elective'],
+  [/hatgis/, 'Interventional Pain — Dr. Jesse Hatgis', 'Elective'],
+  [/davis|\broa\b/, 'Interventional Pain — Drs. Davis & Roa', 'Elective'],
+  [/^electives$/, 'Electives', 'Elective'],
+  [/rheumatology/, 'Rheumatology — Dr. Barry Waters', 'Elective'],
+  [/broward|gruskin/, 'Outpatient PM&R — Dr. Alan Gruskin', 'Elective'],
+  [/wound care/, 'Wound Care — Dr. Perez-Clavijo', 'Elective'],
+  [/hospice/, 'Hospice & Palliative Medicine — Dr. Rejtman', 'Elective'],
+  [/orthopedic surgery/, 'Orthopedic Surgery (Sports Medicine) — Dr. Schapiro', 'Elective'],
+];
+const HB_HOWTO = [
+  'How to edit these Handbooks',
+  'Each Google Doc in this folder is one page on the hub website (larkinpmr.github.io). Edits show up on the site within about 30 minutes, or right away if a chief runs refreshHandbookNow in Apps Script.',
+  '• The document\'s NAME is the page title on the site. Rename the doc to rename the page.',
+  '• The FOLDER is the group it appears under on the Rotation Guides page (Inpatient Rehab, Elective, …). Move a doc to another folder to move it on the site.',
+  '• Policies go in the Policies folder; they appear under Resources.',
+  '• To add a rotation: make a new Google Doc in the right folder (File ▸ Make a copy of an existing guide keeps the look) and write the guide. It appears on the site automatically. To give it a schedule code (so it shows in the resident schedule and personal calendars), a chief adds a row with the SAME name in the Control Panel "Rotations" tab.',
+  '• To remove a rotation: move its doc to the trash.',
+  '• "Note shown on every rotation" appears at the top of every rotation guide.',
+  '• Red text stays red on the site; use it for warnings and "⚠ Confirm" notes. Pictures, tables and links all carry over.',
+  '• Never put patient information here. Use Suggesting mode for big changes so the chiefs can review them.',
+];
+
+/** Run ONCE from the editor: copies each rotation and policy out of the current Handbook Doc into its own Google Doc
+ *  (formatting, pictures and tables kept) inside a new "Handbooks" folder, and points the site at that folder.
+ *  The original Handbook is not changed. Safe to run again: docs that already exist are skipped. */
+function setupHandbooksFolder() {
+  const started = Date.now();
+  const settings = panelSettings_();
+  const masterId = idFromLink_(settings['Handbook Doc']) || FALLBACK['Handbook Doc'];
+  const master = DocumentApp.openById(masterId), body = master.getBody(), n = body.getNumChildren();
+  // folders
+  let root = null;
+  const existingId = folderIdFromLink_(settings['Handbooks Folder']);
+  if (existingId) root = DriveApp.getFolderById(existingId);
+  if (!root) { const it = DriveApp.getRootFolder().getFoldersByName('Handbooks'); root = it.hasNext() ? it.next() : DriveApp.getRootFolder().createFolder('Handbooks'); }
+  const sub = name => { const it = root.getFoldersByName(name); return it.hasNext() ? it.next() : root.createFolder(name); };
+  const exists = (folder, name) => folder.getFilesByName(name).hasNext();
+  // sections = Heading 1 paragraphs
+  const heads = [];
+  for (let i = 0; i < n; i++) {
+    const el = body.getChild(i);
+    if (el.getType() === DocumentApp.ElementType.PARAGRAPH && el.asParagraph().getHeading() === DocumentApp.ParagraphHeading.HEADING1) {
+      const t = el.asParagraph().getText().replace(/\s+/g, ' ').trim();
+      if (t) heads.push({ i: i, title: t });
+    }
+  }
+  if (!heads.length) throw new Error('No Heading 1 titles found in the Handbook. Each rotation title must use the Heading 1 style.');
+  const copyRange = (from, to, nb) => {
+    for (let j = from; j < to; j++) {
+      const el = body.getChild(j), T = DocumentApp.ElementType;
+      try {
+        if (el.getType() === T.PARAGRAPH) nb.appendParagraph(el.copy().asParagraph());
+        else if (el.getType() === T.LIST_ITEM) nb.appendListItem(el.copy().asListItem());
+        else if (el.getType() === T.TABLE) nb.appendTable(el.copy().asTable());
+      } catch (e) { /* skip anything Docs can't copy (e.g. a table of contents) */ }
+    }
+    // tidy: drop the blank first line of a new doc and blank lines at the end
+    const isBlank = el => el.getType() === DocumentApp.ElementType.PARAGRAPH && !el.asParagraph().getText().trim() && el.asParagraph().getNumChildren() <= 1 && !/INLINE_IMAGE|HORIZONTAL_RULE/.test(String(el.asParagraph().getNumChildren() ? el.asParagraph().getChild(0).getType() : ''));
+    if (nb.getNumChildren() > 1 && isBlank(nb.getChild(0))) nb.getChild(0).removeFromParent();
+    while (nb.getNumChildren() > 2 && isBlank(nb.getChild(nb.getNumChildren() - 2)) && isBlank(nb.getChild(nb.getNumChildren() - 1))) nb.getChild(nb.getNumChildren() - 1).removeFromParent();
+  };
+  const makeDoc = (name, folder, fill) => {
+    if (exists(folder, name)) return 'skipped';
+    const d = DocumentApp.create(name), nb = d.getBody();
+    nb.setMarginTop(body.getMarginTop()).setMarginBottom(body.getMarginBottom()).setMarginLeft(body.getMarginLeft()).setMarginRight(body.getMarginRight());
+    fill(nb);
+    const c0 = nb.getChild(0);
+    if (nb.getNumChildren() > 1 && c0.getType() === DocumentApp.ElementType.PARAGRAPH && !c0.asParagraph().getText().trim() && !c0.asParagraph().getNumChildren()) c0.removeFromParent();
+    d.saveAndClose();
+    DriveApp.getFileById(d.getId()).moveTo(folder);
+    return 'made';
+  };
+  const log = [];
+  // how-to and every-rotation note
+  log.push(HB_HOWTO[0] + ': ' + makeDoc(HB_HOWTO[0], root, nb => { nb.appendParagraph(HB_HOWTO[0]).setHeading(DocumentApp.ParagraphHeading.HEADING1); HB_HOWTO.slice(1).forEach(t => nb.appendParagraph(t)); }));
+  log.push('Note shown on every rotation: ' + makeDoc('Note shown on every rotation', root, nb => {
+    for (let j = 0; j < heads[0].i; j++) { const el = body.getChild(j); if (el.getType() === DocumentApp.ElementType.PARAGRAPH && /please note/i.test(el.asParagraph().getText())) nb.appendParagraph(el.copy().asParagraph()); }
+    if (nb.getNumChildren() > 1 && !nb.getChild(0).asParagraph().getText().trim()) nb.getChild(0).removeFromParent();
+  }));
+  // one doc per section
+  for (let k = 0; k < heads.length; k++) {
+    if (Date.now() - started > 5 * 60 * 1000) { log.push('Stopped to stay under Google\'s time limit: run setupHandbooksFolder again to finish (finished docs are skipped).'); break; }
+    const h = heads[k], key = h.title.toLowerCase();
+    const hit = HB_SPLIT.find(r => r[0].test(key));
+    const name = hit ? hit[1] : h.title.replace(/\b([A-Z])([A-Z']+)\b/g, (m, a, b) => a + b.toLowerCase());
+    const folder = sub(hit ? hit[2] : 'Other');
+    log.push(name + ' → ' + (hit ? hit[2] : 'Other') + ': ' + makeDoc(name, folder, nb => copyRange(h.i, k + 1 < heads.length ? heads[k + 1].i : n, nb)));
+  }
+  // point the site at the folder
+  const ss = SpreadsheetApp.getActiveSpreadsheet(), st = ss.getSheetByName('Settings');
+  const rows = st.getDataRange().getValues();
+  let r = rows.findIndex(x => String(x[0]).trim().toLowerCase() === 'handbooks folder');
+  if (r < 0) { st.appendRow(['Handbooks Folder', root.getUrl()]); } else st.getRange(r + 1, 2).setValue(root.getUrl());
+  CacheService.getScriptCache().remove('hb_n');
+  Logger.log(log.join('\n'));
+  Logger.log('Handbooks folder: ' + root.getUrl() + '\nThe Control Panel Settings tab now points the site at this folder. Next: run refreshHandbookNow.');
 }
 
 function readSheet_(sheetId, tabName) {
@@ -592,23 +766,30 @@ function testMyCalendar() {
  * Handbook and writes the results to a "Link Check" tab in this Control Panel: problems first. */
 function checkHandbookLinks() {
   const settings = panelSettings_();
-  const docId = idFromLink_(settings['Handbook Doc']) || FALLBACK['Handbook Doc'];
-  const res = UrlFetchApp.fetch('https://docs.google.com/document/d/' + docId + '/export?format=html',
-    { headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true });
-  if (res.getResponseCode() !== 200) throw new Error('Could not open the Handbook (HTTP ' + res.getResponseCode() + ')');
-  const html = res.getContentText();
+  const token = ScriptApp.getOAuthToken();
+  const rawExport = id => {
+    const res = UrlFetchApp.fetch('https://docs.google.com/document/d/' + id + '/export?format=html', { headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) throw new Error('Could not open a Handbook doc (HTTP ' + res.getResponseCode() + ')');
+    return res.getContentText();
+  };
   const text = s => s.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#39;|&rsquo;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
-  // section titles (Heading 1) and where they start, so each link says which rotation it is in
-  const heads = []; html.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/g, (m, t, i) => { heads.push({ at: i, title: text(t.replace(/<br\s*\/?>/g, ' ')) }); return m; });
-  const sectionAt = i => { let t = 'Front pages'; heads.forEach(h => { if (h.at < i) t = h.title; }); return t; };
-  const links = {}; 
-  html.replace(/<a [^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g, (m, href, inner, i) => {
+  // [{ html, sectionAt(i) }]: one per doc in the Handbooks folder, or the single Handbook split by Heading 1
+  const sources = [];
+  const folderId = folderIdFromLink_(settings['Handbooks Folder']);
+  if (folderId) handbookDocs_(folderId).forEach(d => sources.push({ html: rawExport(d.id), sectionAt: () => d.name }));
+  else {
+    const html = rawExport(idFromLink_(settings['Handbook Doc']) || FALLBACK['Handbook Doc']);
+    const heads = []; html.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/g, (m, t, i) => { heads.push({ at: i, title: text(t.replace(/<br\s*\/?>/g, ' ')) }); return m; });
+    sources.push({ html: html, sectionAt: i => { let t = 'Front pages'; heads.forEach(h => { if (h.at < i) t = h.title; }); return t; } });
+  }
+  const links = {};
+  sources.forEach(src => src.html.replace(/<a [^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g, (m, href, inner, i) => {
     let url = href.replace(/&amp;/g, '&');
     const g = url.match(/^https:\/\/www\.google\.com\/url\?q=([^&]+)/); if (g) url = decodeURIComponent(g[1]);
     if (!/^https?:/i.test(url)) return m;
-    if (!links[url]) links[url] = { url: url, label: text(inner) || url, section: sectionAt(i) };
+    if (!links[url]) links[url] = { url: url, label: text(inner) || url, section: src.sectionAt(i) };
     return m;
-  });
+  }));
   const list = Object.keys(links).map(k => links[k]);
   const opts = u => ({ url: u, muteHttpExceptions: true, followRedirects: false, headers: { 'User-Agent': 'Mozilla/5.0 (Larkin PM&R Hub link check)' } });
   // fetch in parallel; if one link fails outright, split the group so the rest still run in parallel
