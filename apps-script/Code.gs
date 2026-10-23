@@ -162,6 +162,7 @@ function slimDocHtml_(html, docId) {
 /** Saves a big picture from the Handbook once (as a view-only image in the "Hub pictures" Drive folder)
  *  and returns a web address for it, so the site shows every picture without a huge download.
  *  The same picture is never saved twice. If anything fails, the picture is kept inline instead. */
+const PIC_STATS = { saved: 0, reused: 0, inline: 0, failed: [] };
 function pictureUrl_(dataUri) {
   try {
     const m = dataUri.match(/^data:([^;]+);base64,(.*)$/);
@@ -169,7 +170,7 @@ function pictureUrl_(dataUri) {
     const hash = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, m[2]).map(b => ('0' + (b & 255).toString(16)).slice(-2)).join('');
     const props = PropertiesService.getScriptProperties();
     let id = props.getProperty('pic_' + hash);
-    if (id) { try { DriveApp.getFileById(id); } catch (e) { id = null; } }
+    if (id) { try { DriveApp.getFileById(id); PIC_STATS.reused++; } catch (e) { id = null; } }
     if (!id) {
       const folders = DriveApp.getFoldersByName('Hub pictures');
       const folder = folders.hasNext() ? folders.next() : DriveApp.createFolder('Hub pictures');
@@ -178,11 +179,29 @@ function pictureUrl_(dataUri) {
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       id = file.getId();
       props.setProperty('pic_' + hash, id);
+      PIC_STATS.saved++;
     }
     return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w2000';
   } catch (err) {
-    return dataUri;
+    PIC_STATS.failed.push(String(err && err.message || err));
+    return dataUri;   // still shown on the site, just a bigger download
   }
+}
+
+/** Run from the editor after changing the Handbook or this code: rebuilds the Handbook data right away
+ *  (the website picks it up on its next load) and reports what happened to the pictures. */
+function refreshHandbookNow() {
+  const hb = buildHandbook_();
+  const payload = JSON.stringify(hb);
+  writeCache_(CacheService.getScriptCache(), 'hb_', payload, 3600);
+  CacheService.getScriptCache().put('hb_at', String(Date.now()), 3600);
+  const html = hb.handbookHtml || '';
+  Logger.log('Errors: ' + JSON.stringify(hb.errors));
+  Logger.log('Pictures in the Handbook export: ' + (html.match(/<img/g) || []).length +
+    ' · saved to "Hub pictures" now: ' + PIC_STATS.saved + ' · already saved: ' + PIC_STATS.reused +
+    ' · kept inline: ' + (html.match(/<img src="data:/g) || []).length);
+  if (PIC_STATS.failed.length) Logger.log('Picture problem: ' + PIC_STATS.failed[0]);
+  Logger.log('Handbook download size: ' + Math.round(payload.length / 1024) + ' KB. "Program Handbook" notes left: ' + (html.match(/see the <a/g) || []).length);
 }
 
 function readSheet_(sheetId, tabName) {
