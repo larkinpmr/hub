@@ -120,7 +120,7 @@ header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; b
 header.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 3px; background: var(--stripe); }
 .top-row { display: flex; align-items: center; gap: 16px; padding-block: 12px 0; flex-wrap: wrap; }
 .brand { position: relative; display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); margin-right: auto; min-width: 0; flex: 1 1 auto; }
-.brand .logo { width: 34px; height: 34px; flex: none; border-radius: 9px; }
+.brand .logo { display: none; }   /* the styled title stands on its own; the logo stays as the tab and home-screen icon */
 .brand > b { font: 700 20px/1 var(--display); letter-spacing: -.01em; }
 .brand #ayear { font: 500 12px/1 var(--mono); color: var(--muted); white-space: nowrap; }
 /* ---- rotating header wordmark (7 styles, a new one every 75 minutes) ---- */
