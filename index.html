@@ -260,7 +260,7 @@ body.gated > :not(.gate) { visibility: hidden; }
 .qlinks { margin: 24px 0 0; }
 .ql-h { font-size: 13px; font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
 .ql-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
-.ql { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); text-decoration: none; color: var(--ink); min-width: 0; transition: border-color .15s, transform .15s; }
+.ql { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); text-decoration: none; color: var(--ink); min-width: 0; transition: border-color .15s, transform .15s; }
 .ql:hover { border-color: var(--accent); transform: translateY(-1px); }
 .ql-ic { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--raised); color: var(--accent); }
 .ql-ic svg { width: 20px; height: 20px; }
@@ -269,8 +269,8 @@ body.gated > :not(.gate) { visibility: hidden; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ql-ic.sheet { color: #6DD58C; } :root:not([data-theme="light"]) .ql-ic.doc { color: #8AB4F8; } :root:not([data-theme="light"]) .ql-ic.drive { color: #FDD663; } }
 .ql-t { min-width: 0; display: grid; }
 .ql-t b { font-weight: 600; font-size: 15px; line-height: 1.3; }
-.ql-t small { color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-@media (max-width: 480px) { .ql-grid { grid-template-columns: 1fr 1fr; gap: 8px; } .ql { padding: 10px; gap: 9px; } .ql-ic { width: 30px; height: 30px; border-radius: 8px; } .ql-ic svg { width: 17px; height: 17px; } .ql-t b { font-size: 13.5px; } .ql-t small { display: none; } }
+.ql-t small { color: var(--muted); font-size: 12.5px; line-height: 1.35; margin-top: 2px; }
+@media (max-width: 480px) { .ql-grid { grid-template-columns: 1fr 1fr; gap: 8px; } .ql { padding: 10px; gap: 9px; } .ql-ic { width: 30px; height: 30px; border-radius: 8px; } .ql-ic svg { width: 17px; height: 17px; } .ql-t b { font-size: 13.5px; } .ql-t small { font-size: 12px; } }
 .linklist { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
 .linklist a { font-weight: 600; }
 .linklist small { display: block; color: var(--muted); }
