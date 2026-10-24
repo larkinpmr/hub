@@ -872,7 +872,7 @@ function applyGuides(d, guides) {
   d.hbNotice = note.map(g => guideHtml(g.raw)).join("");
   const pick = (list, items, isPolicy) => {
     const used = new Set();
-    const give = (it, g) => { used.add(g); it.handbookHtml = it.html = guideHtml(g.raw); it.source = "handbook"; if (!isPolicy && !it.category && g.folder) it.category = g.folder; };
+    const give = (it, g) => { used.add(g); it.handbookHtml = it.html = guideHtml(g.raw); it.source = "handbook"; if (!isPolicy && g.folder) it.category = g.folder; };   // the Drive folder decides the group on the Guides page
     items.forEach(it => { const g = list.find(x => !used.has(x) && x.key === nameKey(it.title)); if (g) give(it, g); });          // same name
     items.forEach(it => { if (it.source === "handbook") return;                                                                  // or a matching word
       const terms = String(it.handbookMatch || "").toLowerCase().split("|").map(t => t.trim()).filter(Boolean);
