@@ -1,7 +1,7 @@
 /* Larkin PM&R Hub service worker: lets the installed app open offline.
    Pages and data: network first (always fresh when online), fall back to the saved copy.
    Images and files: cached after first use. Google data is cached by the page itself. */
-const CACHE = "hub-v1";
+const CACHE = "hub-v2";   // bump when icons or other cached files change
 const CORE = ["./", "./index.html", "./data/snapshot.json", "./data/config.json", "./manifest.webmanifest", "./assets/logo.svg", "./assets/icon-192.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
