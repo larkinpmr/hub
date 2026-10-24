@@ -205,6 +205,7 @@ main { padding-block: 28px 64px; }
 :root:not([data-accent]) .today::before, :root[data-accent="vice"] .today::before { background: linear-gradient(180deg, var(--accent), var(--sun)); }
 .today b { display: block; font: 700 20px/1.15 var(--display); white-space: nowrap; }
 .today .muted { font-size: 14px; }
+.today b em { font-style: normal; color: var(--accent); background: var(--hero-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; align-items: start; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; min-width: 0; }
 .panel h2 { font-size: 20px; margin-bottom: 4px; }
@@ -899,6 +900,8 @@ function mergeLive(snap, live) {
   const rowsOf = t => { if (!t || t.length < 2) return []; const h = t[0].map(x => String(x).trim().toLowerCase()); return t.slice(1).filter(r => r.some(c => String(c).trim())).map(r => Object.fromEntries(h.map((k, i) => [k, String(r[i] ?? "").trim()]))); };
   const settings = {}; (tab("settings") || []).forEach(r => { if (r[0]) settings[String(r[0]).trim().toLowerCase()] = String(r[1] ?? "").trim(); });
   if (settings["academic year"]) d.academicYear = settings["academic year"];
+  if (settings["home headline"]) d.heroHeadline = settings["home headline"];
+  if (settings["home subtitle"]) d.heroSub = settings["home subtitle"] === "-" ? "" : settings["home subtitle"];   // a single "-" hides the line
   d.passcode = settings["site passcode"] || "";   // blank = no passcode screen
   const contacts = rowsOf(tab("contacts"));
   if (contacts.length) d.contacts = contacts.map(r => ({ role: r.role || "", name: r.name || "", phone: r.phone || "", email: r.email || "" }));
@@ -1332,6 +1335,12 @@ function meCard() {
     ${CFG.liveDataUrl ? `<div class="calrow"><button type="button" class="btn small ghost" id="mycal">Add my calendar</button><span class="n">Your rotations, lectures you present, and onboarding reminders, kept in sync.</span></div>` : ""}
   </section>`;
 }
+/** Home headline from the Control Panel Settings tab ("Home headline"); text between *asterisks* gets the theme color. */
+function heroHeadline() {
+  const raw = S.heroHeadline || "Everything for the year, *in one place.*";
+  const parts = esc(raw).split("*");
+  return parts.map((t, i) => i % 2 ? `<em>${t}</em>` : t).join("");
+}
 function viewHome() {
   const days = nextSessions();
   const [nd, talks] = days[0] || [];
@@ -1343,10 +1352,10 @@ function viewHome() {
   <section class="hero">
     <div>
       <div class="eyebrow">PM&amp;R Residency · ${esc(S.academicYear)}</div>
-      <h1>Everything for the year, <em>in one place.</em></h1>
-      <p>Rotation guides, the didactic calendar, block schedules, policies and note templates for Larkin Community Hospital South Miami residents.</p>
+      <h1>${heroHeadline()}</h1>
+      ${S.heroSub !== "" ? `<p>${esc(S.heroSub || "Rotation guides, the didactic calendar, block schedules, policies and note templates for Larkin Community Hospital South Miami residents.")}</p>` : ""}
     </div>
-    <div class="today"><span class="eyebrow">Today</span><b>${d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</b><span class="muted">Block month: ${MONTH_FULL[mi]}</span></div>
+    <div class="today"><span class="eyebrow">Today</span><b>${d.toLocaleDateString("en-US", { weekday: "long" })}, ${d.toLocaleDateString("en-US", { month: "long" })} <em>${d.getDate()}</em></b><span class="muted">Block month: ${MONTH_FULL[mi]}</span></div>
   </section>
   ${meCard()}
   ${ann}

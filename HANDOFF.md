@@ -25,6 +25,8 @@ The hub website (**https://larkinpmr.github.io**) is built from Google Drive. No
 
 **Site passcode:** the Control Panel **Settings** tab has a "Site passcode" row. Each phone or computer is asked for it once and then remembered. Change it each year (every device will be asked again); leave it blank to turn the passcode screen off. It keeps casual visitors out but is not real security, so keep patient information out of everything.
 
+**Home page headline:** the Settings tab rows "Home headline" and "Home subtitle" change the big welcome line and the sentence under it. Put *asterisks* around the words that should get the theme color (for example `Everything for the year, *in one place.*`). Leave a row blank for the default; a single `-` hides the subtitle.
+
 **Chief editor:** open the gear menu on the site and choose "Chief editor". It only works when you are signed in as the chief Gmail, and it edits the Control Panel tabs without opening the sheet.
 
 # Editing the Handbooks (the rules that keep the site working)
