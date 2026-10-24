@@ -219,6 +219,11 @@ main { padding-block: 28px 64px; }
 .talks li { display: grid; gap: 1px; }
 .talks .t { font-weight: 600; }
 .talks .s { color: var(--muted); font-size: 14px; }
+.homegrid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+.homegrid > .wide { grid-column: 1 / -1; }
+.didpanel { display: flex; flex-direction: column; } .didpanel > p:last-child { margin-top: auto !important; padding-top: 16px; }
+.homegrid .contacts { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); column-gap: 24px; }
+.homegrid .contact:first-child { border-top: 1px solid var(--line); padding-top: 10px; }
 .where { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 20px; }
 .where .site { display: grid; gap: 4px; padding-block: 8px; border-top: 1px solid var(--line); }
 .where .site a { text-decoration: none; display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -530,7 +535,7 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
   .span-7, .span-5, .span-6, .span-4, .span-8 { grid-column: span 12; }
   .guide-layout { grid-template-columns: 1fr; }
   .side { display: none; }
-  .cols { grid-template-columns: 1fr; }
+  .cols, .homegrid { grid-template-columns: 1fr; }
   .res { grid-template-columns: 1fr; gap: 18px; }
   .dirpromo { grid-template-columns: minmax(0, 1fr) auto; } .dirpromo span:not(.ar) { grid-column: 1; }
   .dir-grid { grid-template-columns: 1fr; }
@@ -1342,6 +1347,7 @@ function heroHeadline() {
   return parts.map((t, i) => i % 2 ? `<em>${t}</em>` : t).join("");
 }
 function viewHome() {
+  const onb = onboardingPanel();
   const days = nextSessions();
   const [nd, talks] = days[0] || [];
   const ann = (S.announcements || []).map(a => `<div class="announce"><b>${esc(a.title)}</b>${a.details ? `<span>${esc(a.details)}</span>` : ""}</div>`).join("");
@@ -1359,9 +1365,8 @@ function viewHome() {
   </section>
   ${meCard()}
   ${ann}
-  <div class="cols">
-    <div class="col">
-      <section class="panel">
+  <div class="homegrid">
+      <section class="panel didpanel ${onb ? "" : "wide"}">
         <h2>Next didactics</h2>
         <p class="sub">Lectures are Mondays; Journal Club and workshops are Thursdays.</p>
         ${nd ? `<div class="next-date">
@@ -1373,21 +1378,18 @@ function viewHome() {
             <p style="margin:16px 0 0"><a href="#didactics">Full didactic calendar →</a></p>`
           : `<div class="empty">No upcoming sessions on the calendar.</div>`}
       </section>
-      <section class="panel">
+      ${onb}
+      <section class="panel wide">
         <h2>Where everyone is in ${MONTH_FULL[mi]}</h2>
         <p class="sub">From the resident block schedule. Tap a rotation for its guide.</p>
         <div class="where">${sites.map(x => `<div class="site"><a href="#rot-${x.r.id}">${chipSpan(x.r)} <b style="color:var(--ink)">${esc(x.r.short)}</b></a><span class="names">${x.people.map(p => esc(p.name)).join(", ")}</span></div>`).join("")}</div>
       </section>
-    </div>
-    <div class="col">
-      ${onboardingPanel()}
-      <section class="panel">
+      <section class="panel wide">
         <h2>Key contacts</h2>
         <p class="sub">Program leadership and chiefs · <a href="#directory">Full directory →</a></p>
         <div class="contacts">${S.contacts.map(c => `<div class="contact"><span class="role">${esc(c.role)}</span><span class="name">${esc(c.name)}</span>
           <span class="how">${c.phone ? `<a href="tel:+1${esc(c.phone.replace(/\D/g, "").slice(-10))}">${esc(c.phone)}</a>` : ""}${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ""}</span></div>`).join("")}</div>
       </section>
-    </div>
   </div>
   ${quickLinks()}`;
 }
