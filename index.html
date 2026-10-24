@@ -47,21 +47,21 @@
     --stripe: linear-gradient(90deg, #FF6BB5, #B48CFF 50%, #3BE0E3);
     --hero-grad: linear-gradient(95deg, #FF6BB5 8%, #B48CFF 52%, #3BE0E3 95%); color-scheme: dark;
 }
-/* Alternative color schemes share the original calm neutrals */
+/* Alternative color schemes share calm slate neutrals */
 :root[data-accent]:not([data-accent="vice"]) {
-  --bg: #F3F6F5; --surface: #FFFFFF; --raised: #EAF0EE; --ink: #10282C; --muted: #56696C; --line: #D6E0DE;
+  --bg: #F1F5F9; --surface: #FFFFFF; --raised: #E8EDF3; --ink: #0F172A; --muted: #526072; --line: #D5DCE5;
   --on-accent: #FFFFFF; --sun: #B9740F; --sun-soft: #FBEBCF; --warn-soft: #FCEBDD; --warn-line: #E2A274;
   --chip-l: 90%; --chip-s: 42%; --chip-fg-l: 24%;
   --stripe: linear-gradient(var(--line), var(--line)); --hero-grad: linear-gradient(var(--accent), var(--accent));
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent]:not([data-accent="vice"]) {
-    --bg: #0C1819; --surface: #122326; --raised: #182D30; --ink: #E3EDEB; --muted: #94A9AA; --line: #24393C;
-    --on-accent: #052022; --sun: #F0B451; --sun-soft: #3A2C14; --warn-soft: #3A2418; --warn-line: #A4623A;
+    --bg: #0F172A; --surface: #1A2436; --raised: #222E43; --ink: #E6EBF2; --muted: #9AA7B8; --line: #2C3A52;
+    --on-accent: #0B1220; --sun: #F0B451; --sun-soft: #3A2C14; --warn-soft: #3A2418; --warn-line: #A4623A;
     --chip-l: 22%; --chip-s: 30%; --chip-fg-l: 84%; color-scheme: dark;
 } }
 :root[data-theme="dark"][data-accent]:not([data-accent="vice"]) {
-    --bg: #0C1819; --surface: #122326; --raised: #182D30; --ink: #E3EDEB; --muted: #94A9AA; --line: #24393C;
-    --on-accent: #052022; --sun: #F0B451; --sun-soft: #3A2C14; --warn-soft: #3A2418; --warn-line: #A4623A;
+    --bg: #0F172A; --surface: #1A2436; --raised: #222E43; --ink: #E6EBF2; --muted: #9AA7B8; --line: #2C3A52;
+    --on-accent: #0B1220; --sun: #F0B451; --sun-soft: #3A2C14; --warn-soft: #3A2418; --warn-line: #A4623A;
     --chip-l: 22%; --chip-s: 30%; --chip-fg-l: 84%; color-scheme: dark;
 }
 :root[data-accent="teal"] { --accent: #0B6B6B; --accent-soft: #DCEDEA; }
@@ -119,10 +119,57 @@ button { font: inherit; color: inherit; }
 header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); }
 header.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 3px; background: var(--stripe); }
 .top-row { display: flex; align-items: center; gap: 16px; padding-block: 12px 0; flex-wrap: wrap; }
-.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); margin-right: auto; min-width: 0; flex: 1 1 auto; }
+.brand { position: relative; display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); margin-right: auto; min-width: 0; flex: 1 1 auto; }
 .brand .logo { width: 34px; height: 34px; flex: none; border-radius: 9px; }
 .brand b { font: 700 20px/1 var(--display); letter-spacing: -.01em; }
-.brand span { font: 500 12px/1 var(--mono); color: var(--muted); white-space: nowrap; }
+.brand #ayear { font: 500 12px/1 var(--mono); color: var(--muted); white-space: nowrap; }
+/* ---- rotating header wordmark (7 styles, a new one every 75 minutes) ---- */
+:root { --wm-pink: #E3168C; --wm-cyan: #0A7F89; --wm-cyanbg: #2DC8C8; --wm-shadow: #22103F; --wm-body: #8A2A6B; --wm-soft: #22103F;
+  --wm-neon: #FF3D9E; --wm-neon-glow: 0 0 1px #fff, 0 0 6px rgba(255, 61, 158, .75), 0 0 16px rgba(255, 61, 158, .45);
+  --wm-cyan-glow: 0 0 6px rgba(59, 224, 227, .6); --wm-pink-glow: 0 0 6px rgba(255, 79, 163, .5);
+  --wm-tube: #D4127F; --wm-tube-glow: 0 0 8px rgba(255, 79, 163, .35); --wm-tube2: #087A84; --wm-tube2-glow: 0 0 8px rgba(59, 224, 227, .35);
+  --wm-sunset: linear-gradient(180deg, #F2711C 0%, #E83E8C 55%, #8A3BC4 100%);
+  --wm-chrome: linear-gradient(180deg, #4B2A8F 0%, #8A3BC4 45%, #22103F 50%, #C41F6E 58%, #FF6BB5 100%); --wm-chrome2: #C41F6E; --wm-chrome2-glow: none; }
+:root[data-theme="dark"] { --wm-pink: #FF2FA8; --wm-cyan: #3BE0E3; --wm-cyanbg: #3BE0E3; --wm-shadow: #0B0518; --wm-body: #FFC7E4; --wm-soft: #F5EDFF;
+  --wm-neon: #FFE6F4; --wm-neon-glow: 0 0 3px #FF4FA3, 0 0 12px #FF4FA3, 0 0 24px #FF4FA3;
+  --wm-cyan-glow: 0 0 8px rgba(59, 224, 227, .8); --wm-pink-glow: 0 0 6px #FF4FA3;
+  --wm-tube: #FFE1F2; --wm-tube-glow: 0 0 3px #FF4FA3, 0 0 10px #FF4FA3, 0 0 22px #FF4FA3; --wm-tube2: #DFFFFF; --wm-tube2-glow: 0 0 3px #3BE0E3, 0 0 10px #3BE0E3, 0 0 20px #3BE0E3;
+  --wm-sunset: linear-gradient(180deg, #FFC2DD 0%, #FF6BB5 50%, #B48CFF 100%);
+  --wm-chrome: linear-gradient(180deg, #E6F7FF 0%, #9FE8FF 45%, #2A1158 50%, #FF8CC6 58%, #FFE3F2 100%); --wm-chrome2: #FF6BB5; --wm-chrome2-glow: 0 0 6px #FF4FA3, 0 0 14px #FF4FA3; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --wm-pink: #FF2FA8; --wm-cyan: #3BE0E3; --wm-cyanbg: #3BE0E3; --wm-shadow: #0B0518; --wm-body: #FFC7E4; --wm-soft: #F5EDFF;
+  --wm-neon: #FFE6F4; --wm-neon-glow: 0 0 3px #FF4FA3, 0 0 12px #FF4FA3, 0 0 24px #FF4FA3;
+  --wm-cyan-glow: 0 0 8px rgba(59, 224, 227, .8); --wm-pink-glow: 0 0 6px #FF4FA3;
+  --wm-tube: #FFE1F2; --wm-tube-glow: 0 0 3px #FF4FA3, 0 0 10px #FF4FA3, 0 0 22px #FF4FA3; --wm-tube2: #DFFFFF; --wm-tube2-glow: 0 0 3px #3BE0E3, 0 0 10px #3BE0E3, 0 0 20px #3BE0E3;
+  --wm-sunset: linear-gradient(180deg, #FFC2DD 0%, #FF6BB5 50%, #B48CFF 100%);
+  --wm-chrome: linear-gradient(180deg, #E6F7FF 0%, #9FE8FF 45%, #2A1158 50%, #FF8CC6 58%, #FFE3F2 100%); --wm-chrome2: #FF6BB5; --wm-chrome2-glow: 0 0 6px #FF4FA3, 0 0 14px #FF4FA3; } }
+.brand.has-wm > b, .brand.has-wm > #ayear { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.wm { font-size: 16px; display: flex; flex-direction: column; justify-content: center; min-width: 0; line-height: 1; white-space: nowrap; padding: 2px 0 4px; }
+.wm .r { display: flex; align-items: center; gap: .7em; }
+.wm .k { font-family: Syncopate, sans-serif; font-weight: 700; font-size: .66em; letter-spacing: .32em; }
+.wm .yr { font-family: Syncopate, sans-serif; font-weight: 700; font-size: .56em; letter-spacing: .12em; }
+.wm-sticker .t { font-family: "Mr Dafoe", cursive; font-size: 2.1em; color: var(--wm-pink); text-shadow: .05em .05em 0 var(--wm-shadow), .1em .1em 0 var(--wm-cyanbg); transform: rotate(-4deg); transform-origin: left center; padding-right: .15em; }
+.wm-sticker .r { margin: .1em 0 0 3.6em; } .wm-sticker .k { color: var(--wm-cyan); }
+.wm-sticker .yr { background: var(--wm-cyan); color: var(--bg); border-radius: 4px; padding: .3em .55em; }
+.wm-tube .t { font-family: Neonderthaw, cursive; font-size: 2.5em; color: var(--wm-tube); text-shadow: var(--wm-tube-glow); padding: 0 .1em; }
+.wm-tube .r { margin: -.15em 0 0 3.4em; } .wm-tube .k { font-family: "Tilt Neon", sans-serif; font-weight: 400; font-size: 1.05em; letter-spacing: .04em; color: var(--wm-tube2); text-shadow: var(--wm-tube2-glow); }
+.wm-tube .yr { font-family: "Tilt Neon", sans-serif; font-weight: 400; font-size: .8em; letter-spacing: .04em; color: var(--wm-tube); text-shadow: var(--wm-tube-glow); }
+.wm-deco .t { font-family: Syncopate, sans-serif; font-weight: 700; font-size: 1.02em; letter-spacing: .2em; color: var(--wm-cyan); }
+.wm-deco .r { margin-top: .35em; } .wm-deco .k { font-family: Monoton, cursive; font-weight: 400; font-size: 1.4em; letter-spacing: .08em; color: var(--wm-pink); background: var(--wm-cyanbg); padding: .12em .5em 0; line-height: 1.1; }
+.wm-deco .yr { color: var(--wm-cyan); }
+.wm-sunset .t { font-family: "Kaushan Script", cursive; font-size: 2em; line-height: 1.15; background: var(--wm-sunset); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .2em; }
+.wm-sunset svg { display: block; width: 13em; height: .55em; margin-top: -.25em; } .wm-sunset svg path { stroke: var(--wm-cyan); }
+.wm-sunset .r { margin: .2em 0 0 .25em; } .wm-sunset .k { font-family: inherit; font-weight: 800; letter-spacing: .3em; color: var(--wm-soft); } .wm-sunset .yr { color: var(--wm-cyan); }
+.wm-chrome .t { font-family: Audiowide, sans-serif; font-size: 1.4em; letter-spacing: .04em; line-height: 1.1; background: var(--wm-chrome); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.wm-chrome .r { margin-top: .25em; } .wm-chrome .k { font-family: Monoton, cursive; font-weight: 400; font-size: 1.25em; letter-spacing: .12em; color: var(--wm-chrome2); text-shadow: var(--wm-chrome2-glow); }
+.wm-chrome .yr { font-family: Audiowide, sans-serif; font-weight: 400; letter-spacing: .1em; color: var(--wm-cyan); }
+.wm-formal .t { font-family: "Great Vibes", cursive; font-size: 2.05em; color: var(--wm-body); line-height: 1.1; padding-right: .15em; }
+.wm-formal .t b { font-weight: 400; font-size: 1.4em; color: var(--wm-cyan); text-shadow: var(--wm-cyan-glow); }
+.wm-formal svg { display: block; width: 15em; height: .7em; margin: -.35em 0 0 .9em; } .wm-formal svg path { stroke: var(--wm-pink); } .wm-formal svg circle { fill: var(--wm-pink); }
+.wm-formal .r { margin: .1em 0 0 6em; } .wm-formal .k { color: var(--wm-pink); } .wm-formal .yr { font-family: "Great Vibes", cursive; font-weight: 400; font-size: 1.2em; letter-spacing: 0; color: var(--wm-cyan); }
+.wm-signed .t { font-family: "Herr Von Muellerhoff", cursive; font-size: 2.7em; color: var(--wm-neon); text-shadow: var(--wm-neon-glow); line-height: 1; padding-right: .2em; }
+.wm-signed .t b { font-weight: 400; font-size: 1.4em; }
+.wm-signed svg { display: block; width: 15em; height: .7em; margin: -.3em 0 0 1.6em; overflow: visible; } .wm-signed svg path { stroke: var(--wm-cyan); filter: drop-shadow(0 0 3px rgba(59, 224, 227, .8)); }
+.wm-signed .r { margin: .2em 0 0 8em; } .wm-signed .k { color: var(--wm-cyan); text-shadow: var(--wm-cyan-glow); } .wm-signed .yr { color: var(--wm-pink); text-shadow: var(--wm-pink-glow); }
 .search { position: relative; flex: 1 1 240px; max-width: 340px; }
 .search input { width: 100%; padding: 8px 12px 8px 34px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); color: var(--ink); font: inherit; font-size: 15px; }
 .search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); }
@@ -492,13 +539,15 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
   .search { max-width: none; order: 3; flex-basis: 100%; }
   .brand { flex: 1 1 0; }
   .brand b { font-size: 16px; white-space: nowrap; }
+  .wm { font-size: 12px; }
   .brand .logo { width: 30px; height: 30px; }
   .top-row { gap: 12px; }
   .prefs { top: 52px; }
 }
 @media (max-width: 480px) {
   .day { grid-template-columns: 64px minmax(0, 1fr); gap: 12px; }
-  .brand span { display: none; }
+  .brand #ayear, .wm .yr { display: none; }
+  .wm { font-size: 11px; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .view { animation: rise .25s ease-out; }
@@ -657,6 +706,49 @@ async function boot() {
   route();
   if (cfg.liveDataUrl) { gateCheck(false); loadLive(cfg.liveDataUrl, snap); }
   else setStatus();
+}
+
+/* ----------------------------------------------------------- rotating header wordmark
+ * Seven styles; everyone sees the same one, and it changes every 75 minutes (also while the page stays open).
+ * Preview a style with ?wm=1 … ?wm=7 in the address. Screen readers always get the plain title. */
+const WM_MINUTES = 75;
+const WM_STYLES = [
+  { id: "sticker", fonts: "Mr+Dafoe|Syncopate:wght@700", html: y => `<span class="t">Larkin South Miami</span><span class="r"><span class="k">PM&amp;R HUB</span><span class="yr">${y}</span></span>` },
+  { id: "tube", fonts: "Neonderthaw|Tilt+Neon", html: y => `<span class="t">Larkin South Miami</span><span class="r"><span class="k">PM&amp;R Hub</span><span class="yr">${y}</span></span>` },
+  { id: "deco", fonts: "Syncopate:wght@700|Monoton", html: y => `<span class="t">LARKIN SOUTH MIAMI</span><span class="r"><span class="k">PM&amp;R HUB</span><span class="yr">${y}</span></span>` },
+  { id: "sunset", fonts: "Kaushan+Script|Syncopate:wght@700", html: y => `<span class="t">Larkin South Miami</span><svg viewBox="0 0 300 12" preserveAspectRatio="none"><path d="M4 8C70 2 160 1 296 6" fill="none" stroke-width="3.5" stroke-linecap="round"/></svg><span class="r"><span class="k">PM&amp;R HUB</span><span class="yr">${y}</span></span>` },
+  { id: "chrome", fonts: "Audiowide|Monoton", html: y => `<span class="t">LARKIN SOUTH MIAMI</span><span class="r"><span class="k">PM&amp;R HUB</span><span class="yr">${y}</span></span>` },
+  { id: "formal", fonts: "Great+Vibes|Syncopate:wght@700", html: y => `<span class="t"><b>L</b>arkin South Miami</span><svg viewBox="0 0 300 14" preserveAspectRatio="none"><path d="M2 10C60 4 140 2 220 5C254 6 278 5 296 2" fill="none" stroke-width="1.8" stroke-linecap="round"/><circle cx="296" cy="2.4" r="1.8"/></svg><span class="r"><span class="k">PM&amp;R HUB</span><span class="yr">${y}</span></span>` },
+  { id: "signed", fonts: "Herr+Von+Muellerhoff|Syncopate:wght@700", html: y => `<span class="t"><b>L</b>arkin South Miami</span><svg viewBox="0 0 280 14" preserveAspectRatio="none"><path d="M2 10C80 2 180 2 276 7" fill="none" stroke-width="2" stroke-linecap="round"/></svg><span class="r"><span class="k">PM&amp;R HUB</span><span class="yr">${y}</span></span>` },
+];
+let wmTimer = null, wmShown = "";
+function wmIndex() {
+  const pick = +(new URLSearchParams(location.search).get("wm") || 0);
+  if (pick >= 1 && pick <= WM_STYLES.length) return pick - 1;
+  return Math.floor(Date.now() / (WM_MINUTES * 60000)) % WM_STYLES.length;
+}
+function showWordmark() {
+  const brand = document.querySelector(".brand"); if (!brand || !S) return;
+  const st = WM_STYLES[wmIndex()], year = esc(S.academicYear || "");
+  const key = st.id + "|" + year;
+  if (key !== wmShown) {
+    wmShown = key;
+    const families = st.fonts.split("|");
+    const href = "https://fonts.googleapis.com/css2?" + families.map(f => "family=" + f).join("&") + "&display=swap";
+    if (!document.querySelector(`link[data-wm="${st.id}"]`)) { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.dataset.wm = st.id; document.head.appendChild(l); }
+    const put = () => {
+      if (wmShown !== key) return;
+      brand.querySelector(".wm")?.remove();
+      const w = document.createElement("span"); w.className = "wm wm-" + st.id; w.setAttribute("aria-hidden", "true"); w.innerHTML = st.html(year);
+      brand.appendChild(w); brand.classList.add("has-wm");
+    };
+    // swap in once its fonts are ready (the plain title shows meanwhile); give up waiting after 2.5 s
+    const fams = families.map(f => f.split(":")[0].replace(/\+/g, " "));
+    Promise.race([Promise.all(fams.map(f => document.fonts ? document.fonts.load(`20px "${f}"`) : null)), new Promise(r => setTimeout(r, 2500))]).then(put, put);
+  }
+  clearTimeout(wmTimer);
+  const ms = WM_MINUTES * 60000, wait = ms - (Date.now() % ms) + 500;
+  wmTimer = setTimeout(showWordmark, wait);
 }
 
 /* ----------------------------------------------------------- passcode screen
@@ -1047,6 +1139,7 @@ const VIEWS = { home: viewHome, didactics: viewDidactics, schedule: viewSchedule
 function route(keepScroll) {
   if (!S) return;
   $("#ayear").textContent = S.academicYear;
+  showWordmark();
   setStatus();
   const q = $("#q").value.trim();
   if (q.length >= 2) { render(viewSearch(q), "search", keepScroll); return; }
