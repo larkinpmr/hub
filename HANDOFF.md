@@ -56,14 +56,27 @@ The **Handbooks** folder holds one Google Doc per page. Its link is in the Contr
 
 # Guest lecturer reminder emails
 
-The chief Gmail can email guest lecturers automatically before their lecture (a week before by default). It checks the Didactic Schedule every morning around 8 AM, so adding or moving a lecture in the sheet is all you do.
+Every morning around 8 AM the chief Gmail checks the Didactic Schedule and emails each guest lecturer a week before their lecture, with the topic, date, time (2–4 PM is shown as flexible), virtual or in person, the Zoom link or location, and Google/Outlook/Apple calendar buttons. Residents never get these.
 
-1. **Once:** in Apps Script, run **installLectureReminders**. It creates two tabs in the Control Panel and turns on the daily check. Google will ask for permission to send email as the chief Gmail: click Allow.
-2. **Lecturers tab:** one row per guest: their name as written in the Didactic Schedule's Speaker column, their email, other spellings you use (for example `Dr. Kahn; Stuart Kahn`), and "yes" under Send reminders. Residents don't go on this tab, so they never get these emails. This tab is private: the website never receives it. A third tab, **Lecture Locations**, turns sheet shorthand into something a guest understands: "Larkin South" → "Larkin South, G&E building, 4th floor", plus an optional address that becomes a directions link. Fill in ISS once its new location is known.
-3. Run **previewLectureReminders** to see the next 6 weeks of lectures and who will be emailed when. It sends nothing.
-4. Run **sendTestReminder** to get a sample email in the chief inbox.
+**Setup (once):**
 
-Every email sent is listed on the **Lecture Reminders** tab (and in the chief Gmail's Sent folder), and nobody gets the same reminder twice. Replies come back to the chief Gmail. Each email has **Google Calendar** and **Outlook** buttons and an attached calendar file (for Apple Calendar and other apps), so the lecturer can add the lecture, with its join link, to their calendar in one tap. Settings rows: **Lecture reminders** (`off` stops them), **Lecture reminder days** (`7`, or `7, 1` for a week before and the day before), **Didactics start time** (blank = 2:00 PM; a time in the sheet wins), **Guest lecture length (hours)** (blank = 2, so 2:00–4:00 PM), **Virtual lecture link** (added to the email and the calendar event for Virtual lectures) and **Lecture reminder signature**.
+1. In the Control Panel **Settings** tab add two rows: `Lecture reminders` = `test`, and `Lecture reminder test email` = the address that should receive test copies.
+2. In Apps Script, run **installLectureReminders** and click Allow when Google asks to send email. It creates the **Lecturers**, **Lecture Reminders** and **Lecture Locations** tabs and turns on the daily check.
+3. **Lecturers tab:** one row per guest: name exactly as written in the Didactic Schedule's speaker column, email, other spellings (e.g. `Dr. Kahn; Stuart Kahn`), and "yes" under Send reminders.
+4. Run **previewLectureReminders** (who gets what, when; sends nothing) and **sendTestReminder** (two sample emails to the test address).
+5. When the test emails look right, change `Lecture reminders` to `on`. Use `off` to pause everything.
+
+**What happens automatically:**
+
+- **Test mode** (`test`, or blank): every reminder goes to the test address instead, marked with who it would have gone to.
+- **No duplicates:** every email is logged on the **Lecture Reminders** tab (and in the Gmail Sent folder).
+- **Moved lecture:** the lecturer gets a new reminder that says the date changed.
+- **Canceled lecture:** if a reminded lecture disappears from the sheet or is marked "Canceled", the chief Gmail gets an alert to contact the lecturer personally (no automatic email to them).
+- **Missing emails:** every Monday the chief Gmail gets a list of guest lectures in the next 3 weeks whose speaker isn't on the Lecturers tab. Run **checkLecturerEmails** any time for the same list.
+- **Failures:** if an email can't be sent, the chief Gmail is told the same morning.
+- The Lecturers, Lecture Reminders and Lecture Locations tabs, and the "Lecture reminder…" Settings rows, are never sent to the website. **Lecture Locations** turns sheet shorthand into something a guest understands ("Larkin South" → "Larkin South, G&E building, 4th floor", plus an optional address that becomes a directions link).
+
+Other Settings rows: **Lecture reminder days** (`7`, or `7, 1` for a week before and the day before), **Didactics start time** (blank = 2:00 PM), **Guest lecture length (hours)** (blank = 2), **Virtual lecture link**, **Lecture reminder signature**.
 
 # Start of each academic year (July)
 
@@ -93,7 +106,7 @@ Open the **Hub Control Panel** sheet ▸ **Extensions ▸ Apps Script**. Choose 
 | **setupHandbooksFolder** | Already done (October 2026): it split the old single Handbook into the Handbooks folder. Don't run it again unless you rebuild from scratch |
 | **testHub** | If the site says "Saved copy" or something looks missing: lists errors and sizes |
 | **testCalendar** / **testMyCalendar** | To preview the didactics calendar or one resident's personal calendar |
-| **installLectureReminders** / **previewLectureReminders** / **sendTestReminder** | Guest lecturer reminder emails (see above) |
+| **installLectureReminders** / **previewLectureReminders** / **sendTestReminder** / **checkLecturerEmails** | Guest lecturer reminder emails (see above) |
 | **installAutoRefresh** | Only if the automatic 5-minute refresh ever stops (check the clock icon, "Triggers", on the left) |
 
 **If you ever paste new code into Code.gs or Admin.html:** click **Deploy ▸ Manage deployments**. For **each** of the two deployments, click the pencil, set Version to **New version**, and click **Deploy**. Without this, the site keeps running the old code. The links stay the same.
