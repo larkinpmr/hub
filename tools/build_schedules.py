@@ -54,6 +54,6 @@ snap_path = os.path.join(REPO, 'data/snapshot.json')
 snap = json.load(open(snap_path))
 snap['residents'] = parsed['residents']; snap['didactics'] = parsed['didactics']
 snap['builtAt'] = datetime.date.today().isoformat()
-json.dump(snap, open(snap_path, 'w'), ensure_ascii=False)
+json.dump(snap, open(snap_path, "w"), ensure_ascii=False, indent=1)
 print(len(parsed['residents']), 'residents ·', len(parsed['didactics']), 'didactic sessions ·',
       sum(1 for p in parsed['residents'] if any(p.get('months2') or [])), 'residents with split months')
