@@ -46,6 +46,17 @@ The **Handbooks** folder holds one Google Doc per page. Its link is in the Contr
 - Use **Suggesting** mode for big changes, so the chiefs can review them.
 - The old single "PM&R Program Handbook" doc is an archive: edits there no longer reach the site.
 
+# Guest lecturer reminder emails
+
+The chief Gmail can email guest lecturers automatically before their lecture (a week before by default). It checks the Didactic Schedule every morning around 8 AM, so adding or moving a lecture in the sheet is all you do.
+
+1. **Once:** in Apps Script, run **installLectureReminders**. It creates two tabs in the Control Panel and turns on the daily check. Google will ask for permission to send email as the chief Gmail: click Allow.
+2. **Lecturers tab:** one row per guest: their name as written in the Didactic Schedule's Speaker column, their email, other spellings you use (for example `Dr. Kahn; Stuart Kahn`), and "yes" under Send reminders. Residents don't go on this tab, so they never get these emails. This tab is private: the website never receives it.
+3. Run **previewLectureReminders** to see the next 6 weeks of lectures and who will be emailed when. It sends nothing.
+4. Run **sendTestReminder** to get a sample email in the chief inbox.
+
+Every email sent is listed on the **Lecture Reminders** tab (and in the chief Gmail's Sent folder), and nobody gets the same reminder twice. Replies come back to the chief Gmail. Settings rows: **Lecture reminders** (`off` stops them), **Lecture reminder days** (`7`, or `7, 1` for a week before and the day before), **Didactics start time**, **Virtual lecture link** (added for Virtual lectures) and **Lecture reminder signature**.
+
 # Start of each academic year (July)
 
 1. **Accounts:** give the new chiefs the chief Gmail and update its recovery phone/email and 2-step verification.
@@ -74,6 +85,7 @@ Open the **Hub Control Panel** sheet ▸ **Extensions ▸ Apps Script**. Choose 
 | **setupHandbooksFolder** | Already done (October 2026): it split the old single Handbook into the Handbooks folder. Don't run it again unless you rebuild from scratch |
 | **testHub** | If the site says "Saved copy" or something looks missing: lists errors and sizes |
 | **testCalendar** / **testMyCalendar** | To preview the didactics calendar or one resident's personal calendar |
+| **installLectureReminders** / **previewLectureReminders** / **sendTestReminder** | Guest lecturer reminder emails (see above) |
 | **installAutoRefresh** | Only if the automatic 5-minute refresh ever stops (check the clock icon, "Triggers", on the left) |
 
 **If you ever paste new code into Code.gs or Admin.html:** click **Deploy ▸ Manage deployments**. For **each** of the two deployments, click the pencil, set Version to **New version**, and click **Deploy**. Without this, the site keeps running the old code. The links stay the same.

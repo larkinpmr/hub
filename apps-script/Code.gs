@@ -101,16 +101,24 @@ function build_() {
   const out = { ok: true, updated: new Date().toISOString(), errors: [], panel: {} };
   try {
     const panel = SpreadsheetApp.getActiveSpreadsheet();
-    if (panel) panel.getSheets().forEach(sh => { out.panel[sh.getName()] = values_(sh); });
+    if (panel) panel.getSheets().forEach(sh => { if (PRIVATE_TABS.indexOf(sh.getName()) < 0) out.panel[sh.getName()] = values_(sh); });
   } catch (err) { out.errors.push('Control Panel: ' + err.message); }
 
   const settings = {};
   (out.panel['Settings'] || []).forEach(r => { if (r[0]) settings[String(r[0]).trim()] = String(r[1] || '').trim(); });
   const idOf = key => idFromLink_(settings[key]) || FALLBACK[key];
 
-  try { out.didactics = readSheet_(idOf('Didactic Schedule Sheet'), settings['Didactic Schedule tab']); } catch (err) { out.errors.push('Didactic Schedule: ' + err.message); }
+  try { out.didactics = dropEmailColumns_(readSheet_(idOf('Didactic Schedule Sheet'), settings['Didactic Schedule tab'])); } catch (err) { out.errors.push('Didactic Schedule: ' + err.message); }
   try { out.residents = readSheet_(idOf('Resident Schedule Sheet'), settings['Resident Schedule tab']); } catch (err) { out.errors.push('Resident Schedule: ' + err.message); }
   return out;
+}
+
+/** Keeps email addresses off the public website if someone adds an Email column to a schedule sheet. */
+function dropEmailColumns_(rows) {
+  const hi = rows.findIndex(r => r.some(c => /topic/i.test(c)));
+  if (hi < 0) return rows;
+  const drop = rows[hi].map((c, i) => /e-?mail/i.test(c) ? i : -1).filter(i => i >= 0);
+  return drop.length ? rows.map(r => r.filter((c, i) => drop.indexOf(i) < 0)) : rows;
 }
 
 function panelSettings_() {
@@ -855,4 +863,157 @@ function checkHandbookLinks() {
   sh.autoResizeColumns(1, 4);
   const count = s => list.filter(l => l.status === s).length;
   Logger.log(list.length + ' links checked: ' + count('OK') + ' OK · ' + count('Broken') + ' broken · ' + count('Private') + ' private · ' + count('Check') + ' to check by hand. See the "Link Check" tab.');
+}
+
+/* ------------------------------------------------------------------ guest lecturer reminder emails
+ * Once a day the script reads the Didactic Schedule and emails each lecturer listed on the Control
+ * Panel's private "Lecturers" tab before their lecture (7 days ahead by default). Every email sent is
+ * written to the "Lecture Reminders" tab, so nobody gets the same reminder twice. Both tabs stay
+ * private: the website never receives them.
+ *   installLectureReminders  run once: creates the tabs and turns on the daily 8 AM check
+ *   previewLectureReminders  lists the next 6 weeks of lectures and who would be emailed (sends nothing)
+ *   sendTestReminder         sends a sample reminder to the chief Gmail only
+ * Settings rows (optional): Lecture reminders (on/off) · Lecture reminder days (e.g. "7" or "7, 1") ·
+ * Didactics start time · Virtual lecture link · Lecture reminder signature */
+const PRIVATE_TABS = ['Lecturers', 'Lecture Reminders'];
+const LECTURER_HEAD = ['Name (as written in the Didactic Schedule)', 'Email', 'Also written as (separate with ;)', 'Send reminders (yes/no)', 'Notes'];
+const REMINDER_HEAD = ['Sent', 'Lecture date', 'Topic', 'Speaker', 'Email', 'Days before', 'Status'];
+
+function installLectureReminders() {
+  const lec = panelSheet_('Lecturers', LECTURER_HEAD);
+  panelSheet_('Lecture Reminders', REMINDER_HEAD);
+  if (lec.getLastRow() < 2) lec.getRange(2, 1, 1, 5).setValues([['Dr. Example Lecturer', 'name@example.com', 'Dr. Lecturer; John Lecturer', 'no', 'Sample row: replace it. Reminders go only to rows with an email and "yes".']]);
+  lec.setColumnWidth(1, 280); lec.setColumnWidth(2, 240); lec.setColumnWidth(3, 260); lec.setColumnWidth(5, 360);
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'sendLectureReminders').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('sendLectureReminders').timeBased().atHour(8).everyDays(1).inTimezone(TZ).create();
+  Logger.log('Lecture reminders are on: every morning around 8 AM, lecturers on the "Lecturers" tab get an email ' + reminderDays_(panelSettings_()).join(' and ') + ' day(s) before their lecture.\nNext: add your guest lecturers to the "Lecturers" tab, then run previewLectureReminders.');
+}
+
+function reminderDays_(settings) {
+  const days = String(settings['Lecture reminder days'] || '7').split(/[,;\s]+/).map(Number).filter(n => n >= 1 && n <= 60);
+  return (days.length ? days : [7]).filter((n, i, a) => a.indexOf(n) === i).sort((a, b) => b - a);
+}
+
+function normName_(s) {
+  return String(s || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/\b(dr|doctor|prof|md|do|phd)\b\.?/g, ' ').replace(/[^a-z\s'-]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function readLecturers_() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Lecturers');
+  if (!sh) return [];
+  return values_(sh).slice(1).map(r => ({
+    name: String(r[0] || '').trim(), email: String(r[1] || '').trim(),
+    names: [r[0]].concat(String(r[2] || '').split(/[;\n]/)).map(normName_).filter(Boolean),
+    on: !/^(no|n|off|false|0)$/i.test(String(r[3] || '').trim()),
+  })).filter(l => l.name && /@/.test(l.email) && l.on && !/@example\.com$/i.test(l.email));
+}
+
+/** Which lecturers a Speaker cell refers to: "Dr. Kahn", "Stuart Kahn / Dr. Ortiz", etc. */
+function matchLecturers_(speaker, lecturers) {
+  const parts = String(speaker || '').split(/\s*(?:\/|&|,|\band\b|\+)\s*/i).map(normName_).filter(Boolean);
+  const found = [];
+  parts.forEach(p => {
+    let hit = lecturers.filter(l => l.names.indexOf(p) >= 0);
+    if (!hit.length && p.indexOf(' ') < 0) { // just a last name, e.g. "Dr. Ortiz": use it only if one lecturer has that last name
+      const byLast = lecturers.filter(l => l.names.some(n => n.split(' ').pop() === p));
+      if (byLast.length === 1) hit = byLast;
+    }
+    hit.forEach(l => { if (found.indexOf(l) < 0) found.push(l); });
+  });
+  return found;
+}
+
+function daysUntil_(iso) {
+  const today = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
+  return Math.round((Date.parse(iso + 'T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 86400000);
+}
+
+/** Reminders due today: each reminder day d covers the days until the next smaller reminder, so a lecture
+ * added late still gets one reminder. */
+function dueReminders_(settings, horizon) {
+  const id = idFromLink_(settings['Didactic Schedule Sheet']) || FALLBACK['Didactic Schedule Sheet'];
+  const talks = parseDidactics_(readSheet_(id, settings['Didactic Schedule tab']));
+  const lecturers = readLecturers_();
+  const days = reminderDays_(settings);
+  const sent = {};
+  const log = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Lecture Reminders');
+  if (log) values_(log).slice(1).forEach(r => { if (/^sent/i.test(r[6])) sent[[r[1], normName_(r[2]), String(r[4]).toLowerCase(), r[5]].join('|')] = true; });
+  const out = [];
+  talks.forEach(t => {
+    const n = daysUntil_(t.date);
+    if (n < 1 || n > (horizon || days[0])) return;
+    const who = matchLecturers_(t.speaker, lecturers);
+    if (!who.length) { if (horizon) out.push({ talk: t, n: n, lecturer: null }); return; }
+    who.forEach(l => {
+      const slot = days.find((d, i) => n <= d && n > (days[i + 1] || 0));
+      const key = slot && [t.date, normName_(t.topic), l.email.toLowerCase(), slot].join('|');
+      out.push({ talk: t, n: n, lecturer: l, slot: slot, key: key, already: !!(key && sent[key]) });
+    });
+  });
+  return out;
+}
+
+function reminderEmail_(t, l, settings) {
+  const fmt = iso => Utilities.formatDate(new Date(iso + 'T12:00:00Z'), 'UTC', 'EEEE, MMMM d');
+  const when = fmt(t.date);
+  const time = t.time || settings['Didactics start time'] || '';
+  const virtual = /virtual|zoom|teams|online/i.test(t.location || '');
+  const link = virtual ? (settings['Virtual lecture link'] || '') : '';
+  const sign = settings['Lecture reminder signature'] || 'PM&R Chief Residents\nLarkin Community Hospital South Miami';
+  const greet = /^\s*dr\b/i.test(l.name) ? 'Dr. ' + String(l.name).replace(/\([^)]*\)/g, '').trim().split(/\s+/).pop() : String(l.name).replace(/\([^)]*\)/g, '').trim();
+  const rows = [['Topic', t.topic], ['Date', when], ['Time', time], ['Location', t.location], ['Join link', link]].filter(r => r[1]);
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const subject = 'Reminder: your PM&R lecture on ' + when;
+  const plain = 'Dear ' + greet + ',\n\nThank you again for teaching our PM&R residents. This is a friendly reminder about your upcoming lecture:\n\n' +
+    rows.map(r => r[0] + ': ' + r[1]).join('\n') +
+    '\n\nIf anything has changed, or you would like to share slides or materials ahead of time, just reply to this email.\n\nThank you,\n' + sign;
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f2937">' +
+    '<p>Dear ' + esc(greet) + ',</p><p>Thank you again for teaching our PM&amp;R residents. This is a friendly reminder about your upcoming lecture:</p>' +
+    '<table style="border-collapse:collapse;margin:8px 0 14px">' + rows.map(r => '<tr><td style="padding:3px 16px 3px 0;color:#6b7280">' + r[0] + '</td><td style="padding:3px 0;font-weight:bold">' +
+      (r[0] === 'Join link' ? '<a href="' + esc(r[1]) + '">' + esc(r[1]) + '</a>' : esc(r[1])) + '</td></tr>').join('') + '</table>' +
+    '<p>If anything has changed, or you would like to share slides or materials ahead of time, just reply to this email.</p>' +
+    '<p>Thank you,<br>' + esc(sign).replace(/\n/g, '<br>') + '</p></div>';
+  return { subject: subject, plain: plain, html: html };
+}
+
+/** Runs every morning (installLectureReminders sets it up). */
+function sendLectureReminders() {
+  const settings = panelSettings_();
+  if (/^(off|no|false|0)$/i.test(settings['Lecture reminders'] || '')) return;
+  const log = panelSheet_('Lecture Reminders', REMINDER_HEAD);
+  const stamp = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm');
+  dueReminders_(settings).filter(r => r.lecturer && r.slot && !r.already).forEach(r => {
+    let status = 'Sent';
+    try {
+      const m = reminderEmail_(r.talk, r.lecturer, settings);
+      MailApp.sendEmail({ to: r.lecturer.email, subject: m.subject, body: m.plain, htmlBody: m.html, name: 'Larkin PM&R Chief Residents' });
+    } catch (err) { status = 'Failed: ' + err.message; }
+    log.appendRow([stamp, r.talk.date, r.talk.topic, r.talk.speaker, r.lecturer.email, r.slot, status]);
+  });
+}
+
+/** Lists the next 6 weeks of lectures and what would be sent. Sends nothing. */
+function previewLectureReminders() {
+  const settings = panelSettings_();
+  const days = reminderDays_(settings);
+  const list = dueReminders_(settings, 42).filter(r => r.talk.speaker);
+  const lines = ['Reminders go out ' + days.join(' and ') + ' day(s) before. Lectures in the next 6 weeks with a speaker:'];
+  list.forEach(r => {
+    const t = r.talk, head = t.date + ' · ' + t.topic + ' — ' + t.speaker;
+    if (!r.lecturer) lines.push('  ' + head + '  →  no email (not on the Lecturers tab, or set to "no": fine for residents)');
+    else lines.push('  ' + head + '  →  ' + r.lecturer.email + (r.already ? '  (already sent)' : r.slot && r.n <= days[0] ? '  (sends at the next 8 AM check)' : '  (will send ' + days.map(d => Utilities.formatDate(new Date(Date.parse(t.date + 'T12:00:00Z') - d * 86400000), 'UTC', 'MMM d')).join(' and ') + ')'));
+  });
+  if (/^(off|no|false|0)$/i.test(settings['Lecture reminders'] || '')) lines.push('NOTE: "Lecture reminders" is set to off in Settings, so nothing will be sent.');
+  if (!ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'sendLectureReminders')) lines.push('NOTE: the daily check is not on yet. Run installLectureReminders.');
+  Logger.log(lines.join('\n'));
+}
+
+/** Sends one sample reminder to the chief Gmail (the account running the script). */
+function sendTestReminder() {
+  const settings = panelSettings_();
+  const me = Session.getEffectiveUser().getEmail();
+  const soon = Utilities.formatDate(new Date(Date.now() + 7 * 86400000), TZ, 'yyyy-MM-dd');
+  const m = reminderEmail_({ date: soon, time: '', location: 'Virtual', topic: 'Sample lecture topic', speaker: 'Dr. Example' }, { name: 'Dr. Example' }, settings);
+  MailApp.sendEmail({ to: me, subject: '[TEST] ' + m.subject, body: m.plain, htmlBody: m.html, name: 'Larkin PM&R Chief Residents' });
+  Logger.log('Sample reminder sent to ' + me + '. Check its inbox.');
 }
