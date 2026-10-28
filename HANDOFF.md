@@ -55,7 +55,7 @@ The chief Gmail can email guest lecturers automatically before their lecture (a 
 3. Run **previewLectureReminders** to see the next 6 weeks of lectures and who will be emailed when. It sends nothing.
 4. Run **sendTestReminder** to get a sample email in the chief inbox.
 
-Every email sent is listed on the **Lecture Reminders** tab (and in the chief Gmail's Sent folder), and nobody gets the same reminder twice. Replies come back to the chief Gmail. Settings rows: **Lecture reminders** (`off` stops them), **Lecture reminder days** (`7`, or `7, 1` for a week before and the day before), **Didactics start time**, **Virtual lecture link** (added for Virtual lectures) and **Lecture reminder signature**.
+Every email sent is listed on the **Lecture Reminders** tab (and in the chief Gmail's Sent folder), and nobody gets the same reminder twice. Replies come back to the chief Gmail. Each email has **Google Calendar** and **Outlook** buttons and an attached calendar file (for Apple Calendar and other apps), so the lecturer can add the lecture, with its join link, to their calendar in one tap. Settings rows: **Lecture reminders** (`off` stops them), **Lecture reminder days** (`7`, or `7, 1` for a week before and the day before), **Didactics start time** (blank = 2:00 PM; a time in the sheet wins), **Guest lecture length (hours)** (blank = 2, so 2:00–4:00 PM), **Virtual lecture link** (added to the email and the calendar event for Virtual lectures) and **Lecture reminder signature**.
 
 # Start of each academic year (July)
 

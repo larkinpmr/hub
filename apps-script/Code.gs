@@ -874,7 +874,8 @@ function checkHandbookLinks() {
  *   previewLectureReminders  lists the next 6 weeks of lectures and who would be emailed (sends nothing)
  *   sendTestReminder         sends a sample reminder to the chief Gmail only
  * Settings rows (optional): Lecture reminders (on/off) · Lecture reminder days (e.g. "7" or "7, 1") ·
- * Didactics start time · Virtual lecture link · Lecture reminder signature */
+ * Didactics start time (blank = 2:00 PM) · Guest lecture length (hours) (blank = 2) · Virtual lecture link ·
+ * Lecture reminder signature */
 const PRIVATE_TABS = ['Lecturers', 'Lecture Reminders'];
 const LECTURER_HEAD = ['Name (as written in the Didactic Schedule)', 'Email', 'Also written as (separate with ;)', 'Send reminders (yes/no)', 'Notes'];
 const REMINDER_HEAD = ['Sent', 'Lecture date', 'Topic', 'Speaker', 'Email', 'Days before', 'Status'];
@@ -953,27 +954,67 @@ function dueReminders_(settings, horizon) {
   return out;
 }
 
+/** "2:00 PM" / "1:30-3 PM" -> start and end minutes; no time in the sheet means the usual 2:00–4:00 PM. */
+function lectureTimes_(t, settings) {
+  const len = Math.round((Number(settings['Guest lecture length (hours)']) || 2) * 60);
+  const p = parseTime_(t.time) || parseTime_(settings['Didactics start time'] || '2:00 PM') || { start: 14 * 60, end: null };
+  const end = p.end != null ? p.end : Math.min(p.start + len, 23 * 60 + 59);
+  return { start: p.start, end: end };
+}
+
+function clock_(mins) {
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return ((h + 11) % 12 + 1) + ':' + ('0' + m).slice(-2) + ' ' + (h < 12 ? 'AM' : 'PM');
+}
+
 function reminderEmail_(t, l, settings) {
-  const fmt = iso => Utilities.formatDate(new Date(iso + 'T12:00:00Z'), 'UTC', 'EEEE, MMMM d');
-  const when = fmt(t.date);
-  const time = t.time || settings['Didactics start time'] || '';
+  const when = Utilities.formatDate(new Date(t.date + 'T12:00:00Z'), 'UTC', 'EEEE, MMMM d');
+  const tm = lectureTimes_(t, settings);
+  const time = clock_(tm.start).replace(/ (AM|PM)$/, (s, ap) => clock_(tm.end).slice(-2) === ap ? '' : s) + ' – ' + clock_(tm.end);
   const virtual = /virtual|zoom|teams|online/i.test(t.location || '');
   const link = virtual ? (settings['Virtual lecture link'] || '') : '';
   const sign = settings['Lecture reminder signature'] || 'PM&R Chief Residents\nLarkin Community Hospital South Miami';
-  const greet = /^\s*dr\b/i.test(l.name) ? 'Dr. ' + String(l.name).replace(/\([^)]*\)/g, '').trim().split(/\s+/).pop() : String(l.name).replace(/\([^)]*\)/g, '').trim();
+  const bare = String(l.name).replace(/\([^)]*\)/g, '').trim();
+  const greet = /^\s*dr\b/i.test(bare) ? 'Dr. ' + bare.split(/\s+/).pop() : bare;
   const rows = [['Topic', t.topic], ['Date', when], ['Time', time], ['Location', t.location], ['Join link', link]].filter(r => r[1]);
-  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+
+  // Calendar: Google / Outlook buttons plus an attached .ics file (Apple Calendar, Outlook desktop, anything else).
+  const ymd = t.date.replace(/-/g, '');
+  const local = m => ymd + 'T' + hhmm_(m);
+  const title = 'PM&R lecture: ' + t.topic;
+  const calLoc = link || t.location || '';
+  const details = 'Lecture for the Larkin Community Hospital South Miami PM&R residents.\nTopic: ' + t.topic + (link ? '\nJoin link: ' + link : '') + (t.location ? '\nLocation: ' + t.location : '') + '\n\nQuestions: reply to the reminder email.';
+  const q = o => Object.keys(o).map(k => k + '=' + encodeURIComponent(o[k])).join('&');
+  const google = 'https://calendar.google.com/calendar/render?' + q({ action: 'TEMPLATE', text: title }) + '&dates=' + local(tm.start) + '/' + local(tm.end) + '&' + q({ ctz: TZ, details: details, location: calLoc });
+  const isoLocal = m => t.date + 'T' + hhmm_(m).replace(/(\d\d)(\d\d)(\d\d)/, '$1:$2:$3');
+  const outlook = 'https://outlook.office.com/calendar/deeplink/compose?' + q({ path: '/calendar/action/compose', rru: 'addevent', subject: title, startdt: isoLocal(tm.start), enddt: isoLocal(tm.end), body: details, location: calLoc });
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Larkin PM&R Hub//Lecture//EN', 'METHOD:PUBLISH', 'BEGIN:VTIMEZONE', 'TZID:' + TZ,
+    'BEGIN:DAYLIGHT', 'TZOFFSETFROM:-0500', 'TZOFFSETTO:-0400', 'TZNAME:EDT', 'DTSTART:19700308T020000', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU', 'END:DAYLIGHT',
+    'BEGIN:STANDARD', 'TZOFFSETFROM:-0400', 'TZOFFSETTO:-0500', 'TZNAME:EST', 'DTSTART:19701101T020000', 'RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU', 'END:STANDARD', 'END:VTIMEZONE',
+    'BEGIN:VEVENT', 'UID:lecture-' + ymd + '-' + normName_(t.topic).replace(/[^a-z0-9]+/g, '-').slice(0, 40) + '@larkin-pmr-hub',
+    'DTSTAMP:' + Utilities.formatDate(new Date(), 'UTC', "yyyyMMdd'T'HHmmss'Z'"),
+    'DTSTART;TZID=' + TZ + ':' + local(tm.start), 'DTEND;TZID=' + TZ + ':' + local(tm.end),
+    fold_('SUMMARY:' + esc_(title)), fold_('LOCATION:' + esc_(calLoc)), fold_('DESCRIPTION:' + esc_(details))]
+    .concat(link ? [fold_('URL:' + link)] : [])
+    .concat(['BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + esc_(title), 'TRIGGER:-PT1H', 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR']).join('\r\n') + '\r\n';
+  const attachment = Utilities.newBlob(ics, 'text/calendar', 'PM&R lecture ' + t.date + '.ics');
+
+  const btn = (href, label) => '<a href="' + esc(href) + '" style="display:inline-block;margin:0 8px 8px 0;padding:9px 14px;border-radius:8px;background:#0F766E;color:#ffffff;text-decoration:none;font-weight:bold">' + label + '</a>';
   const subject = 'Reminder: your PM&R lecture on ' + when;
   const plain = 'Dear ' + greet + ',\n\nThank you again for teaching our PM&R residents. This is a friendly reminder about your upcoming lecture:\n\n' +
     rows.map(r => r[0] + ': ' + r[1]).join('\n') +
+    '\n\nAdd it to your calendar:\nGoogle Calendar: ' + google + '\nOutlook: ' + outlook + '\nApple Calendar or other apps: open the attached .ics file.' +
     '\n\nIf anything has changed, or you would like to share slides or materials ahead of time, just reply to this email.\n\nThank you,\n' + sign;
   const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f2937">' +
     '<p>Dear ' + esc(greet) + ',</p><p>Thank you again for teaching our PM&amp;R residents. This is a friendly reminder about your upcoming lecture:</p>' +
     '<table style="border-collapse:collapse;margin:8px 0 14px">' + rows.map(r => '<tr><td style="padding:3px 16px 3px 0;color:#6b7280">' + r[0] + '</td><td style="padding:3px 0;font-weight:bold">' +
       (r[0] === 'Join link' ? '<a href="' + esc(r[1]) + '">' + esc(r[1]) + '</a>' : esc(r[1])) + '</td></tr>').join('') + '</table>' +
+    '<p style="margin:0 0 6px">Add it to your calendar:</p><div>' + btn(google, 'Google Calendar') + btn(outlook, 'Outlook') + '</div>' +
+    '<p style="margin:0 0 14px;color:#6b7280;font-size:13px">Apple Calendar or another app: open the attached .ics file.' + (link ? ' The join link is saved in the event.' : '') + '</p>' +
     '<p>If anything has changed, or you would like to share slides or materials ahead of time, just reply to this email.</p>' +
     '<p>Thank you,<br>' + esc(sign).replace(/\n/g, '<br>') + '</p></div>';
-  return { subject: subject, plain: plain, html: html };
+  return { subject: subject, plain: plain, html: html, attachments: [attachment] };
 }
 
 /** Runs every morning (installLectureReminders sets it up). */
@@ -986,7 +1027,7 @@ function sendLectureReminders() {
     let status = 'Sent';
     try {
       const m = reminderEmail_(r.talk, r.lecturer, settings);
-      MailApp.sendEmail({ to: r.lecturer.email, subject: m.subject, body: m.plain, htmlBody: m.html, name: 'Larkin PM&R Chief Residents' });
+      MailApp.sendEmail({ to: r.lecturer.email, subject: m.subject, body: m.plain, htmlBody: m.html, attachments: m.attachments, name: 'Larkin PM&R Chief Residents' });
     } catch (err) { status = 'Failed: ' + err.message; }
     log.appendRow([stamp, r.talk.date, r.talk.topic, r.talk.speaker, r.lecturer.email, r.slot, status]);
   });
@@ -1014,6 +1055,6 @@ function sendTestReminder() {
   const me = Session.getEffectiveUser().getEmail();
   const soon = Utilities.formatDate(new Date(Date.now() + 7 * 86400000), TZ, 'yyyy-MM-dd');
   const m = reminderEmail_({ date: soon, time: '', location: 'Virtual', topic: 'Sample lecture topic', speaker: 'Dr. Example' }, { name: 'Dr. Example' }, settings);
-  MailApp.sendEmail({ to: me, subject: '[TEST] ' + m.subject, body: m.plain, htmlBody: m.html, name: 'Larkin PM&R Chief Residents' });
+  MailApp.sendEmail({ to: me, subject: '[TEST] ' + m.subject, body: m.plain, htmlBody: m.html, attachments: m.attachments, name: 'Larkin PM&R Chief Residents' });
   Logger.log('Sample reminder sent to ' + me + '. Check its inbox.');
 }
