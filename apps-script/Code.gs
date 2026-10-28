@@ -519,7 +519,9 @@ function parseDidactics_(rows) {
     const topic = g(cTopic);
     if (!topic || !cur.date) return;
     out.push({ date: cur.date, time: cur.time, rowTime: g(cTime), location: cur.location, topic: topic, speaker: g(cSpk), block: block, link: cur.link,
-      confKnown: cConf >= 0, confirmed: /^(y|yes|confirmed|✓|✔|true|x)$/i.test(g(cConf)) });
+      // Confirmed column: "yes"/"confirmed" → reminder · blank → invitation · anything else (rescheduled…) → nothing
+      confKnown: cConf >= 0, confState: cConf < 0 ? '' : !g(cConf) ? 'blank' : /^(y|yes|confirmed)\b/i.test(g(cConf)) ? 'yes' : 'other' });
+    out[out.length - 1].confirmed = out[out.length - 1].confState === 'yes';
   });
   return out;
 }
@@ -1128,13 +1130,13 @@ function sendLectureReminders() {
   const stamp = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm');
   const talks = readTalks_(settings);
   const failed = [];
-  const due = dueReminders_(settings, 0, talks).filter(r => r.lecturer && r.slot && !r.already);
-  const held = due.filter(r => r.talk.confKnown && !r.talk.confirmed);
+  const due = dueReminders_(settings, 0, talks).filter(r => r.lecturer && r.slot && !r.already && r.talk.confState !== 'other');
+  const held = due.filter(r => r.talk.confState === 'blank');
   held.forEach(r => log.appendRow([stamp, r.talk.date, r.talk.topic, r.talk.speaker, r.lecturer.email, r.slot, 'Not confirmed: no reminder sent, chiefs alerted']));
   if (held.length) MailApp.sendEmail({ to: chiefEmail_(), subject: 'Hub: ' + held.length + ' guest lecture(s) coming up but not confirmed', name: 'PM&R Hub',
-    body: 'These guest lectures are coming up soon, but "Confirmed" is not marked yes in the Didactic Schedule, so no reminder went out:\n\n' +
+    body: 'These guest lectures are coming up soon, but their "Confirmed" cell in the Didactic Schedule is blank, so no reminder went out:\n\n' +
       held.map(r => r.talk.date + ' · ' + r.talk.topic + ' — ' + r.talk.speaker + ' <' + r.lecturer.email + '>').join('\n') +
-      '\n\nIf they confirmed, type yes under Confirmed and they will get their reminder at the next 8 AM check. If not, please reach out to them.' });
+      '\n\nIf they confirmed, type yes (or confirmed) under Confirmed and they will get their reminder at the next 8 AM check. If not, please reach out to them, or type something like "rescheduled" to stop these alerts.' });
   due.filter(r => held.indexOf(r) < 0).forEach(r => {
     const to = mode === 'on' ? r.lecturer.email : testAddress_(settings);
     let status = mode === 'on' ? 'Sent' : 'Test sent to ' + to;
@@ -1198,7 +1200,7 @@ function missingLecturerEmails_(settings, talks, horizon) {
   const out = [];
   talks.forEach(t => {
     const n = daysUntil_(t.date);
-    if (n < 0 || n > horizon || !t.speaker || /cancel|no didactics|holiday/i.test(t.topic)) return;
+    if (n < 0 || n > horizon || !t.speaker || t.confState === 'other' || /cancel|no didactics|holiday/i.test(t.topic)) return;
     guestParts_(t.speaker, tokens).forEach(part => { if (!matchLecturers_(part, lecturers).length) out.push(t.date + ' · ' + t.topic + ' — ' + part); });
   });
   return out.filter((x, i, a) => a.indexOf(x) === i);
@@ -1215,6 +1217,8 @@ function previewLectureReminders() {
     'Reminders go out ' + days.join(' and ') + ' day(s) before. Guest lectures in the next 6 weeks:'];
   list.forEach(r => {
     const t = r.talk, head = t.date + ' · ' + t.topic + ' — ' + t.speaker;
+    if (t.confState === 'other') { lines.push('  ' + head + '  →  nothing (Confirmed column says something other than yes)'); return; }
+    if (t.confState === 'blank') { lines.push('  ' + head + '  →  no reminder until Confirmed says yes (gets an invitation draft instead)'); return; }
     lines.push('  ' + head + '  →  ' + r.lecturer.email + (r.moved ? '  (date changed)' : '') + (r.already ? '  (already sent)' : r.slot && r.n <= days[0] ? '  (sends at the next 8 AM check)' : '  (will send ' + days.map(d => Utilities.formatDate(new Date(Date.parse(t.date + 'T12:00:00Z') - d * 86400000), 'UTC', 'MMM d')).join(' and ') + ')'));
   });
   if (!list.length) lines.push('  (none: add guest lecturers to the "Lecturers" tab)');
@@ -1370,7 +1374,7 @@ function draftUpcomingInvitations(talks) {
   const made = [];
   talks.forEach(t => {
     const n = daysUntil_(t.date);
-    if (n < 1 || n > weeks * 7 || t.confirmed || /cancel|no didactics|holiday/i.test(t.topic)) return;
+    if (n < 1 || n > weeks * 7 || t.confState !== 'blank' || /cancel|no didactics|holiday/i.test(t.topic)) return;   // only blank Confirmed cells get an invitation
     guestParts_(t.speaker, tokens).forEach(guest => {
       const k = normName_(t.topic) + '|' + t.date;
       if (have[k] || have[normName_(guest) + '|' + t.date]) return; have[k] = true;
