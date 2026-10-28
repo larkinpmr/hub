@@ -702,16 +702,23 @@ function parseResidents_(rows) {
     if (r.filter(isMonth).length >= 6) {
       const first = r.findIndex(isMonth);
       let ni = r.findIndex(c => /resident/i.test(c)); if (ni < 0 || ni > first) ni = Math.max(0, first - 1);
-      map = { name: ni, months: MONTH_NAMES.map(m => r.findIndex(c => isMonth(c) && c.slice(0, 3).toLowerCase() === m.slice(0, 3).toLowerCase())) };
+      // a month can span two columns (first half / second half of the month, split on the 16th)
+      // a month header covering two columns (merged, repeated, or a blank header right after it) = first half / second half
+      const own = []; let last = -1;
+      r.forEach((c, k) => { if (isMonth(c)) { own[k] = c; last = k; } else if (!c && last >= 0 && k === last + 1 && own[last] && String(own[k - 2] || '').charAt(0) !== '+') { own[k] = '+' + own[last]; } else last = -1; });
+      const monthOf = k => String(own[k] || '').replace(/^\+/, '').slice(0, 3).toLowerCase();
+      map = { name: ni, months: MONTH_NAMES.map(m => own.map((c, k) => c && monthOf(k) === m.slice(0, 3).toLowerCase() ? k : -1).filter(k => k >= 0).slice(0, 2)) };
       if (pg) pgy = 'PGY-' + pg[1];
       return;
     }
     if (!map) { if (pg) pgy = 'PGY-' + pg[1]; return; }
     const name = r[map.name] || '';
-    const months = map.months.map(i => i >= 0 ? (r[i] || '').split(',')[0].trim() : '');
+    const cell = k => (r[k] || '').split(',')[0].trim();
+    const months = map.months.map(ks => ks.length ? cell(ks[0]) : '');
+    const months2 = map.months.map((ks, i) => { const b = ks.length > 1 ? cell(ks[ks.length - 1]) : ''; return b && normCode_(b) !== normCode_(months[i]) ? b : ''; });
     const filled = months.filter(Boolean).length;
     if (pg && (filled < 6 || /pgy/i.test(name))) { pgy = 'PGY-' + pg[1]; return; }
-    if (name && filled >= 6 && !/key|resident/i.test(name)) out.push({ name: name, pgy: pgy, months: months });
+    if (name && filled >= 6 && !/key|resident/i.test(name)) out.push({ name: name, pgy: pgy, months: months, months2: months2 });
   });
   return out;
 }
@@ -745,21 +752,25 @@ function buildMyCalendar_(who) {
     ev.push('END:VEVENT'); Array.prototype.push.apply(out, ev);
   };
 
-  // Rotation blocks (consecutive months with the same assignment)
-  let i = 0;
-  while (i < 12) {
-    const raw = me.months[i]; if (!raw) { i++; continue; }
-    let j = i; while (j + 1 < 12 && normCode_(me.months[j + 1]) === normCode_(raw)) j++;
-    const rot = rotOf(raw), label = rot ? (rot.short || rot.name) : raw;
-    const start = monthStart(i), end = monthStart(j + 1 < 12 ? j + 1 : 12);
-    allDay(uidBase + '-rot-' + i, start, end, 'Rotation: ' + label, (rot ? rot.name + '\n' : '') + MONTH_NAMES[i] + (j > i ? '–' + MONTH_NAMES[j] : '') + (site ? '\nGuide: ' + site + '#rotations' : ''), false);
+  // Rotation blocks (consecutive half-months with the same assignment; a split month changes on the 16th)
+  const slot = k => (k % 2 && me.months2[k >> 1]) ? me.months2[k >> 1] : me.months[k >> 1];
+  const slotStart = k => k >= 24 ? monthStart(12) : (k % 2 ? new Date(monthStart(k >> 1).getTime() + 15 * 86400000) : monthStart(k >> 1));
+  const fmt = d => Utilities.formatDate(d, 'UTC', 'MMM d');
+  let k = 0;
+  while (k < 24) {
+    const raw = slot(k); if (!raw) { k++; continue; }
+    const key = x => { const r = x ? rotOf(x) : null; return r ? 'r:' + r.name : normCode_(x || ''); };   // "WF/C" = "WF/Consults"
+    let j = k; while (j + 1 < 24 && key(slot(j + 1)) === key(raw)) j++;
+    const i = k >> 1, rot = rotOf(raw), label = rot ? (rot.short || rot.name) : raw;
+    const start = slotStart(k), end = slotStart(j + 1);
+    allDay(uidBase + '-rot-' + i + (k % 2 ? 'h' : ''), start, end, 'Rotation: ' + label, (rot ? rot.name + '\n' : '') + fmt(start) + ' – ' + fmt(new Date(end.getTime() - 86400000)) + (site ? '\nGuide: ' + site + '#rotations' : ''), false);
     // Onboarding reminders before each new rotation
     leadWeeks_(rot).forEach((w, k) => {
       const d = new Date(start.getTime() - w * 7 * 86400000), next = new Date(d.getTime() + 86400000);
-      allDay(uidBase + '-onb-' + i + '-' + w, d, next, (k === 0 ? 'Start onboarding: ' : 'Onboarding reminder: ') + label + ' (starts ' + Utilities.formatDate(start, 'UTC', 'MMM d') + ')',
+      allDay(uidBase + '-onb-' + i + (k % 2 ? 'h' : '') + '-' + w, d, next, (k === 0 ? 'Start onboarding: ' : 'Onboarding reminder: ') + label + ' (starts ' + Utilities.formatDate(start, 'UTC', 'MMM d') + ')',
         'Your ' + (rot ? rot.name : label) + ' rotation starts ' + Utilities.formatDate(start, 'UTC', 'EEEE, MMMM d') + '. Complete credentialing, EMR and facility access, and arrange shadowing now.' + (site ? '\nGuide: ' + site + '#rotations' : ''), true);
     });
-    i = j + 1;
+    k = j + 1;
   }
 
   // Lectures this resident presents

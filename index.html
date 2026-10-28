@@ -296,6 +296,8 @@ a.code:hover { outline: 1px solid hsl(var(--h) 50% 45%); }
 .sched-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
 table.sched { border-collapse: separate; border-spacing: 0; width: 100%; font-variant-numeric: tabular-nums; }
 table.sched th, table.sched td { padding: 6px 6px; text-align: center; border-bottom: 1px solid var(--line); }
+.split { display: inline-flex; gap: 3px; align-items: center; } .split > span { display: inline-flex; } .split .code { min-width: 0; padding-inline: 5px; }
+.split .past, .split .later { opacity: .45; }
 table.sched thead th { position: sticky; top: 0; background: var(--surface); font: 600 12px/1.2 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding-block: 10px; }
 table.sched th.name { text-align: left; position: sticky; left: 0; background: var(--surface); font: 600 14px/1.25 var(--body); color: var(--ink); text-transform: none; letter-spacing: 0; padding-left: 14px; min-width: 150px; white-space: nowrap; z-index: 1; }
 table.sched thead th.name { z-index: 2; font: 600 12px/1.2 var(--mono); color: var(--muted); text-transform: uppercase; }
@@ -1086,14 +1088,19 @@ function prepare(d) {
     r.codes.forEach(c => codeMap.set(norm(c), r));
   });
   d.codeMap = codeMap;
-  d.residents.forEach(p => p.rots = p.months.map(m => lookup(codeMap, m)));
+  d.residents.forEach(p => { p.months2 = p.months2 || p.months.map(() => ""); p.rots = p.months.map(m => lookup(codeMap, m)); p.rots2 = p.months2.map(m => m ? lookup(codeMap, m) : null);
+    p.months2.forEach((m, i) => { if (m && p.rots2[i] && p.rots2[i] === p.rots[i]) { p.months2[i] = ""; p.rots2[i] = null; } });   // "WF/Consults" then "WF/C" = one rotation
+  });
   d.didactics.forEach(t => t.kind = kindOf(t));
   return d;
 }
 function lookup(map, raw) {
   if (!raw) return null;
   const n = norm(raw);
-  return map.get(n) || map.get(norm(raw.split(",")[0])) || null;
+  const hit = map.get(n) || map.get(norm(raw.split(",")[0]));
+  if (hit) return hit;
+  if (n.length >= 2) { const pre = [...new Set([...map.entries()].filter(([c]) => c.startsWith(n)).map(([, r]) => r))]; if (pre.length === 1) return pre[0]; }   // "WG" → WGRH
+  return null;
 }
 function kindOf(t) {
   const s = (t.topic + " " + (t.type || "")).toLowerCase();
@@ -1284,16 +1291,24 @@ function parseResidents(rows) {
       const first = r.findIndex(isMonth);
       let nameIdx = r.findIndex(c => /resident/i.test(c));
       if (nameIdx < 0 || nameIdx > first) nameIdx = Math.max(0, first - 1);
-      map = { name: nameIdx, months: MONTH_FULL.map(m => r.findIndex(c => isMonth(c) && c.slice(0, 3).toLowerCase() === m.slice(0, 3).toLowerCase())) };
+      // a month can span two columns: first half / second half of the month (the second half starts on the 16th)
+      // A month header can cover one or two columns (merged, repeated, or a blank header right after it): two columns =
+      // first half / second half of the month, the second half starting on the 16th. Works for any month, any year.
+      const own = []; let last = -1;
+      r.forEach((c, k) => { if (isMonth(c)) { own[k] = c; last = k; } else if (!c && last >= 0 && k === last + 1 && own[last] && !own[k - 2]?.startsWith?.("+")) { own[k] = "+" + own[last]; } else last = -1; });
+      const monthOf = k => (own[k] || "").replace(/^\+/, "").slice(0, 3).toLowerCase();
+      map = { name: nameIdx, months: MONTH_FULL.map(m => own.map((c, k) => c && monthOf(k) === m.slice(0, 3).toLowerCase() ? k : -1).filter(k => k >= 0).slice(0, 2)) };
       if (pg) pgy = "PGY-" + pg[1];
       continue;
     }
     if (!map) { if (pg) pgy = "PGY-" + pg[1]; continue; }
     const name = r[map.name] || "";
-    const months = map.months.map(i => i >= 0 ? (r[i] || "").split(",")[0].trim() : "");
+    const cell = k => (r[k] || "").split(",")[0].trim();
+    const months = map.months.map(ks => ks.length ? cell(ks[0]) : "");
+    const months2 = map.months.map((ks, i) => { const b = ks.length > 1 ? cell(ks[ks.length - 1]) : ""; return b && norm(b) !== norm(months[i]) ? b : ""; });
     const filled = months.filter(Boolean).length;
     if (pg && (filled < 6 || /pgy/i.test(name))) { pgy = "PGY-" + pg[1]; continue; }
-    if (name && filled >= 6 && !/key|resident/i.test(name)) out.push({ name, pgy, months });
+    if (name && filled >= 6 && !/key|resident/i.test(name)) out.push({ name, pgy, months, months2 });
   }
   return out;
 }
@@ -1416,7 +1431,17 @@ function nextSessions() {
   const days = byDate(S.didactics.filter(t => t.date >= todayISO && t.kind !== "off"));
   return days;
 }
-function whoIsAt(rot, mi) { return S.residents.filter(p => p.rots[mi] === rot); }
+/* Split months: a month's second half (from the 16th) can differ from its first. Slots 0–23 = half-months, Jul 1 … Jun 16. */
+const HALF_DAY = 16, nowHalf = today.getDate() >= HALF_DAY ? 1 : 0, nowSlot = curMonth * 2 + nowHalf;
+const slotRaw = (p, k) => (k % 2 && p.months2[k >> 1]) ? p.months2[k >> 1] : p.months[k >> 1];
+const slotRot = (p, k) => (k % 2 && p.months2[k >> 1]) ? p.rots2[k >> 1] : p.rots[k >> 1];
+/** What a resident is on in month mi: now → today's half; another month → its first half. */
+const rawAt = (p, mi) => slotRaw(p, mi * 2 + (mi === curMonth ? nowHalf : 0));
+const rotAt = (p, mi) => slotRot(p, mi * 2 + (mi === curMonth ? nowHalf : 0));
+/** Same assignment? Compare rotations when known ("WF/C" = "WF/Consults"), else the text. */
+const slotKey = (p, k) => { const r = slotRot(p, k); return r ? "r:" + r.id : norm(slotRaw(p, k) || ""); };
+/** Who is on a rotation in month mi: this month → right now; other months → any part of the month. */
+function whoIsAt(rot, mi) { return S.residents.filter(p => mi === curMonth ? rotAt(p, mi) === rot : (p.rots[mi] === rot || p.rots2[mi] === rot)); }
 function copyText(text, btn) {
   const done = () => toast("Copied");
   try { navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text)); } catch { fallbackCopy(text); }
@@ -1433,6 +1458,7 @@ function toast(msg) { const t = document.createElement("div"); t.className = "to
 const DAY = 86400000;
 function ayStartYear() { const m = String(S.academicYear || "").match(/(20\d\d)/); return m ? +m[1] : (today.getMonth() >= 6 ? today.getFullYear() : today.getFullYear() - 1); }
 function monthStart(i) { const y = ayStartYear() + (i >= 6 ? 1 : 0); return new Date(y, (i + 6) % 12, 1); }
+function slotStart(k) { const d = monthStart(k >> 1); if (k % 2) d.setDate(HALF_DAY); return d; }
 function leadWeeks(r) {
   if (r && r.lead && r.lead.length) return [...r.lead].sort((a, b) => b - a);
   const inpatient = r && (/inpatient/i.test(r.category || "") || r.codes.some(c => norm(c) === "WPB"));
@@ -1441,7 +1467,10 @@ function leadWeeks(r) {
 /** Rotation changes for one resident: [{i, start, rot, raw}] */
 function starts(p) {
   const out = [];
-  p.months.forEach((m, i) => { if (m && (i === 0 || norm(m) !== norm(p.months[i - 1] || ""))) out.push({ i, start: monthStart(i), rot: p.rots[i], raw: m }); });
+  for (let k = 0; k < 24; k++) {
+    const m = slotRaw(p, k);
+    if (m && (k === 0 || slotKey(p, k) !== slotKey(p, k - 1))) out.push({ i: k >> 1, start: slotStart(k), rot: slotRot(p, k), raw: m });
+  }
   return out;
 }
 /** Upcoming starts whose reminder window is open today */
@@ -1552,17 +1581,18 @@ function meCard() {
     return `<section class="mycard pick"><div><b>See your own rotation and get your personal calendar</b><span class="n">Pick your name once and this device will show your rotation, what's next and your upcoming lectures here, with a button to add your own calendar to your phone.</span></div>
       <div><select id="mesel" aria-label="Choose your name"><option value="">Choose your name…</option>${pgys.map(g => `<optgroup label="${esc(g)}">${S.residents.filter(r => r.pgy === g).map(r => `<option>${esc(r.name)}</option>`).join("")}</optgroup>`).join("")}</select></div></section>`;
   }
-  const mi = curMonth, r0 = p.rots[mi], raw0 = p.months[mi];
-  let j = mi + 1; while (j < 12 && (p.months[j] || "") === (raw0 || "")) j++;
-  const until = j - 1 > mi ? ` · through ${MON[(j - 1 + 6) % 12]}` : "";
-  const nextR = j < 12 ? p.rots[j] : null, nextRaw = j < 12 ? p.months[j] : "";
+  const mi = curMonth, r0 = slotRot(p, nowSlot), raw0 = slotRaw(p, nowSlot);
+  let j = nowSlot + 1; while (j < 24 && slotKey(p, j) === slotKey(p, nowSlot)) j++;
+  const endMonth = (j - 1) >> 1, endsMid = j < 24 && j % 2 === 1;   // the run ends on the 15th when the next rotation starts mid-month
+  const until = endsMid ? ` · through ${MON[(endMonth + 6) % 12]} ${HALF_DAY - 1}` : endMonth > mi ? ` · through ${MON[(endMonth + 6) % 12]}` : "";
+  const nextR = j < 24 ? slotRot(p, j) : null, nextRaw = j < 24 ? slotRaw(p, j) : "";
   const lec = S.didactics.find(t => t.date >= todayISO && presentsTalk(t.speaker, p.name));
   const onb = onboardingDue(p);
   const rotLink = (r, raw) => r ? `${chipSpan(r)}<a href="#rot-${r.id}">${esc(r.short)}</a>` : (raw ? esc(raw) : "—");
   return `<section class="mycard">
     <div class="hi"><b>Hi, ${esc(p.name.split(" ")[0])}</b><span class="n">${esc(p.pgy)}</span><button type="button" id="mechange">Not you?</button></div>
     <div><span class="k">This month</span><span class="v">${rotLink(r0, raw0)}</span><span class="n">${MONTH_FULL[mi]}${until}</span></div>
-    <div><span class="k">Next</span><span class="v">${j < 12 ? rotLink(nextR, nextRaw) : "End of year"}</span><span class="n">${j < 12 ? "Starts " + MONTH_FULL[j] : ""}</span></div>
+    <div><span class="k">Next</span><span class="v">${j < 24 ? rotLink(nextR, nextRaw) : "End of year"}</span><span class="n">${j < 24 ? "Starts " + (j % 2 ? `${MONTH_FULL[j >> 1]} ${HALF_DAY}` : MONTH_FULL[j >> 1]) : ""}</span></div>
     <div class="lec"><span class="k">Your next lecture</span>${lec ? `<span class="v"><a href="#didactics">${esc(lec.topic)}</a></span><span class="n">${fmtDate(lec.date)}${lec.location ? " · " + esc(lec.location) : ""}</span>` : `<span class="n">None on the calendar</span>`}</div>
     ${onb.map(x => {
       const steps = onboardingSteps(x.rot);
@@ -1751,19 +1781,19 @@ function viewSchedule() {
   if (sState.view === "site") {
     const mi = sState.month;
     const cards = S.rotations.map(r => ({ r, ppl: whoIsAt(r, mi) })).filter(x => x.ppl.length);
-    const unknown = S.residents.filter(p => p.months[mi] && !p.rots[mi]);
+    const unknown = S.residents.filter(p => rawAt(p, mi) && !rotAt(p, mi));
     return head + `<div class="bysite">${cards.map(x => `<div class="panel"><a href="#rot-${x.r.id}" style="text-decoration:none;display:flex;gap:8px;align-items:center">${chipSpan(x.r)}<b style="color:var(--ink)">${esc(x.r.short)}</b></a>
       <ul>${x.ppl.map(p => `<li>${esc(p.name)}<span class="pg">${esc(p.pgy)}</span></li>`).join("")}</ul></div>`).join("")}
-      ${unknown.length ? `<div class="panel"><b>Other</b><ul>${unknown.map(p => `<li>${esc(p.name)} <span class="pg">${esc(p.months[mi])}</span></li>`).join("")}</ul></div>` : ""}</div>`;
+      ${unknown.length ? `<div class="panel"><b>Other</b><ul>${unknown.map(p => `<li>${esc(p.name)} <span class="pg">${esc(rawAt(p, mi))}</span></li>`).join("")}</ul></div>` : ""}</div>`;
   }
   const groups = sState.pgy === "all" ? pgys : [sState.pgy];
   const cols = sState.span === "3" ? [curMonth, curMonth + 1, curMonth + 2].filter(i => i < 12) : MONTHS.map((_, i) => i);
   const who = sState.who.toLowerCase();
   const rows = groups.map(g => `<tr class="pgy"><th colspan="${cols.length + 1}">${esc(g)}</th></tr>` + S.residents.filter(p => p.pgy === g).map(p => {
     const match = who && p.name.toLowerCase().includes(who);
-    return `<tr class="${who ? (match ? "hl" : "dim") : ""}${p.name === ME ? " me" : ""}"><th class="name" scope="row">${esc(p.name)}</th>${cols.map(i => `<td class="${i === curMonth ? "now" : ""}">${chipRaw(p.months[i], p.rots[i])}</td>`).join("")}</tr>`;
+    return `<tr class="${who ? (match ? "hl" : "dim") : ""}${p.name === ME ? " me" : ""}"><th class="name" scope="row">${esc(p.name)}</th>${cols.map(i => `<td class="${i === curMonth ? "now" : ""}">${p.months2[i] ? `<span class="split" title="${esc(p.months[i])} ${MON[(i + 6) % 12]} 1–${HALF_DAY - 1}, then ${esc(p.months2[i])} from ${MON[(i + 6) % 12]} ${HALF_DAY}"><span class="${i === curMonth && nowHalf ? "past" : ""}">${chipRaw(p.months[i], p.rots[i])}</span><span class="${i === curMonth && !nowHalf ? "later" : ""}">${chipRaw(p.months2[i], p.rots2[i])}</span></span>` : chipRaw(p.months[i], p.rots[i])}</td>`).join("")}</tr>`;
   }).join("")).join("");
-  const used = S.rotations.filter(r => S.residents.some(p => p.rots.includes(r)));
+  const used = S.rotations.filter(r => S.residents.some(p => p.rots.includes(r) || p.rots2.includes(r)));
   return head + `<div class="sched-wrap"><table class="sched"><thead><tr><th class="name">Resident</th>${cols.map(i => `<th class="${i === curMonth ? "now" : ""}">${MONTHS[i]}${i === curMonth ? " · now" : ""}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
   <div class="legend">${used.map(r => `<a href="#rot-${r.id}">${chipSpan(r)}<span>${esc(r.title)}</span></a>`).join("")}</div>`;
 }
@@ -1903,7 +1933,7 @@ function viewSearch(q) {
   (S.subpages || []).forEach(p => { const s = snip(p.html); if (p.title.toLowerCase().includes(ql) || s) res.push({ href: "#" + p.id, title: p.title, kind: "Extra guide", s }); });
   S.policies.concat(S.extraSections || []).forEach(p => { const s = snip(p.html); if (p.title.toLowerCase().includes(ql) || s) res.push({ href: "#" + (p.id.startsWith("hb-") ? p.id : "pol-" + p.id), title: p.title, kind: "Policy", s }); });
   S.templates.forEach(t => { const s = snip(t.html); if (t.title.toLowerCase().includes(ql) || s) res.push({ href: "#tpl-" + t.id, title: t.title, kind: "Template", s }); });
-  S.residents.filter(p => p.name.toLowerCase().includes(ql)).forEach(p => res.push({ href: "#schedule", title: p.name, kind: `${p.pgy} · ${MONTH_FULL[curMonth]}: ${p.rots[curMonth]?.title || p.months[curMonth] || "—"}`, s: "" , who: p.name}));
+  S.residents.filter(p => p.name.toLowerCase().includes(ql)).forEach(p => res.push({ href: "#schedule", title: p.name, kind: `${p.pgy} · ${MONTH_FULL[curMonth]}: ${rotAt(p, curMonth)?.title || rawAt(p, curMonth) || "—"}`, s: "" , who: p.name}));
   const talks = S.didactics.filter(t => (t.topic + " " + t.speaker).toLowerCase().includes(ql)).slice(0, 20);
   talks.forEach(t => res.push({ href: "#didactics", title: t.topic, kind: `Didactics · ${fmtDate(t.date)}${t.speaker ? " · " + t.speaker : ""}`, s: "" }));
   return `<div class="view-head"><div><div class="eyebrow">Search</div><h1>Results for “${esc(q)}”</h1><p>${res.length} match${res.length === 1 ? "" : "es"}. Press Esc to clear.</p></div></div>

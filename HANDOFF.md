@@ -35,6 +35,8 @@ The hub website (**https://larkinpmr.github.io**) is built from Google Drive. No
 
 **First-visit tour:** new devices see a 5-step tour of the hub once. Anyone can replay it from the gear menu ▸ "Take a tour".
 
+**Half-month rotations:** to split a month in the Resident Schedule, give that month two columns (insert a column next to it; merge the month header across both, or leave the new header blank). The first column is the 1st–15th, the second starts on the 16th. Residents whose halves differ show both rotations on the site, and "Where everyone is", their personal card and their personal calendar switch on the 16th. Any month can be split, every year, with nothing else to set up.
+
 **Chief editor:** open the gear menu on the site and choose "Chief editor". It only works when you are signed in as the chief Gmail, and it edits the Control Panel tabs without opening the sheet.
 
 # Editing the Handbooks (the rules that keep the site working)
