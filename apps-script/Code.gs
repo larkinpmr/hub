@@ -478,8 +478,10 @@ function buildCalendar_() {
     const jc = talks.some(x => /journal club/i.test(x.topic));
     const summary = off ? talks[0].topic : 'PM&R Didactics' + (jc ? ' · Journal Club' : '');
     ev.push(fold_('SUMMARY:' + esc_(summary)));
-    if (talks[0].location && !off) ev.push(fold_('LOCATION:' + esc_(talks[0].location)));
-    const desc = talks.map(x => '• ' + x.topic + (x.speaker ? ' — ' + x.speaker : '')).join('\n') + (talks[0].block ? '\n\n' + talks[0].block : '');
+    const link = off ? '' : meetLink_(talks, settings);
+    if (link) ev.push(fold_('LOCATION:' + esc_(link)), fold_('URL:' + link));
+    else if (talks[0].location && !off) ev.push(fold_('LOCATION:' + esc_(talks[0].location)));
+    const desc = (link ? (/zoom\.us/i.test(link) ? 'Join Zoom: ' : 'Join meeting: ') + link + '\n\n' : '') + talks.map(x => '• ' + x.topic + (x.speaker ? ' — ' + x.speaker : '')).join('\n') + (talks[0].block ? '\n\n' + talks[0].block : '');
     ev.push(fold_('DESCRIPTION:' + esc_(desc)), 'TRANSP:' + (off ? 'TRANSPARENT' : 'OPAQUE'), 'END:VEVENT');
     Array.prototype.push.apply(out, ev);
   });
@@ -495,20 +497,31 @@ function parseDidactics_(rows) {
   const H = rows[hi].map(c => c.toLowerCase());
   const col = re => H.findIndex(h => re.test(h));
   const cDate = col(/^date$/), cLoc = col(/location/), cTime = col(/^time/), cTopic = col(/topic/), cSpk = col(/speaker|presenter|resident\/|attending/);
-  const out = []; let cur = { date: '', location: '', time: '' }, block = '';
+  const cLink = col(/meeting|zoom|join|^link$|^url$/);
+  const out = []; let cur = { date: '', location: '', time: '', link: '' }, block = '';
   rows.slice(hi + 1).forEach(r => {
     const g = i => (i >= 0 ? (r[i] || '') : '');
     const vals = r.filter(Boolean).filter((v, i, a) => a.indexOf(v) === i);
     if (vals.length === 1 && /block\s*\d/i.test(vals[0])) { block = vals[0]; return; }
     if (!g(cTopic) && vals.some(v => /block\s*\d/i.test(v))) { block = vals.find(v => /block\s*\d/i.test(v)); return; }
     const iso = isoDate_(g(cDate));
-    if (iso && iso !== cur.date) cur = { date: iso, location: g(cLoc), time: g(cTime) };
+    if (iso && iso !== cur.date) cur = { date: iso, location: g(cLoc), time: g(cTime), link: '' };
     if (g(cLoc)) cur.location = g(cLoc);
+    if (/^https?:\/\//i.test(g(cLink))) cur.link = g(cLink);   // a meeting link carries down to the rest of that day
     const topic = g(cTopic);
     if (!topic || !cur.date) return;
-    out.push({ date: cur.date, time: cur.time, location: cur.location, topic: topic, speaker: g(cSpk), block: block });
+    out.push({ date: cur.date, time: cur.time, location: cur.location, topic: topic, speaker: g(cSpk), block: block, link: cur.link });
   });
   return out;
+}
+
+/** A session's meeting link: one typed in the didactic sheet, else Settings "Virtual lecture link" when the location says Virtual. */
+function meetLink_(talks, settings) {
+  talks = [].concat(talks);
+  const own = talks.map(t => t.link).filter(Boolean)[0];
+  if (own) return own;
+  const def = String(settings['Virtual lecture link'] || '').trim();
+  return /^https?:\/\//i.test(def) && talks.some(t => /virtual/i.test(t.location || '')) ? def : '';
 }
 
 function isoDate_(s) {
@@ -539,7 +552,7 @@ function parseTime_(s) {
 
 function utf8Len_(s) { return unescape(encodeURIComponent(s)).length; }
 function hhmm_(mins) { return ('0' + Math.floor(mins / 60)).slice(-2) + ('0' + (mins % 60)).slice(-2) + '00'; }
-function esc_(s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+function esc_(s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
 function fold_(line) {
   const out = []; let cur = '';
   for (const ch of line) {
@@ -760,7 +773,9 @@ function buildMyCalendar_(who) {
     if (tm) ev.push('DTSTART;TZID=' + TZ + ':' + day + 'T' + hhmm_(tm.start), 'DTEND;TZID=' + TZ + ':' + day + 'T' + hhmm_(Math.min(tm.end != null ? tm.end : tm.start + hours * 60, 1439)));
     else { const nd = new Date(t.date + 'T12:00:00Z'); nd.setUTCDate(nd.getUTCDate() + 1); ev.push('DTSTART;VALUE=DATE:' + day, 'DTEND;VALUE=DATE:' + ymd(nd)); }
     ev.push(fold_('SUMMARY:' + esc_('You present: ' + t.topic)));
-    if (t.location) ev.push(fold_('LOCATION:' + esc_(t.location)));
+    const link = meetLink_(talks.filter(x => x.date === t.date), settings);
+    if (link) ev.push(fold_('LOCATION:' + esc_(link)), fold_('URL:' + link), fold_('DESCRIPTION:' + esc_((/zoom\.us/i.test(link) ? 'Join Zoom: ' : 'Join meeting: ') + link)));
+    else if (t.location) ev.push(fold_('LOCATION:' + esc_(t.location)));
     ev.push('BEGIN:VALARM', 'ACTION:DISPLAY', fold_('DESCRIPTION:' + esc_('You present: ' + t.topic)), 'TRIGGER:-P7D', 'END:VALARM', 'END:VEVENT');
     Array.prototype.push.apply(out, ev);
   });
@@ -990,7 +1005,7 @@ function reminderEmail_(t, l, settings) {
   const tm = lectureTimes_(t, settings);
   const time = clock_(tm.start).replace(/ (AM|PM)$/, (s, ap) => clock_(tm.end).slice(-2) === ap ? '' : s) + ' – ' + clock_(tm.end);
   const virtual = /virtual/i.test(t.location || '');  // the sheet says "Virtual" -> virtual; anything else is in person
-  const link = virtual ? (settings['Virtual lecture link'] || '') : '';
+  const link = t.link || (virtual ? (settings['Virtual lecture link'] || '') : '');
   const where = virtual ? { name: '', address: '' } : lectureLocation_(t.location);
   const place = where.name;
   const maps = where.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(where.address) : '';

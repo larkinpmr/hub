@@ -29,6 +29,12 @@ The hub website (**https://larkinpmr.github.io**) is built from Google Drive. No
 
 **Holiday themes:** on certain days the whole site switches to holiday colors on its own, then back the next day: New Year's (Dec 31–Jan 1), Valentine's Day, Match season (Match Day through March 31), St. Patrick's Day, National Doctors' Day (March 30), graduation week (June 24–30), July 4, Halloween, Thanksgiving (Thursday–Sunday) and Christmas (Dec 24–26). July 1 shows a "Welcome" greeting only. To turn them all off, set the Settings row "Holiday themes" to `off`. To preview one, add `?holiday=halloween` (or match, doctors, thanksgiving, christmas…) to the site address.
 
+**Zoom links for virtual didactics:** the Settings row "Virtual lecture link" holds the usual Zoom link. Every session whose Location says "Virtual" gets a **Join Zoom** button on the site and the link in its calendar event (didactics and personal calendars). For a one-off meeting, add a column named **Meeting link** to the Didactic Schedule and paste that day's link on its first row; it overrides the usual one. Keep a passcode or waiting room on the Zoom meeting, since the calendar links are open.
+
+**Journal Club and the Didactics page:** sessions marked "Journal Club" in the Didactic Schedule's **Type** column (or with "Journal Club" in the topic) get a teal accent and a book icon. On computers, the Didactics page shows a small calendar of the current month; tap a dotted day to jump to it.
+
+**First-visit tour:** new devices see a 5-step tour of the hub once. Anyone can replay it from the gear menu ▸ "Take a tour".
+
 **Chief editor:** open the gear menu on the site and choose "Chief editor". It only works when you are signed in as the chief Gmail, and it edits the Control Panel tabs without opening the sheet.
 
 # Editing the Handbooks (the rules that keep the site working)

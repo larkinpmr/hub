@@ -324,7 +324,45 @@ table.sched tr.dim { opacity: .35; }
 .dmeta { font: 500 12px/1.4 var(--mono); color: var(--muted); margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .tag { display: inline-block; font: 600 11px/1 var(--mono); padding: 3px 6px; border-radius: 4px; background: var(--raised); color: var(--muted); margin-left: 6px; vertical-align: 2px; white-space: nowrap; }
 .tag.off { background: var(--warn-soft); color: var(--ink); }
-.tag.jc { background: var(--accent-soft); color: var(--accent); }
+.tag.jc { background: var(--sun-soft); color: var(--ink); }
+.tag .ic { vertical-align: -2px; margin-right: 4px; color: var(--sun); }
+.day.jc-day { box-shadow: inset 3px 0 0 var(--sun); padding-left: 14px; background: linear-gradient(90deg, color-mix(in srgb, var(--sun-soft) 70%, transparent), transparent 55%); }
+.day.jc-day .dlabel b, .day.jc-day .dlabel small { color: var(--sun); }
+.next-date.jc-day .datebox { box-shadow: inset 0 -3px 0 var(--sun); }
+.join { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--accent); color: var(--on-accent) !important; font: 600 12.5px/1.4 var(--body); text-decoration: none; letter-spacing: 0; text-transform: none; }
+.join:hover { filter: brightness(1.08); }
+
+/* mini month calendar on Didactics (desktop only) */
+.didtop { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 24px; align-items: start; }
+.minical { margin-bottom: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px 8px; width: 236px; flex: none; }
+.mc-h { font: 700 14px/1.2 var(--display); margin: 0 2px 6px; } .mc-h span { color: var(--muted); font-weight: 600; }
+.mc-g { display: grid; grid-template-columns: repeat(7, 1fr); border-radius: 7px; }
+.mc-g.now { background: var(--accent-soft); }
+.mc-g > * { position: relative; display: grid; place-items: center; width: 27px; height: 27px; justify-self: center; font: 500 12.5px/1 var(--mono); color: var(--ink); text-decoration: none; border-radius: 50%; }
+.mc-w > span { height: 20px; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.mc-g .past { color: var(--muted); }
+.mc-g .has::after { content: ""; position: absolute; bottom: 2px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--accent); }
+.mc-g .has.jc::after { background: var(--sun); }
+.mc-g a.has:hover { background: var(--raised); }
+.mc-g > .tdy { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.mc-g .tdy.has::after { background: var(--on-accent); }
+.mc-k { display: flex; gap: 12px; margin: 6px 2px 0; font: 500 10.5px/1.2 var(--mono); color: var(--muted); }
+.mc-k i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; } .mc-k i.lec { background: var(--accent); } .mc-k i.jc { background: var(--sun); }
+@media (max-width: 899px) { .minical { display: none; } .didtop { display: block; } }
+.day.flash { animation: dayflash 1.6s ease-out; } @keyframes dayflash { 0%, 40% { background-color: var(--accent-soft); } 100% { background-color: transparent; } }
+
+/* first-visit tour (lives outside <body>, so it has its own font) */
+.tour { position: fixed; inset: 0; z-index: 60; font: 16px/1.5 var(--body); color: var(--ink); } .tour button { font: inherit; }
+.tour-dim { position: fixed; inset: 0; background: rgb(8 10 20 / .55); }
+.tour-hole { position: fixed; border-radius: 12px; box-shadow: 0 0 0 9999px rgb(8 10 20 / .55), 0 0 0 3px var(--accent); pointer-events: none; transition: all .25s ease; }
+.tour-card { position: fixed; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 18px 48px rgb(0 0 0 / .3); padding: 18px 18px 14px; outline: none; }
+.tour-card h2 { font: 700 19px/1.25 var(--display); margin: 2px 28px 6px 0; }
+.tour-card p { margin: 0 0 14px; font-size: 15px; color: var(--muted); } .tour-card p b { color: var(--ink); }
+.tour-n { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.tour-x { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; }
+.tour-x:hover { background: var(--raised); color: var(--ink); }
+.tour-b { display: flex; justify-content: space-between; gap: 8px; }
+@media (prefers-reduced-motion: reduce) { .tour-hole { transition: none; } }
 .empty { padding: 32px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--r); }
 
 /* guides */
@@ -486,6 +524,7 @@ table.sched tr.me td { background: color-mix(in srgb, var(--accent-soft) 55%, tr
 #dlist .talks { gap: 6px; }
 #dlist .talks li { display: flex; flex-wrap: wrap; column-gap: 10px; align-items: baseline; }
 #dlist .day { padding: 10px 0; }
+#dlist .day.jc-day { padding-left: 14px; }
 #dlist .dmeta { margin-bottom: 4px; }
 .cal { padding: 10px 14px; margin-bottom: 14px; }
 .cal .ct b { display: inline; margin-right: 8px; }
@@ -618,6 +657,7 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
         <button type="button" class="swatch" data-ac="plum" title="Plum" aria-label="Plum" style="background:#6E3F8F"></button>
         <button type="button" class="swatch" data-ac="forest" title="Everglades green" aria-label="Everglades green" style="background:#2F6B33"></button></div></div>
       <div id="install-box"><h3>Use it like an app</h3><div id="install-body" class="install"></div></div>
+      <div><h3>New here?</h3><button type="button" class="btn small ghost" id="tour-btn">Take a tour</button></div>
       <div class="edit" id="prefs-edit">Chief residents: <span id="edit-link">editing turns on once the hub is connected to Google.</span></div>
     </div>
     <nav class="tabs" aria-label="Sections">
@@ -687,6 +727,7 @@ prefsBox.addEventListener("click", e => {
   applyPrefs();
 });
 applyPrefs();
+$("#tour-btn").onclick = e => { e.stopPropagation(); startTour(); };
 function showEditLink() {
   if (!CFG.adminUrl) return;
   $("#edit-link").innerHTML = `<a href="${esc(CFG.adminUrl)}" target="_blank" rel="noopener">Open the hub editor →</a> <span style="display:block;margin-top:4px">Requires signing in as the chief Google account.</span>`;
@@ -886,7 +927,93 @@ function showGate(waiting) {
   if (!waiting) setTimeout(() => input.focus(), 50);
   if (waiting) setTimeout(() => { if (!gateKnown && document.querySelector(".gate.waiting")) hideGate(); }, 20000);   // Google unreachable: don't lock people out of the saved copy
 }
-function hideGate() { document.querySelector(".gate")?.remove(); document.body.classList.remove("gated"); }
+function hideGate() { const had = !!document.querySelector(".gate"); document.querySelector(".gate")?.remove(); document.body.classList.remove("gated"); if (had || S) maybeStartTour(); }
+
+/* ----------------------------------------------------------- first-visit tour
+ * Five short cards that point at the real page. Shown once per device (after the passcode screen); "Take a tour"
+ * in the gear menu replays it. The overlay lives outside <body> so the Text size setting (body zoom) can't shift it. */
+const TOUR_KEY = "hub.tour";
+const isPhone = () => window.matchMedia("(max-width: 640px)").matches;
+const visible = sel => [...document.querySelectorAll(sel)].find(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+const navLink = tab => visible(`.bottomnav a[data-tab="${tab}"]`) || visible(`nav.tabs a[data-tab="${tab}"]`);
+function tourSteps() {
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const android = /android/i.test(navigator.userAgent);
+  const home = standalone() ? "You already have the hub on your home screen. You're all set."
+    : ios ? "In Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>. The hub opens like an app."
+    : android ? "In Chrome's menu (⋮), tap <b>Add to Home screen</b> or <b>Install app</b>."
+    : "Bookmark this page (⌘D or Ctrl+D). On your phone, add it to your home screen. The steps are in this gear menu.";
+  return [
+    { title: "Welcome to the PM&R Hub", text: "Schedules, didactics, rotation guides and resources for the residency, all in one place. Here's a 30-second tour." },
+    { target: () => visible(".mycard"), title: "Make it yours", text: "Pick your name once. Home then shows your current and next rotation, your upcoming lectures, onboarding reminders and a personal calendar for your phone." },
+    { target: () => [navLink("schedule"), navLink("didactics")], title: "Schedules and calendars", text: "The block schedule and the didactic calendar live here. Subscribe to the didactics calendar and your personal calendar: they're live subscriptions, so changes the chiefs make show up in your calendar on their own." },
+    { target: () => navLink("rotations"), title: "Rotation guides", text: "Each rotation has its guide: expectations, daily workflow, where to go, who to call. Check it before your first day." },
+    { target: () => visible("#prefs-btn"), title: "Keep it handy", text: home + " Replay this tour anytime from this gear menu." },
+  ];
+}
+let tourEl = null, tourI = 0, tourList = [];
+function maybeStartTour() {
+  if (store.get(TOUR_KEY) || tourEl || document.querySelector(".gate")) return;
+  setTimeout(() => { if (!store.get(TOUR_KEY) && !tourEl && !document.querySelector(".gate") && S) startTour(); }, 900);
+}
+function startTour() {
+  if ((location.hash || "#home") !== "#home") location.hash = "#home";
+  prefsBox.hidden = true; prefsBtn.setAttribute("aria-expanded", "false");
+  tourList = tourSteps(); tourI = 0;
+  tourEl?.remove();
+  tourEl = document.createElement("div"); tourEl.className = "tour"; tourEl.setAttribute("role", "dialog"); tourEl.setAttribute("aria-modal", "true"); tourEl.setAttribute("aria-labelledby", "tour-h");
+  document.documentElement.appendChild(tourEl);
+  setTimeout(showTourStep, 250);
+}
+function endTour() {
+  store.set(TOUR_KEY, "done");
+  tourEl?.remove(); tourEl = null;
+}
+function showTourStep() {
+  if (!tourEl) return;
+  const st = tourList[tourI], last = tourI === tourList.length - 1;
+  let els = st.target ? [].concat(st.target()).filter(Boolean) : [];
+  if (els.length && !isPhone()) els[0].scrollIntoView({ block: "center" });
+  else if (els.length) { const r = els[0].getBoundingClientRect(); if (r.top < 70 || r.bottom > innerHeight - 80) els[0].scrollIntoView({ block: "center" }); }
+  const rects = els.map(e => e.getBoundingClientRect());
+  const box = rects.length ? { l: Math.min(...rects.map(r => r.left)) - 6, t: Math.min(...rects.map(r => r.top)) - 6, r: Math.max(...rects.map(r => r.right)) + 6, b: Math.max(...rects.map(r => r.bottom)) + 6 } : null;
+  tourEl.innerHTML = `${box ? `<div class="tour-hole" style="left:${box.l}px;top:${box.t}px;width:${box.r - box.l}px;height:${box.b - box.t}px"></div>` : `<div class="tour-dim"></div>`}
+    <div class="tour-card" tabindex="-1">
+      <button type="button" class="tour-x" aria-label="Skip the tour">×</button>
+      <div class="tour-n">${tourI + 1} of ${tourList.length}</div>
+      <h2 id="tour-h">${esc(st.title)}</h2>
+      <p>${st.text}</p>
+      <div class="tour-b">${tourI ? `<button type="button" class="btn small ghost" data-t="back">Back</button>` : `<button type="button" class="btn small ghost" data-t="skip">Skip</button>`}
+        <button type="button" class="btn small" data-t="next">${last ? "Done" : "Next"}</button></div>
+    </div>`;
+  const card = tourEl.querySelector(".tour-card");
+  const W = innerWidth, H = innerHeight, cw = Math.min(340, W - 32);
+  card.style.width = cw + "px";
+  const ch = card.offsetHeight;
+  let x, y;
+  if (!box) { x = (W - cw) / 2; y = Math.max(16, (H - ch) / 2); }
+  else if (isPhone()) { x = 16; y = (box.t + box.b) / 2 > H / 2 ? Math.max(16, box.t - ch - 14) : Math.min(H - ch - 16, box.b + 14); }
+  else {
+    x = Math.min(Math.max(16, (box.l + box.r) / 2 - cw / 2), W - cw - 16);
+    y = box.b + 14 + ch < H - 8 ? box.b + 14 : Math.max(16, box.t - ch - 14);
+  }
+  card.style.left = x + "px"; card.style.top = y + "px";
+  tourEl.querySelectorAll("[data-t]").forEach(b => b.onclick = () => {
+    const t = b.dataset.t;
+    if (t === "skip") endTour();
+    else if (t === "back") { tourI--; showTourStep(); }
+    else if (last) endTour(); else { tourI++; showTourStep(); }
+  });
+  tourEl.querySelector(".tour-x").onclick = endTour;
+  tourEl.querySelector('[data-t="next"]').focus();
+}
+addEventListener("resize", () => { if (tourEl) showTourStep(); });
+document.addEventListener("keydown", e => {
+  if (!tourEl) return;
+  if (e.key === "Escape") endTour();
+  else if (e.key === "ArrowRight" && tourI < tourList.length - 1) { tourI++; showTourStep(); }
+  else if (e.key === "ArrowLeft" && tourI > 0) { tourI--; showTourStep(); }
+});
 
 const LIVE_KEY = "hub.live.v1";
 function readLiveCache() { try { return JSON.parse(localStorage.getItem(LIVE_KEY) || "null"); } catch { return null; } }
@@ -903,6 +1030,7 @@ async function loadLive(url, snap) {
     source = { mode, when: live.updated, errors: live.errors || [] };
     route(true);
     gateCheck(true);
+    if (!document.querySelector(".gate")) maybeStartTour();
   };
   // 1. Show the last live data this device saw, right away.
   let cached = readLiveCache();
@@ -994,6 +1122,7 @@ function mergeLive(snap, live) {
   if (settings["holiday themes"]) d.holidayThemes = settings["holiday themes"];
   if (settings["home subtitle"]) d.heroSub = settings["home subtitle"] === "-" ? "" : settings["home subtitle"];   // a single "-" hides the line
   d.passcode = settings["site passcode"] || "";   // blank = no passcode screen
+  d.zoomLink = /^https?:\/\//i.test(settings["virtual lecture link"] || "") ? settings["virtual lecture link"] : "";   // the usual Zoom for "Virtual" sessions
   const contacts = rowsOf(tab("contacts"));
   if (contacts.length) d.contacts = contacts.map(r => ({ role: r.role || "", name: r.name || "", phone: r.phone || "", email: r.email || "" }));
   const links = rowsOf(tab("quick links") || tab("links"));
@@ -1127,18 +1256,20 @@ function parseDidactics(rows) {
   const H = rows[hi].map(c => c.toLowerCase());
   const col = re => H.findIndex(h => re.test(h));
   const cDate = col(/^date$/), cLoc = col(/location/), cTime = col(/^time/), cTopic = col(/topic/), cSpk = col(/speaker|presenter|resident\/|attending/);
-  const out = []; let cur = { date: "", location: "", time: "" }, block = "";
+  const cType = col(/^(session |event )?type$/), cLink = col(/meeting|zoom|join|^link$|^url$/);
+  const out = []; let cur = { date: "", location: "", time: "", link: "" }, block = "";
   for (const r of rows.slice(hi + 1)) {
     const g = i => i >= 0 ? (r[i] || "") : "";
     const vals = [...new Set(r.filter(Boolean))];
     if (vals.length === 1 && /block\s*\d/i.test(vals[0])) { block = vals[0]; continue; }
     if (!g(cTopic) && vals.some(v => /block\s*\d/i.test(v))) { block = vals.find(v => /block\s*\d/i.test(v)); continue; }
     const iso = parseLooseDate(g(cDate));
-    if (iso && iso !== cur.date) cur = { date: iso, location: g(cLoc), time: g(cTime) };
+    if (iso && iso !== cur.date) cur = { date: iso, location: g(cLoc), time: g(cTime), link: "" };
     if (g(cLoc)) cur.location = g(cLoc);
+    if (/^https?:\/\//i.test(g(cLink))) cur.link = g(cLink);   // a meeting link carries down to the rest of that day, like Location
     const topic = g(cTopic);
     if (!topic || !cur.date) continue;
-    out.push({ date: cur.date, time: g(cTime), location: cur.location, topic, speaker: g(cSpk), type: "", block });
+    out.push({ date: cur.date, time: g(cTime), location: cur.location, topic, speaker: g(cSpk), type: g(cType), link: cur.link, block });
   }
   return out;
 }
@@ -1264,6 +1395,22 @@ const chip = r => r ? `<a class="code" style="--h:${r.hue}" href="#rot-${r.id}" 
 const chipSpan = r => r && r.codes && r.codes[0] ? `<span class="code" style="--h:${r.hue}">${esc(r.codes[0])}</span>` : "";
 const chipRaw = (raw, r) => r ? `<a class="code" style="--h:${r.hue}" href="#rot-${r.id}" title="${esc(r.title)}">${esc(raw)}</a>` : (raw ? `<span class="code" style="--h:0">${esc(raw)}</span>` : `<span class="muted">—</span>`);
 function fmtDate(iso, opts) { return parseISO(iso).toLocaleDateString("en-US", opts || { weekday: "short", month: "short", day: "numeric" }); }
+/** A day's meeting link: a link typed in the didactic sheet, else the Settings Zoom link when the location says Virtual. */
+function meetLink(talks) {
+  const own = talks.map(t => t.link).find(Boolean);
+  if (own) return own;
+  return talks.some(t => /virtual/i.test(t.location || "")) && S.zoomLink ? S.zoomLink : "";
+}
+function joinBtn(talks) {
+  const u = meetLink(talks); if (!u) return "";
+  const zoom = /zoom\.us/i.test(u);
+  return `<a class="join" href="${esc(u)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="m15.5 10.5 6-3.5v10l-6-3.5"/></svg>Join ${zoom ? "Zoom" : "meeting"}</a>`;
+}
+const BOOK = `<svg class="ic" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5C5.5 4.5 8.5 4.5 12 6.5v13c-3.5-2-6.5-2-9-1z"/><path d="M21 5.5c-2.5-1-5.5-1-9 1v13c3.5-2 6.5-2 9-1z"/></svg>`;
+function kindTag(t) {
+  const lab = KIND_LABEL[t.kind]; if (!lab) return "";
+  return `<span class="tag ${t.kind === "off" ? "off" : t.kind === "jc" ? "jc" : ""}">${t.kind === "jc" ? BOOK : ""}${lab}</span>`;
+}
 function byDate(list) { const m = new Map(); list.forEach(t => { if (!m.has(t.date)) m.set(t.date, []); m.get(t.date).push(t); }); return [...m.entries()]; }
 function nextSessions() {
   const days = byDate(S.didactics.filter(t => t.date >= todayISO && t.kind !== "off"));
@@ -1469,11 +1616,11 @@ function viewHome() {
       <section class="panel didpanel ${onb ? "" : "wide"}">
         <h2>Next didactics</h2>
         <p class="sub">Lectures are Mondays; Journal Club and workshops are Thursdays.</p>
-        ${nd ? `<div class="next-date">
+        ${nd ? `<div class="next-date ${talks.some(t => t.kind === "jc") ? "jc-day" : ""}">
             <div class="datebox"><small>${DOW[parseISO(nd).getDay()]}</small><b>${parseISO(nd).getDate()}</b><small>${MON[parseISO(nd).getMonth()]}</small></div>
             <div style="min-width:0">
-              <div class="dmeta"><span>${esc(talks[0].location || "Location TBA")}</span>${talks[0].time ? `<span>${esc(talks[0].time)}</span>` : ""}</div>
-              <ul class="talks">${talks.map(t => `<li><span class="t">${esc(t.topic)}${KIND_LABEL[t.kind] ? `<span class="tag ${t.kind === "jc" ? "jc" : ""}">${KIND_LABEL[t.kind]}</span>` : ""}</span>${t.speaker ? `<span class="s">${esc(t.speaker)}</span>` : ""}</li>`).join("")}</ul>
+              <div class="dmeta"><span>${esc(talks[0].location || "Location TBA")}</span>${talks[0].time ? `<span>${esc(talks[0].time)}</span>` : ""}${joinBtn(talks)}</div>
+              <ul class="talks">${talks.map(t => `<li><span class="t">${esc(t.topic)}${kindTag(t)}</span>${t.speaker ? `<span class="s">${esc(t.speaker)}</span>` : ""}</li>`).join("")}</ul>
             </div></div>
             <p style="margin:16px 0 0"><a href="#didactics">Full didactic calendar →</a></p>`
           : `<div class="empty">No upcoming sessions on the calendar.</div>`}
@@ -1513,9 +1660,10 @@ let dState = { scope: store.get("hub.d.scope") || "upcoming", month: "all", q: "
 function viewDidactics() {
   const months = [...new Set(S.didactics.map(t => t.date.slice(0, 7)))];
   return `
+  <div class="didtop"><div>
   <div class="view-head"><div><div class="eyebrow">Didactic Schedule · ${esc(S.academicYear)}</div><h1>Didactics</h1>
     <p>Braddom chapter lectures, board review, journal club and workshops. Edits made in the Didactic Schedule sheet appear here.</p></div></div>
-  ${calPanel()}
+  ${calPanel()}</div>${miniCal()}</div>
   <div class="filters">
     <div class="seg" role="group" aria-label="Show">
       <button data-scope="upcoming" aria-pressed="${dState.scope === "upcoming"}">Upcoming</button>
@@ -1525,6 +1673,30 @@ function viewDidactics() {
     <input id="dq" type="search" placeholder="Filter by topic or presenter" value="${esc(dState.q)}" aria-label="Filter lectures">
   </div>
   <div id="dlist">${didacticList()}</div>`;
+}
+/** Small month calendar (desktop only): today circled, this week shaded, a dot on didactic days. */
+function miniCal() {
+  const y = today.getFullYear(), m = today.getMonth();
+  const first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate();
+  const kinds = new Map();
+  S.didactics.forEach(t => { if (t.kind === "off") return; const k = kinds.get(t.date); kinds.set(t.date, k === "jc" || t.kind === "jc" ? "jc" : "lec"); });
+  const cells = []; for (let i = 0; i < first.getDay(); i++) cells.push(null);
+  for (let d = 1; d <= days; d++) cells.push(d);
+  while (cells.length % 7) cells.push(null);
+  const weekOfToday = Math.floor((first.getDay() + today.getDate() - 1) / 7);
+  const rows = []; for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
+  return `<div class="minical" aria-label="${today.toLocaleDateString("en-US", { month: "long", year: "numeric" })}">
+    <div class="mc-h">${today.toLocaleDateString("en-US", { month: "long" })} <span>${y}</span></div>
+    <div class="mc-g mc-w">${["S","M","T","W","T","F","S"].map(x => `<span>${x}</span>`).join("")}</div>
+    ${rows.map((r, wi) => `<div class="mc-g${wi === weekOfToday ? " now" : ""}">${r.map(d => {
+      if (!d) return `<span></span>`;
+      const iso = `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`, k = kinds.get(iso);
+      const cls = [d === today.getDate() ? "tdy" : "", k ? "has " + k : "", iso < todayISO ? "past" : ""].filter(Boolean).join(" ");
+      const label = k ? (k === "jc" ? "Journal Club" : "Didactics") : "";
+      return k ? `<a href="#didactics" data-go="${iso}" class="${cls}" title="${label}">${d}</a>` : `<span class="${cls}">${d}</span>`;
+    }).join("")}</div>`).join("")}
+    <div class="mc-k"><span><i class="lec"></i>Didactics</span><span><i class="jc"></i>Journal Club</span></div>
+  </div>`;
 }
 function calPanel() {
   const base = CFG.liveDataUrl;
@@ -1550,11 +1722,12 @@ function didacticList() {
     const b = talks[0].block && talks[0].block !== lastBlock ? `<div class="blockhead">${esc(talks[0].block)}</div>` : "";
     if (talks[0].block) lastBlock = talks[0].block;
     const off = talks.every(t => t.kind === "off");
-    return `${b}<div class="day ${date === todayISO ? "today-row" : ""} ${date < todayISO ? "past" : ""}">
+    const jc = talks.some(t => t.kind === "jc");
+    return `${b}<div class="day ${date === todayISO ? "today-row" : ""} ${date < todayISO ? "past" : ""} ${jc ? "jc-day" : ""}" id="d-${date}">
       <div class="dlabel"><small>${DOW[d.getDay()]} · ${MON[d.getMonth()]}</small><b>${d.getDate()}</b></div>
       <div style="min-width:0">
-        ${off ? "" : `<div class="dmeta"><span>${esc(talks[0].location || "Location TBA")}</span>${talks[0].time ? `<span>${esc(talks[0].time)}</span>` : ""}</div>`}
-        <ul class="talks">${talks.map(t => `<li><span class="t">${esc(t.topic)}${KIND_LABEL[t.kind] ? `<span class="tag ${t.kind === "off" ? "off" : t.kind === "jc" ? "jc" : ""}">${KIND_LABEL[t.kind]}</span>` : ""}${ME && presentsTalk(t.speaker, ME) ? `<span class="tag you">You</span>` : ""}</span>${t.speaker ? `<span class="s">${esc(t.speaker)}</span>` : ""}</li>`).join("")}</ul>
+        ${off ? "" : `<div class="dmeta"><span>${esc(talks[0].location || "Location TBA")}</span>${talks[0].time ? `<span>${esc(talks[0].time)}</span>` : ""}${date >= todayISO ? joinBtn(talks) : ""}</div>`}
+        <ul class="talks">${talks.map(t => `<li><span class="t">${esc(t.topic)}${kindTag(t)}${ME && presentsTalk(t.speaker, ME) ? `<span class="tag you">You</span>` : ""}</span>${t.speaker ? `<span class="s">${esc(t.speaker)}</span>` : ""}</li>`).join("")}</ul>
       </div></div>`;
   }).join("");
 }
@@ -1825,6 +1998,12 @@ function bindView() {
   document.querySelectorAll(".prose").forEach(linkAddresses);
   document.querySelectorAll("[data-scope]").forEach(b => b.onclick = () => { dState.scope = b.dataset.scope; dState.month = "all"; store.set("hub.d.scope", dState.scope); route(true); });
   const dm = $("#dmonth"); if (dm) dm.onchange = () => { dState.month = dm.value; $("#dlist").innerHTML = didacticList(); };
+  document.querySelectorAll(".minical [data-go]").forEach(x => x.onclick = e => {
+    e.preventDefault();
+    const iso = x.dataset.go; let row = document.getElementById("d-" + iso);
+    if (!row) { dState.month = iso.slice(0, 7); const sel = $("#dmonth"); if (sel) sel.value = dState.month; $("#dlist").innerHTML = didacticList(); row = document.getElementById("d-" + iso); }
+    if (row) { row.scrollIntoView({ behavior: "smooth", block: "center" }); row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash"); }
+  });
   const dq = $("#dq"); if (dq) dq.oninput = () => { dState.q = dq.value; $("#dlist").innerHTML = didacticList(); };
   document.querySelectorAll("[data-sview]").forEach(b => b.onclick = () => { sState.view = b.dataset.sview; route(true); });
   document.querySelectorAll("[data-span]").forEach(b => b.onclick = () => { sState.span = b.dataset.span; route(true); });
