@@ -1444,3 +1444,55 @@ function signature_(settings) {
 function signHtml_(sign) {
   return String(sign).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/([\w.+-]+@[\w-]+\.[\w.-]+)/g, '<a href="mailto:$1">$1</a>').replace(/\n/g, '<br>');
 }
+
+/* ------------------------------------------------------------------ "How to update" tab
+ * Run writeHowToTab to (re)write the Control Panel's "How to update" tab with current instructions. */
+const HOWTO_LINES = [
+  ['HOW TO KEEP THE HUB UP TO DATE'],
+  ['You never edit the website. Edit the Google files below and the site follows within about 5 minutes (refresh the page). The full Chief Handoff Guide has more detail.'],
+  [''],
+  ['WHAT TO EDIT'],
+  ['Didactic schedule → the Didactic Schedule sheet. Each session needs a Date (or sits under a dated row) and a Lecture Topic; add Time, Location and Speaker. Write "Virtual" in Location for Zoom sessions. Put "Journal Club" in the topic for Journal Club. Calendar subscribers follow the sheet automatically.'],
+  ['Resident schedule → the Resident Schedule sheet, using the codes in the Rotations tab (SCW, WGRH, EMG…). To split a month in half, give that month two columns (merge the month header or leave the new header blank): the first column is the 1st–15th, the second starts on the 16th.'],
+  ['Rotation guides & policies → the Handbooks folder in Drive: one Google Doc per page. The doc name is the page title, the folder is its group, and the Policies folder appears under Resources. To add a rotation, copy a doc in the right folder and rename it; add a Rotations-tab row with exactly the same name to give it a schedule code. Run refreshHandbookNow to update the site right away.'],
+  ['Contacts, announcements, quick links → the tabs in this Control Panel. Contacts rows whose role contains "Chief" also become the signature on every lecture email.'],
+  ['Settings tab → Academic Year, Home headline and subtitle, Site passcode, Virtual lecture link (the usual Zoom link), Holiday themes (off to turn off), and the Lecture reminder settings.'],
+  [''],
+  ['GUEST LECTURERS (automatic emails from the chief Gmail)'],
+  ['Lecturers tab → one row per guest: name as written in the Didactic Schedule, email (several are fine, separated by commas), other spellings, and yes. This tab is never shown on the website.'],
+  ['Confirmed column in the Didactic Schedule → yes or confirmed = the guest gets a reminder 7 days before. Blank = the guest gets an invitation draft. Anything else (rescheduled, declined…) = nothing.'],
+  ['Every Monday → invitation drafts are created in Gmail ▸ Drafts for guest lectures in the next 6 weeks with a blank Confirmed cell, and the chief Gmail gets a note. Open each draft, adjust it, and press Send. When the guest agrees, type yes under Confirmed.'],
+  ['Invitations tab → to invite someone by hand, add a row and type yes under "Create draft?". Leave the dates blank to suggest open Mondays.'],
+  ['Settings "Lecture reminders" → test (everything goes to the "Lecture reminder test email"), on (to the lecturers) or off. Optional: Invitation lead (weeks), Lecture reminder days, Automatic invitations (off).'],
+  ['The chief Gmail is emailed about guests with no email on file (Mondays), emails that failed, reminded lectures that disappear or are canceled, and guest lectures still blank a week out. Every email sent is logged on the Lecture Reminders tab.'],
+  ['Lecture Locations tab → what in-person locations are called in emails (for example ISS → full name) and an optional address that becomes a directions link.'],
+  [''],
+  ['NEW ACADEMIC YEAR (each July)'],
+  ['1. Make the new Didactic and Resident Schedule sheets (File ▸ Make a copy of last year\'s), paste their links into Settings, and update Academic Year (the website and the email signature show the new year).'],
+  ['2. Change the Site passcode in Settings: every phone and computer is asked for the new one once.'],
+  ['3. Update Contacts with the new chiefs (name and cell): the website and the email signature follow.'],
+  ['4. Check the Rotations tab codes match the new Resident Schedule.'],
+  ['5. Update the Lecturers tab (add new guests, remove old ones) and keep the Confirmed column in the new Didactic Schedule.'],
+  ['6. Have residents review their Handbooks docs; run checkHandbookLinks.'],
+  [''],
+  ['IF SOMETHING LOOKS WRONG (Extensions ▸ Apps Script, pick the function, press Run, read the log)'],
+  ['Site footer says "Saved copy" → run testHub; the "Errors" line names the source that failed (usually a link in Settings or a file\'s sharing).'],
+  ['A Handbook change is not on the site → run refreshHandbookNow, then reload the site.'],
+  ['Check the lecture emails without sending anything → run previewLectureReminders. Run sendTestReminder for two sample reminders at the test address.'],
+  ['After pasting new code into Code.gs → Deploy ▸ Manage deployments: for BOTH deployments click the pencil, choose New version, and Deploy.'],
+  [''],
+  ['OWNERSHIP'],
+  ['This sheet, its Apps Script, the Handbooks folder and the GitHub account that hosts the site all belong to the shared chief Gmail. Hand over that login (and update its recovery phone and email) each year and nothing breaks.'],
+];
+
+function writeHowToTab() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName('How to update') || ss.insertSheet('How to update', 0);
+  sh.clear();
+  sh.getRange(1, 1, HOWTO_LINES.length, 1).setValues(HOWTO_LINES).setWrap(true).setVerticalAlignment('top').setFontSize(11);
+  sh.setColumnWidth(1, 900);
+  const isHead = t => /^[A-Z]/.test(t) && t.length < 140 && !/[a-z]/.test(t.split('(')[0]);   // ALL-CAPS lines are section headings
+  HOWTO_LINES.forEach((r, i) => { if (r[0] && isHead(r[0])) sh.getRange(i + 1, 1).setFontWeight('bold').setFontSize(i ? 12 : 14); });
+  sh.setFrozenRows(1);
+  Logger.log('The "How to update" tab is up to date (' + HOWTO_LINES.length + ' lines).');
+}
