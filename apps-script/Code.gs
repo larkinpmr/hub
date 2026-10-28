@@ -960,8 +960,10 @@ function normName_(s) {
 function readLecturers_() {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Lecturers');
   if (!sh) return [];
+  // the Email cell can hold several addresses ("a@x.com, b@y.org"): every reminder and invitation goes to all of them
+  const emails = v => String(v || '').replace(/mailto:/gi, '').split(/[\s,;]+/).filter(e => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)).join(', ');
   return values_(sh).slice(1).map(r => ({
-    name: String(r[0] || '').trim(), email: String(r[1] || '').trim(),
+    name: String(r[0] || '').trim(), email: emails(r[1]),
     names: [r[0]].concat(String(r[2] || '').split(/[;\n]/)).map(normName_).filter(Boolean),
     on: !/^(no|n|off|false|0)$/i.test(String(r[3] || '').trim()),
   })).filter(l => l.name && /@/.test(l.email) && l.on && !/@example\.com$/i.test(l.email));

@@ -62,7 +62,7 @@ Every morning around 8 AM the chief Gmail checks the Didactic Schedule and email
 
 1. In the Control Panel **Settings** tab add two rows: `Lecture reminders` = `test`, and `Lecture reminder test email` = the address that should receive test copies.
 2. In Apps Script, run **installLectureReminders** and click Allow when Google asks to send email. It creates the **Lecturers**, **Lecture Reminders** and **Lecture Locations** tabs and turns on the daily check.
-3. **Lecturers tab:** one row per guest: name exactly as written in the Didactic Schedule's speaker column, email, other spellings (e.g. `Dr. Kahn; Stuart Kahn`), and "yes" under Send reminders.
+3. **Lecturers tab:** one row per guest: name exactly as written in the Didactic Schedule's speaker column, email (several are fine, separated by commas: every email goes to all of them), other spellings (e.g. `Dr. Kahn; Stuart Kahn`), and "yes" under Send reminders.
 4. Run **previewLectureReminders** (who gets what, when; sends nothing) and **sendTestReminder** (two sample emails to the test address).
 5. When the test emails look right, change `Lecture reminders` to `on`. Use `off` to pause everything.
 
