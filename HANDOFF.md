@@ -51,7 +51,7 @@ The **Handbooks** folder holds one Google Doc per page. Its link is in the Contr
 The chief Gmail can email guest lecturers automatically before their lecture (a week before by default). It checks the Didactic Schedule every morning around 8 AM, so adding or moving a lecture in the sheet is all you do.
 
 1. **Once:** in Apps Script, run **installLectureReminders**. It creates two tabs in the Control Panel and turns on the daily check. Google will ask for permission to send email as the chief Gmail: click Allow.
-2. **Lecturers tab:** one row per guest: their name as written in the Didactic Schedule's Speaker column, their email, other spellings you use (for example `Dr. Kahn; Stuart Kahn`), and "yes" under Send reminders. Residents don't go on this tab, so they never get these emails. This tab is private: the website never receives it.
+2. **Lecturers tab:** one row per guest: their name as written in the Didactic Schedule's Speaker column, their email, other spellings you use (for example `Dr. Kahn; Stuart Kahn`), and "yes" under Send reminders. Residents don't go on this tab, so they never get these emails. This tab is private: the website never receives it. A third tab, **Lecture Locations**, turns sheet shorthand into something a guest understands: "Larkin South" → "Larkin South, G&E building, 4th floor", plus an optional address that becomes a directions link. Fill in ISS once its new location is known.
 3. Run **previewLectureReminders** to see the next 6 weeks of lectures and who will be emailed when. It sends nothing.
 4. Run **sendTestReminder** to get a sample email in the chief inbox.
 

@@ -876,18 +876,36 @@ function checkHandbookLinks() {
  * Settings rows (optional): Lecture reminders (on/off) · Lecture reminder days (e.g. "7" or "7, 1") ·
  * Didactics start time (blank = 2:00 PM) · Guest lecture length (hours) (blank = 2) · Virtual lecture link ·
  * Lecture reminder signature */
-const PRIVATE_TABS = ['Lecturers', 'Lecture Reminders'];
+const PRIVATE_TABS = ['Lecturers', 'Lecture Reminders', 'Lecture Locations'];
+const LOCATION_HEAD = ['Location (as written in the Didactic Schedule)', 'What the email says', 'Address (optional: becomes a directions link)'];
 const LECTURER_HEAD = ['Name (as written in the Didactic Schedule)', 'Email', 'Also written as (separate with ;)', 'Send reminders (yes/no)', 'Notes'];
 const REMINDER_HEAD = ['Sent', 'Lecture date', 'Topic', 'Speaker', 'Email', 'Days before', 'Status'];
 
 function installLectureReminders() {
   const lec = panelSheet_('Lecturers', LECTURER_HEAD);
   panelSheet_('Lecture Reminders', REMINDER_HEAD);
+  lectureLocationsTab_();
   if (lec.getLastRow() < 2) lec.getRange(2, 1, 1, 5).setValues([['Dr. Example Lecturer', 'name@example.com', 'Dr. Lecturer; John Lecturer', 'no', 'Sample row: replace it. Reminders go only to rows with an email and "yes".']]);
   lec.setColumnWidth(1, 280); lec.setColumnWidth(2, 240); lec.setColumnWidth(3, 260); lec.setColumnWidth(5, 360);
   ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'sendLectureReminders').forEach(t => ScriptApp.deleteTrigger(t));
   ScriptApp.newTrigger('sendLectureReminders').timeBased().atHour(8).everyDays(1).inTimezone(TZ).create();
   Logger.log('Lecture reminders are on: every morning around 8 AM, lecturers on the "Lecturers" tab get an email ' + reminderDays_(panelSettings_()).join(' and ') + ' day(s) before their lecture.\nNext: add your guest lecturers to the "Lecturers" tab, then run previewLectureReminders.');
+}
+
+/** "Lecture Locations" tab: turns sheet shorthand like "ISS" into something a guest understands. */
+function lectureLocationsTab_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss.getSheetByName('Lecture Locations')) return;
+  const sh = panelSheet_('Lecture Locations', LOCATION_HEAD);
+  sh.getRange(2, 1, 2, 3).setValues([['Larkin South', 'Larkin South, G&E building, 4th floor', ''], ['ISS', '', '']]);
+  sh.setColumnWidth(1, 300); sh.setColumnWidth(2, 320); sh.setColumnWidth(3, 340);
+}
+
+function lectureLocation_(loc) {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Lecture Locations');
+  const key = String(loc || '').trim().toLowerCase();
+  const row = sh && key ? values_(sh).slice(1).find(r => String(r[0] || '').trim().toLowerCase() === key) : null;
+  return { name: (row && String(row[1] || '').trim()) || String(loc || '').trim(), address: (row && String(row[2] || '').trim()) || '' };
 }
 
 function reminderDays_(settings) {
@@ -973,20 +991,22 @@ function reminderEmail_(t, l, settings) {
   const time = clock_(tm.start).replace(/ (AM|PM)$/, (s, ap) => clock_(tm.end).slice(-2) === ap ? '' : s) + ' – ' + clock_(tm.end);
   const virtual = /virtual/i.test(t.location || '');  // the sheet says "Virtual" -> virtual; anything else is in person
   const link = virtual ? (settings['Virtual lecture link'] || '') : '';
-  const place = virtual ? '' : String(t.location || '').trim();
+  const where = virtual ? { name: '', address: '' } : lectureLocation_(t.location);
+  const place = where.name;
+  const maps = where.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(where.address) : '';
   const sign = settings['Lecture reminder signature'] || 'PM&R Chief Residents\nLarkin Community Hospital South Miami';
   const bare = String(l.name).replace(/\([^)]*\)/g, '').trim();
   const greet = /^\s*dr\b/i.test(bare) ? 'Dr. ' + bare.split(/\s+/).pop() : bare;
   const flexible = !parseTime_(t.time);
   const flexNote = 'Didactics start at ' + clock_(tm.start) + '. You are welcome to give your presentation at any point between ' + clock_(tm.start) + ' and ' + clock_(tm.end) + ', and we will work around your schedule. Just reply to let us know what time works best for you.';
-  const rows = [['Topic', t.topic], ['Date', when], ['Time', flexible ? time + ' (flexible)' : time], ['Format', virtual ? 'Virtual' : 'In person'], ['Location', place], ['Join link', link]].filter(r => r[1]);
+  const rows = [['Topic', t.topic], ['Date', when], ['Time', flexible ? time + ' (flexible)' : time], ['Format', virtual ? 'Virtual' : 'In person'], ['Location', place], ['Address', where.address], ['Join link', link]].filter(r => r[1]);
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 
   // Calendar: Google / Outlook buttons plus an attached .ics file (Apple Calendar, Outlook desktop, anything else).
   const ymd = t.date.replace(/-/g, '');
   const local = m => ymd + 'T' + hhmm_(m);
   const title = 'PM&R lecture: ' + t.topic;
-  const calLoc = virtual ? (link || 'Virtual') : place;
+  const calLoc = virtual ? (link || 'Virtual') : [place, where.address].filter(Boolean).join(', ');
   const details = 'Lecture for the Larkin Community Hospital South Miami PM&R residents.\nTopic: ' + t.topic + (virtual ? '\nVirtual' + (link ? ': ' + link : '') : '\nIn person' + (place ? ' at ' + place : '')) + '\n\nQuestions: reply to the reminder email.';
   const q = o => Object.keys(o).map(k => k + '=' + encodeURIComponent(o[k])).join('&');
   const google = 'https://calendar.google.com/calendar/render?' + q({ action: 'TEMPLATE', text: title }) + '&dates=' + local(tm.start) + '/' + local(tm.end) + '&' + q({ ctz: TZ, details: details, location: calLoc });
@@ -1013,7 +1033,7 @@ function reminderEmail_(t, l, settings) {
   const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f2937">' +
     '<p>Dear ' + esc(greet) + ',</p><p>Thank you again for teaching our PM&amp;R residents. This is a friendly reminder about your upcoming ' + (virtual ? 'virtual' : 'in-person') + ' lecture:</p>' +
     '<table style="border-collapse:collapse;margin:8px 0 14px">' + rows.map(r => '<tr><td style="padding:3px 16px 3px 0;color:#6b7280">' + r[0] + '</td><td style="padding:3px 0;font-weight:bold">' +
-      (r[0] === 'Join link' ? '<a href="' + esc(r[1]) + '">' + esc(r[1]) + '</a>' : esc(r[1])) + '</td></tr>').join('') + '</table>' +
+      (r[0] === 'Join link' ? '<a href="' + esc(r[1]) + '">' + esc(r[1]) + '</a>' : r[0] === 'Address' ? '<a href="' + esc(maps) + '">' + esc(r[1]) + '</a>' : esc(r[1])) + '</td></tr>').join('') + '</table>' +
     (flexible ? '<p style="margin:0 0 16px;padding:10px 14px;border-left:4px solid #0F766E;background:#F0FDFA">' + esc(flexNote) + '</p>' : '') +
     '<p style="margin:0 0 6px">Add it to your calendar:</p><div>' + btn(google, 'Google Calendar') + btn(outlook, 'Outlook') + '</div>' +
     '<p style="margin:0 0 14px;color:#6b7280;font-size:13px">Apple Calendar or another app: open the attached .ics file.' + (link ? ' The join link is saved in the event.' : '') + '</p>' +
@@ -1024,6 +1044,7 @@ function reminderEmail_(t, l, settings) {
 
 /** Runs every morning (installLectureReminders sets it up). */
 function sendLectureReminders() {
+  lectureLocationsTab_();
   const settings = panelSettings_();
   if (/^(off|no|false|0)$/i.test(settings['Lecture reminders'] || '')) return;
   const log = panelSheet_('Lecture Reminders', REMINDER_HEAD);
@@ -1040,6 +1061,7 @@ function sendLectureReminders() {
 
 /** Lists the next 6 weeks of lectures and what would be sent. Sends nothing. */
 function previewLectureReminders() {
+  lectureLocationsTab_();
   const settings = panelSettings_();
   const days = reminderDays_(settings);
   const list = dueReminders_(settings, 42).filter(r => r.talk.speaker);
