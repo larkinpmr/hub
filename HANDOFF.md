@@ -76,7 +76,7 @@ Every morning around 8 AM the chief Gmail checks the Didactic Schedule and email
 - **Failures:** if an email can't be sent, the chief Gmail is told the same morning.
 - The Lecturers, Lecture Reminders and Lecture Locations tabs, and the "Lecture reminder…" Settings rows, are never sent to the website. **Lecture Locations** turns sheet shorthand into something a guest understands ("Larkin South" → "Larkin South, G&E building, 4th floor", plus an optional address that becomes a directions link).
 
-Other Settings rows: **Lecture reminder days** (`7`, or `7, 1` for a week before and the day before), **Didactics start time** (blank = 2:00 PM), **Guest lecture length (hours)** (blank = 2), **Virtual lecture link**, **Lecture reminder signature**.
+Other Settings rows: **Lecture reminder days** (`7`, or `7, 1` for a week before and the day before), **Didactics start time** (blank = 2:00 PM), **Guest lecture length (hours)** (blank = 2), **Virtual lecture link**, **Lecture reminder signature** (leave blank: every reminder and invitation is signed "Physical Medicine & Rehabilitation Chief Residents" + the Academic Year, the hospital, the chief email, and each chief's name and cell from the Contacts tab, so it updates itself when the Contacts tab changes in July).
 
 # Inviting guest lecturers
 

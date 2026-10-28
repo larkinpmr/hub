@@ -1064,7 +1064,7 @@ function reminderEmail_(t, l, settings) {
   const where = virtual ? { name: '', address: '' } : lectureLocation_(t.location);
   const place = where.name;
   const maps = where.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(where.address) : '';
-  const sign = settings['Lecture reminder signature'] || 'PM&R Chief Residents\nLarkin Community Hospital South Miami';
+  const sign = signature_(settings);
   const bare = String(l.name).replace(/\([^)]*\)/g, '').trim();
   const greet = /^\s*dr\b/i.test(bare) ? 'Dr. ' + bare.split(/\s+/).pop() : bare;
   const flexible = tm.flexible;
@@ -1108,7 +1108,7 @@ function reminderEmail_(t, l, settings) {
     '<p style="margin:0 0 6px">Add it to your calendar:</p><div>' + btn(google, 'Google Calendar') + btn(outlook, 'Outlook') + '</div>' +
     '<p style="margin:0 0 14px;color:#6b7280;font-size:13px">Apple Calendar or another app: open the attached .ics file.' + (link ? ' The join link is saved in the event.' : '') + '</p>' +
     '<p>If anything has changed, or you would like to share slides or materials ahead of time, just reply to this email.</p>' +
-    '<p>Thank you,<br>' + esc(sign).replace(/\n/g, '<br>') + '</p></div>';
+    '<p>Thank you,<br>' + signHtml_(sign) + '</p></div>';
   const moved = t.moved ? 'Please note: the date of this lecture has changed since our last email. The details above are current.' : '';
   return { subject: (t.moved ? 'Updated date: ' : '') + subject, plain: moved ? plain.replace('\n\n', '\n\n' + moved + '\n\n') : plain,
     html: moved ? html.replace('</p><p>Thank you again', '</p><p style="padding:10px 14px;border-left:4px solid #B45309;background:#FFFBEB"><b>' + esc(moved) + '</b></p><p>Thank you again') : html, attachments: [attachment] };
@@ -1328,7 +1328,7 @@ function futureDate_(s) {
 }
 
 function invitationEmail_(x, settings, talks) {
-  const sign = settings['Lecture reminder signature'] || 'PM&R Chief Residents\nLarkin Community Hospital South Miami';
+  const sign = signature_(settings);
   const bare = x.name.replace(/\([^)]*\)/g, '').trim();
   const greet = /^\s*dr\b/i.test(bare) ? 'Dr. ' + bare.split(/\s+/).pop() : bare;
   const fmtDay = d => Utilities.formatDate(new Date(d + 'T12:00:00Z'), 'UTC', 'EEEE, MMMM d');
@@ -1348,7 +1348,7 @@ function invitationEmail_(x, settings, talks) {
   const plain = 'Dear ' + greet + ',\n\n' + p1 + '\n\n' + p2 + (p3 ? '\n\n' + p3 + '\n' + dates.map(d => '• ' + d).join('\n') : '') + '\n\n' + p4 + '\n\nThank you for considering it,\n' + sign;
   const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f2937"><p>Dear ' + esc(greet) + ',</p><p>' + esc(p1) + '</p><p>' + esc(p2) + '</p>' +
     (p3 ? '<p style="margin-bottom:4px">' + esc(p3) + '</p><ul style="margin-top:0">' + dates.map(d => '<li>' + esc(d) + '</li>').join('') + '</ul>' : '') +
-    '<p>' + esc(p4) + '</p><p>Thank you for considering it,<br>' + esc(sign).replace(/\n/g, '<br>') + '</p></div>';
+    '<p>' + esc(p4) + '</p><p>Thank you for considering it,<br>' + signHtml_(sign) + '</p></div>';
   return { subject: subject, plain: plain, html: html };
 }
 
@@ -1398,7 +1398,7 @@ function draftUpcomingInvitations(talks) {
 
 /** The first ask for a lecture that is already on the schedule: that date, or another date that month. */
 function dateInvitationEmail_(x, settings) {
-  const sign = settings['Lecture reminder signature'] || 'PM&R Chief Residents\nLarkin Community Hospital South Miami';
+  const sign = signature_(settings);
   const bare = String(x.name).replace(/\([^)]*\)/g, '').trim();
   const greet = /^\s*dr\b/i.test(bare) ? 'Dr. ' + bare.split(/\s+/).pop() : bare;
   const day = Utilities.formatDate(new Date(x.date + 'T12:00:00Z'), 'UTC', 'EEEE, MMMM d'), month = Utilities.formatDate(new Date(x.date + 'T12:00:00Z'), 'UTC', 'MMMM');
@@ -1410,6 +1410,33 @@ function dateInvitationEmail_(x, settings) {
   const subject = 'Lecture request: ' + x.topic + ' (' + Utilities.formatDate(new Date(x.date + 'T12:00:00Z'), 'UTC', 'MMM d') + ')';
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
   const plain = 'Dear ' + greet + ',\n\n' + p1 + '\n\n' + p2 + '\n\n' + p3 + '\n\nThank you,\n' + sign;
-  const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f2937"><p>Dear ' + esc(greet) + ',</p><p>' + esc(p1) + '</p><p>' + esc(p2) + '</p><p>' + esc(p3) + '</p><p>Thank you,<br>' + esc(sign).replace(/\n/g, '<br>') + '</p></div>';
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f2937"><p>Dear ' + esc(greet) + ',</p><p>' + esc(p1) + '</p><p>' + esc(p2) + '</p><p>' + esc(p3) + '</p><p>Thank you,<br>' + signHtml_(sign) + '</p></div>';
   return { subject: subject, plain: plain, html: html };
+}
+
+
+/** Email signature: the chiefs from the Control Panel "Contacts" tab (role contains "Chief"), the academic year,
+ * and the chief email. A "Lecture reminder signature" Settings row replaces it. Updates itself each year. */
+function signature_(settings) {
+  if (String(settings['Lecture reminder signature'] || '').trim()) return String(settings['Lecture reminder signature']).trim();
+  const year = String(settings['Academic Year'] || '').replace(/\s*[–—-]\s*/, ' - ').trim();
+  let chiefs = [], email = '';
+  try {
+    const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Contacts');
+    const rows = sh ? values_(sh) : [];
+    const head = (rows[0] || []).map(h => String(h).trim().toLowerCase());
+    const col = re => head.findIndex(h => re.test(h));
+    const cRole = col(/role/), cName = col(/name/), cPhone = col(/phone|cell/), cEmail = col(/e-?mail/);
+    rows.slice(1).forEach(r => {
+      if (cRole < 0 || cName < 0 || !/chief/i.test(r[cRole]) || !String(r[cName] || '').trim()) return;
+      chiefs.push(String(r[cName]).trim() + (cPhone >= 0 && String(r[cPhone] || '').trim() ? ' || Cell: ' + String(r[cPhone]).trim() : ''));
+      if (!email && cEmail >= 0 && /@/.test(r[cEmail])) email = String(r[cEmail]).trim();
+    });
+  } catch (err) { /* fall back to the plain signature */ }
+  email = email || Session.getEffectiveUser().getEmail();
+  return ['Physical Medicine & Rehabilitation Chief Residents' + (year ? ' ' + year : ''), 'Larkin Community Hospital South Miami', 'Email: ' + email].concat(chiefs).join('\n');
+}
+
+function signHtml_(sign) {
+  return String(sign).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/([\w.+-]+@[\w-]+\.[\w.-]+)/g, '<a href="mailto:$1">$1</a>').replace(/\n/g, '<br>');
 }
