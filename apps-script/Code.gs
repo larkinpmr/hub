@@ -954,7 +954,7 @@ function reminderDays_(settings) {
 }
 
 function normName_(s) {
-  return String(s || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/\b(dr|doctor|prof|md|do|phd)\b\.?/g, ' ').replace(/[^a-z\s'-]/g, ' ').replace(/\s+/g, ' ').trim();
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/\b(dr|doctor|prof|md|do|phd)\b\.?/g, ' ').replace(/[^a-z\s'-]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 function readLecturers_() {
