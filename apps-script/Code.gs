@@ -971,22 +971,23 @@ function reminderEmail_(t, l, settings) {
   const when = Utilities.formatDate(new Date(t.date + 'T12:00:00Z'), 'UTC', 'EEEE, MMMM d');
   const tm = lectureTimes_(t, settings);
   const time = clock_(tm.start).replace(/ (AM|PM)$/, (s, ap) => clock_(tm.end).slice(-2) === ap ? '' : s) + ' – ' + clock_(tm.end);
-  const virtual = /virtual|zoom|teams|online/i.test(t.location || '');
+  const virtual = /virtual/i.test(t.location || '');  // the sheet says "Virtual" -> virtual; anything else is in person
   const link = virtual ? (settings['Virtual lecture link'] || '') : '';
+  const place = virtual ? '' : String(t.location || '').trim();
   const sign = settings['Lecture reminder signature'] || 'PM&R Chief Residents\nLarkin Community Hospital South Miami';
   const bare = String(l.name).replace(/\([^)]*\)/g, '').trim();
   const greet = /^\s*dr\b/i.test(bare) ? 'Dr. ' + bare.split(/\s+/).pop() : bare;
   const flexible = !parseTime_(t.time);
   const flexNote = 'Didactics start at ' + clock_(tm.start) + '. You are welcome to give your presentation at any point between ' + clock_(tm.start) + ' and ' + clock_(tm.end) + ', and we will work around your schedule. Just reply to let us know what time works best for you.';
-  const rows = [['Topic', t.topic], ['Date', when], ['Time', flexible ? time + ' (flexible)' : time], ['Location', t.location], ['Join link', link]].filter(r => r[1]);
+  const rows = [['Topic', t.topic], ['Date', when], ['Time', flexible ? time + ' (flexible)' : time], ['Format', virtual ? 'Virtual' : 'In person'], ['Location', place], ['Join link', link]].filter(r => r[1]);
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 
   // Calendar: Google / Outlook buttons plus an attached .ics file (Apple Calendar, Outlook desktop, anything else).
   const ymd = t.date.replace(/-/g, '');
   const local = m => ymd + 'T' + hhmm_(m);
   const title = 'PM&R lecture: ' + t.topic;
-  const calLoc = link || t.location || '';
-  const details = 'Lecture for the Larkin Community Hospital South Miami PM&R residents.\nTopic: ' + t.topic + (link ? '\nJoin link: ' + link : '') + (t.location ? '\nLocation: ' + t.location : '') + '\n\nQuestions: reply to the reminder email.';
+  const calLoc = virtual ? (link || 'Virtual') : place;
+  const details = 'Lecture for the Larkin Community Hospital South Miami PM&R residents.\nTopic: ' + t.topic + (virtual ? '\nVirtual' + (link ? ': ' + link : '') : '\nIn person' + (place ? ' at ' + place : '')) + '\n\nQuestions: reply to the reminder email.';
   const q = o => Object.keys(o).map(k => k + '=' + encodeURIComponent(o[k])).join('&');
   const google = 'https://calendar.google.com/calendar/render?' + q({ action: 'TEMPLATE', text: title }) + '&dates=' + local(tm.start) + '/' + local(tm.end) + '&' + q({ ctz: TZ, details: details, location: calLoc });
   const isoLocal = m => t.date + 'T' + hhmm_(m).replace(/(\d\d)(\d\d)(\d\d)/, '$1:$2:$3');
@@ -1003,14 +1004,14 @@ function reminderEmail_(t, l, settings) {
   const attachment = Utilities.newBlob(ics, 'text/calendar', 'PM&R lecture ' + t.date + '.ics');
 
   const btn = (href, label) => '<a href="' + esc(href) + '" style="display:inline-block;margin:0 8px 8px 0;padding:9px 14px;border-radius:8px;background:#0F766E;color:#ffffff;text-decoration:none;font-weight:bold">' + label + '</a>';
-  const subject = 'Reminder: your PM&R lecture on ' + when;
-  const plain = 'Dear ' + greet + ',\n\nThank you again for teaching our PM&R residents. This is a friendly reminder about your upcoming lecture:\n\n' +
+  const subject = 'Reminder: your ' + (virtual ? 'virtual' : 'in-person') + ' PM&R lecture on ' + when;
+  const plain = 'Dear ' + greet + ',\n\nThank you again for teaching our PM&R residents. This is a friendly reminder about your upcoming ' + (virtual ? 'virtual' : 'in-person') + ' lecture:\n\n' +
     rows.map(r => r[0] + ': ' + r[1]).join('\n') +
     (flexible ? '\n\n' + flexNote : '') +
     '\n\nAdd it to your calendar:\nGoogle Calendar: ' + google + '\nOutlook: ' + outlook + '\nApple Calendar or other apps: open the attached .ics file.' +
     '\n\nIf anything has changed, or you would like to share slides or materials ahead of time, just reply to this email.\n\nThank you,\n' + sign;
   const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f2937">' +
-    '<p>Dear ' + esc(greet) + ',</p><p>Thank you again for teaching our PM&amp;R residents. This is a friendly reminder about your upcoming lecture:</p>' +
+    '<p>Dear ' + esc(greet) + ',</p><p>Thank you again for teaching our PM&amp;R residents. This is a friendly reminder about your upcoming ' + (virtual ? 'virtual' : 'in-person') + ' lecture:</p>' +
     '<table style="border-collapse:collapse;margin:8px 0 14px">' + rows.map(r => '<tr><td style="padding:3px 16px 3px 0;color:#6b7280">' + r[0] + '</td><td style="padding:3px 0;font-weight:bold">' +
       (r[0] === 'Join link' ? '<a href="' + esc(r[1]) + '">' + esc(r[1]) + '</a>' : esc(r[1])) + '</td></tr>').join('') + '</table>' +
     (flexible ? '<p style="margin:0 0 16px;padding:10px 14px;border-left:4px solid #0F766E;background:#F0FDFA">' + esc(flexNote) + '</p>' : '') +
