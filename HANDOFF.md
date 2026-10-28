@@ -78,6 +78,17 @@ Every morning around 8 AM the chief Gmail checks the Didactic Schedule and email
 
 Other Settings rows: **Lecture reminder days** (`7`, or `7, 1` for a week before and the day before), **Didactics start time** (blank = 2:00 PM), **Guest lecture length (hours)** (blank = 2), **Virtual lecture link**, **Lecture reminder signature**.
 
+# Inviting guest lecturers
+
+The private **Invitations** tab in the Control Panel turns a row into a ready-to-edit invitation in the chief Gmail's **Drafts** folder. Nothing is sent until you open the draft and press Send.
+
+1. **Once:** in Apps Script, run **installInvitations** (click Allow if Google asks about Gmail). It creates the tab.
+2. Fill in a row: name, email, topic (optional), proposed dates (optional, separated by `;`, e.g. `12/14/2026; Jan 11`), and format (virtual, in person or either).
+3. Type **yes** under "Create draft?". Within a few seconds the draft is in Gmail ▸ Drafts and the Status column says so. Each row makes one draft, once.
+4. Open the draft, personalize it, and send. Replies come to the chief Gmail.
+
+If "Proposed dates" is blank, the draft suggests the next few Monday didactics (2–10 weeks out) that don't have a guest speaker yet. When someone says yes, add them to the Didactic Schedule and the **Lecturers** tab; the 7-day reminder then happens on its own.
+
 # Start of each academic year (July)
 
 1. **Accounts:** give the new chiefs the chief Gmail and update its recovery phone/email and 2-step verification.
@@ -107,6 +118,7 @@ Open the **Hub Control Panel** sheet ▸ **Extensions ▸ Apps Script**. Choose 
 | **testHub** | If the site says "Saved copy" or something looks missing: lists errors and sizes |
 | **testCalendar** / **testMyCalendar** | To preview the didactics calendar or one resident's personal calendar |
 | **installLectureReminders** / **previewLectureReminders** / **sendTestReminder** / **checkLecturerEmails** | Guest lecturer reminder emails (see above) |
+| **installInvitations** / **createInvitationDrafts** | Lecture invitation drafts (see above) |
 | **installAutoRefresh** | Only if the automatic 5-minute refresh ever stops (check the clock icon, "Triggers", on the left) |
 
 **If you ever paste new code into Code.gs or Admin.html:** click **Deploy ▸ Manage deployments**. For **each** of the two deployments, click the pencil, set Version to **New version**, and click **Deploy**. Without this, the site keeps running the old code. The links stay the same.

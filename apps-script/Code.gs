@@ -913,7 +913,7 @@ function checkHandbookLinks() {
  * Lecture reminder test email · Lecture reminder days ("7" or "7, 1") · Didactics start time (blank = 2:00 PM) ·
  * Guest lecture length (hours) (blank = 2) · Virtual lecture link · Lecture reminder signature.
  * "Lecture reminder…" rows are kept off the public website. */
-const PRIVATE_TABS = ['Lecturers', 'Lecture Reminders', 'Lecture Locations'];
+const PRIVATE_TABS = ['Lecturers', 'Lecture Reminders', 'Lecture Locations', 'Invitations'];
 const LOCATION_HEAD = ['Location (as written in the Didactic Schedule)', 'What the email says', 'Address (optional: becomes a directions link)'];
 const LECTURER_HEAD = ['Name (as written in the Didactic Schedule)', 'Email', 'Also written as (separate with ;)', 'Send reminders (yes/no)', 'Notes'];
 const REMINDER_HEAD = ['Sent', 'Lecture date', 'Topic', 'Speaker', 'Email', 'Days before', 'Status'];
@@ -1178,21 +1178,12 @@ function checkLecturerEmails(talks) {
 }
 
 function missingLecturerEmails_(settings, talks, horizon) {
-  const lecturers = readLecturers_();
-  let people = [];
-  try { people = parseResidents_(readSheet_(idFromLink_(settings['Resident Schedule Sheet']) || FALLBACK['Resident Schedule Sheet'], settings['Resident Schedule tab'])); } catch (err) { /* no residents list: only groups are skipped */ }
-  const resTokens = {}; people.forEach(p => normName_(p.name).split(' ').filter(w => w.length >= 3).forEach(w => { resTokens[w] = true; }));
-  const group = /resident|subcommittee|pgy|chief|station|panel|faculty|attending|\btbd\b|\btba\b|everyone|\ball\b|students?\b|team/i;
+  const lecturers = readLecturers_(), tokens = residentTokens_(settings);
   const out = [];
   talks.forEach(t => {
     const n = daysUntil_(t.date);
     if (n < 0 || n > horizon || !t.speaker || /cancel|no didactics|holiday/i.test(t.topic)) return;
-    String(t.speaker).split(/\s*(?:\/|&|,|\band\b|\+)\s*/i).forEach(part => {
-      const nm = normName_(part);
-      if (!nm || group.test(part) || nm.split(' ').some(w => resTokens[w])) return;
-      if (matchLecturers_(part, lecturers).length) return;
-      out.push(t.date + ' · ' + t.topic + ' — ' + part.trim());
-    });
+    guestParts_(t.speaker, tokens).forEach(part => { if (!matchLecturers_(part, lecturers).length) out.push(t.date + ' · ' + t.topic + ' — ' + part); });
   });
   return out.filter((x, i, a) => a.indexOf(x) === i);
 }
@@ -1228,4 +1219,118 @@ function sendTestReminder() {
     MailApp.sendEmail({ to: to, subject: '[TEST] ' + m.subject, body: m.plain, htmlBody: m.html, attachments: m.attachments, name: 'Larkin PM&R Chief Residents' });
   });
   Logger.log('Two sample reminders (virtual and in person) sent to ' + to + '. Check that inbox.');
+}
+
+/* ------------------------------------------------------------------ lecture invitation drafts
+ * Private "Invitations" tab: one row per person you'd like to ask to lecture. Typing "yes" under "Create draft?"
+ * makes a ready-to-edit invitation in the chief Gmail's Drafts folder (nothing is sent). If "Proposed dates" is
+ * blank, the draft suggests upcoming Monday didactics that don't have a guest speaker yet.
+ *   installInvitations       run once: creates the tab and makes "yes" create the draft right away
+ *   createInvitationDrafts   makes drafts for every row marked "yes" that has no status yet */
+const INVITE_HEAD = ['Name', 'Email', 'Topic (optional)', 'Proposed dates (optional; blank = suggest open Mondays)', 'Format (virtual / in person / either)', 'Create draft? (yes)', 'Status'];
+
+function installInvitations() {
+  const sh = panelSheet_('Invitations', INVITE_HEAD);
+  [180, 230, 220, 300, 200, 130, 260].forEach((w, i) => sh.setColumnWidth(i + 1, w));
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'onInvitationsEdit').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('onInvitationsEdit').forSpreadsheet(SpreadsheetApp.getActiveSpreadsheet()).onEdit().create();
+  Logger.log('The "Invitations" tab is ready. Fill in a row and type yes under "Create draft?": the invitation appears in the chief Gmail\'s Drafts folder within a few seconds.');
+}
+
+/** Installable edit trigger: a "yes" typed on the Invitations tab creates that row's draft right away. */
+function onInvitationsEdit(e) {
+  try { if (e && e.range && e.range.getSheet().getName() === 'Invitations') createInvitationDrafts(); } catch (err) { /* the row's Status shows any problem */ }
+}
+
+function createInvitationDrafts() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Invitations');
+  if (!sh) { Logger.log('No "Invitations" tab yet. Run installInvitations first.'); return; }
+  const settings = panelSettings_();
+  const rows = values_(sh);
+  let talks = null, made = 0;
+  rows.slice(1).forEach((r, i) => {
+    const name = String(r[0] || '').trim(), email = String(r[1] || '').trim().replace(/^mailto:/i, '');
+    if (!/^y(es)?$/i.test(String(r[5] || '').trim()) || String(r[6] || '').trim()) return;
+    const cell = sh.getRange(i + 2, 7);
+    if (!name || !/@/.test(email)) { cell.setValue('Needs a name and an email'); return; }
+    try {
+      talks = talks || readTalks_(settings);
+      const m = invitationEmail_({ name: name, topic: String(r[2] || '').trim(), dates: String(r[3] || '').trim(), format: String(r[4] || '').trim() }, settings, talks);
+      GmailApp.createDraft(email, m.subject, m.plain, { htmlBody: m.html, name: 'Larkin PM&R Chief Residents' });
+      cell.setValue('Draft created ' + Utilities.formatDate(new Date(), TZ, 'MMM d, yyyy') + ' (Gmail ▸ Drafts)'); made++;
+    } catch (err) { cell.setValue('Problem: ' + err.message); }
+  });
+  Logger.log(made ? made + ' invitation draft(s) created in the chief Gmail Drafts folder.' : 'No new rows marked "yes".');
+}
+
+/** Upcoming Monday didactics, 2–10 weeks out, with no guest speaker yet. */
+function openMondays_(settings, talks, count) {
+  const tokens = residentTokens_(settings);
+  const byDate = {};
+  talks.forEach(t => { (byDate[t.date] = byDate[t.date] || []).push(t); });
+  return Object.keys(byDate).sort().filter(d => {
+    const n = daysUntil_(d), dow = new Date(d + 'T12:00:00Z').getUTCDay();
+    if (dow !== 1 || n < 14 || n > 70) return false;
+    const day = byDate[d];
+    if (day.some(t => /no didactics|holiday|cancel/i.test(t.topic))) return false;
+    return !day.some(t => guestParts_(t.speaker, tokens).length);
+  }).slice(0, count || 4);
+}
+
+function residentTokens_(settings) {
+  const tokens = {};
+  try {
+    parseResidents_(readSheet_(idFromLink_(settings['Resident Schedule Sheet']) || FALLBACK['Resident Schedule Sheet'], settings['Resident Schedule tab']))
+      .forEach(p => normName_(p.name).split(' ').filter(w => w.length >= 3).forEach(w => { tokens[w] = true; }));
+  } catch (err) { /* no residents list: only groups are recognized */ }
+  return tokens;
+}
+
+/** The parts of a Speaker cell that look like guests (not residents, not groups like "All Residents"). */
+function guestParts_(speaker, tokens) {
+  const group = /resident|subcommittee|pgy|chief|station|panel|faculty|attending|\btbd\b|\btba\b|everyone|\ball\b|students?\b|team/i;
+  return String(speaker || '').split(/\s*(?:\/|&|,|\band\b|\+)\s*/i).map(s => s.trim())
+    .filter(part => { const nm = normName_(part); return nm && !group.test(part) && !nm.split(' ').some(w => tokens[w]); });
+}
+
+/** "12/14/2026", "Dec 14", "1/11" → the next such date on or after today (a date without a year is never in the past). */
+function futureDate_(s) {
+  s = String(s || '').trim();
+  if (/\b20\d\d\b/.test(s) || /^\d{1,2}\/\d{1,2}\/\d{2}$/.test(s)) return isoDate_(s);
+  const today = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd'), y = Number(today.slice(0, 4));
+  let m = s.match(/^(\d{1,2})\/(\d{1,2})$/), mo, d;
+  if (m) { mo = Number(m[1]); d = Number(m[2]); }
+  else {
+    m = s.match(/([A-Za-z]{3,})\.?\s+(\d{1,2})/);
+    if (!m) return '';
+    mo = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].indexOf(m[1].slice(0, 3).toLowerCase()) + 1; d = Number(m[2]);
+    if (!mo) return '';
+  }
+  const iso = yr => yr + '-' + ('0' + mo).slice(-2) + '-' + ('0' + d).slice(-2);
+  return iso(y) >= today ? iso(y) : iso(y + 1);
+}
+
+function invitationEmail_(x, settings, talks) {
+  const sign = settings['Lecture reminder signature'] || 'PM&R Chief Residents\nLarkin Community Hospital South Miami';
+  const bare = x.name.replace(/\([^)]*\)/g, '').trim();
+  const greet = /^\s*dr\b/i.test(bare) ? 'Dr. ' + bare.split(/\s+/).pop() : bare;
+  const fmtDay = d => Utilities.formatDate(new Date(d + 'T12:00:00Z'), 'UTC', 'EEEE, MMMM d');
+  const own = x.dates ? x.dates.split(/\s*[;\n]\s*|\s*,\s*(?=[A-Za-z]{3,}\b|\d{1,2}\/)/).filter(Boolean) : [];
+  const dates = own.length ? own.map(d => { const iso = futureDate_(d); return iso ? fmtDay(iso) : d; }) : openMondays_(settings, talks).map(fmtDay);
+  const tm = lectureTimes_({ time: '' }, settings);
+
+  const f = x.format.toLowerCase();
+  const format = /virtual|zoom/.test(f) ? 'The talk would be virtual, over Zoom.' : /person/.test(f) ? 'The talk would be in person.' : 'It can be virtual (Zoom) or in person, whichever is easier for you.';
+  const topic = x.topic ? 'on ' + x.topic : 'on a topic of your choice';
+  const p1 = 'On behalf of the PM&R residents at Larkin Community Hospital South Miami, we would be honored to have you give a lecture ' + topic + ' as part of our resident didactics.';
+  const p2 = 'Didactics start at ' + clock_(tm.start) + ', and we can fit your talk in anytime between ' + clock_(tm.start) + ' and ' + clock_(tm.end) + ', whatever suits your schedule. ' + format;
+  const p3 = dates.length ? (own.length ? 'Here are some dates that would work well for us:' : 'Here are some upcoming dates that are open for us:') : '';
+  const p4 = 'If none of these work, we are happy to find another date that fits your schedule. Please reply to let us know if you are interested and which date works best.';
+  const subject = 'Invitation to lecture for the Larkin PM&R residents';
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const plain = 'Dear ' + greet + ',\n\n' + p1 + '\n\n' + p2 + (p3 ? '\n\n' + p3 + '\n' + dates.map(d => '• ' + d).join('\n') : '') + '\n\n' + p4 + '\n\nThank you for considering it,\n' + sign;
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f2937"><p>Dear ' + esc(greet) + ',</p><p>' + esc(p1) + '</p><p>' + esc(p2) + '</p>' +
+    (p3 ? '<p style="margin-bottom:4px">' + esc(p3) + '</p><ul style="margin-top:0">' + dates.map(d => '<li>' + esc(d) + '</li>').join('') + '</ul>' : '') +
+    '<p>' + esc(p4) + '</p><p>Thank you for considering it,<br>' + esc(sign).replace(/\n/g, '<br>') + '</p></div>';
+  return { subject: subject, plain: plain, html: html };
 }
