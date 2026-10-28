@@ -78,6 +78,15 @@ if os.path.isdir(SRC):
             if not folder and not re.search(r'every rotation|notice|note for all', name, re.I): continue   # how-to etc.
             doc = docx_to_tree(os.path.join(dirpath, f))
             guides.append({'name': name, 'folder': folder, 'html': '<html><body>' + ''.join(outer(k) for k in doc) + '</body></html>'})
+    # Drive's zip download swaps characters it can't put in file names (' : / become _ or -): restore the real
+    # names from the current saved copy when only those characters differ.
+    key = lambda t: re.sub(r'[^a-z0-9]', '', t.lower().replace("'s", 's'))
+    try: old = json.load(open(REPO + '/data/snapshot.json')).get('guides') or []
+    except Exception: old = []
+    oldNames = {key(g['name']): g['name'] for g in old}; oldFolders = {key(g['folder']): g['folder'] for g in old if g['folder']}
+    for g in guides:
+        g['name'] = oldNames.get(key(g['name']), g['name'].replace(' _ ', ' / ').replace('_s ', "'s ").replace('_ ', ': '))
+        if g['folder']: g['folder'] = oldFolders.get(key(g['folder']), g['folder'])
 else:
     # single Handbook: split by Heading 1 with the same table the Apps Script uses
     split = json.loads(subprocess.run(['node', '-e', "const fs=require('fs');eval(fs.readFileSync(process.argv[1],'utf8')+';console.log(JSON.stringify(HB_SPLIT.map(r=>[r[0].source,r[0].flags,r[1],r[2]])))')", CODE], capture_output=True, text=True, check=True).stdout)

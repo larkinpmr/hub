@@ -1286,7 +1286,7 @@ function parseResidents(rows) {
   const out = []; let pgy = "", map = null;
   for (const r of rows) {
     const line = r.join(" ");
-    const pg = line.match(/PGY[\s-]?([2-5])/i);
+    const pg = line.match(/PGY\s*-?\s*([2-5])/i);   // "PGY-2", "PGY 2", "PGY - 2"
     if (r.filter(isMonth).length >= 6) {
       const first = r.findIndex(isMonth);
       let nameIdx = r.findIndex(c => /resident/i.test(c));

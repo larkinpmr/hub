@@ -698,7 +698,7 @@ function parseResidents_(rows) {
   const isMonth = c => /^(jul|aug|sep|oct|nov|dec|jan|feb|mar|apr|may|jun)[a-z]*\.?(\s+\d{2,4})?$/i.test(c);
   const out = []; let pgy = '', map = null;
   rows.map(r => r.map(c => String(c == null ? '' : c).trim())).forEach(r => {
-    const pg = r.join(' ').match(/PGY[\s-]?([2-5])/i);
+    const pg = r.join(' ').match(/PGY\s*-?\s*([2-5])/i);   // "PGY-2", "PGY 2", "PGY - 2"
     if (r.filter(isMonth).length >= 6) {
       const first = r.findIndex(isMonth);
       let ni = r.findIndex(c => /resident/i.test(c)); if (ni < 0 || ni > first) ni = Math.max(0, first - 1);
