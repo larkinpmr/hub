@@ -131,7 +131,10 @@ function panelSettings_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const st = ss && ss.getSheetByName('Settings');
   if (st) values_(st).forEach(r => { if (r[0]) settings[String(r[0]).trim()] = String(r[1] || '').trim(); });
-  return settings;
+  // Row labels are matched without caring about capitals or extra spaces ("Lecture Reminder Test Email" works too)
+  const key = k => String(k).toLowerCase().replace(/\s+/g, ' ').trim();
+  const byKey = {}; Object.keys(settings).forEach(k => { byKey[key(k)] = settings[k]; });
+  return new Proxy(settings, { get: (t, k) => typeof k !== 'string' ? t[k] : (k in t ? t[k] : byKey[key(k)]) });
 }
 
 function buildHandbook_() {
@@ -990,7 +993,12 @@ function reminderMode_(settings) {
   if (/^(on|yes|true|1|live)$/.test(v)) return 'on';
   return 'test';   // blank or "test": every reminder goes to the test address instead of the lecturer
 }
-function testAddress_(settings) { return String(settings['Lecture reminder test email'] || '').trim() || Session.getEffectiveUser().getEmail(); }
+function testAddress_(settings) {
+  let v = String(settings['Lecture reminder test email'] || '').trim();
+  if (!/@/.test(v)) { const k = Object.keys(settings).find(x => /test\s*e-?mail/i.test(x) && /@/.test(settings[x])); if (k) v = String(settings[k]).trim(); }
+  const m = v.replace(/^mailto:/i, '').match(/[^\s<>"',;]+@[^\s<>"',;]+/);
+  return m ? m[0] : Session.getEffectiveUser().getEmail();
+}
 function chiefEmail_() { return Session.getEffectiveUser().getEmail(); }
 function reminderLog_() { return panelSheet_('Lecture Reminders', REMINDER_HEAD); }
 function readTalks_(settings) {
