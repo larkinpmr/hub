@@ -976,7 +976,9 @@ function reminderEmail_(t, l, settings) {
   const sign = settings['Lecture reminder signature'] || 'PM&R Chief Residents\nLarkin Community Hospital South Miami';
   const bare = String(l.name).replace(/\([^)]*\)/g, '').trim();
   const greet = /^\s*dr\b/i.test(bare) ? 'Dr. ' + bare.split(/\s+/).pop() : bare;
-  const rows = [['Topic', t.topic], ['Date', when], ['Time', time], ['Location', t.location], ['Join link', link]].filter(r => r[1]);
+  const flexible = !parseTime_(t.time);
+  const flexNote = 'Didactics start at ' + clock_(tm.start) + '. You are welcome to give your presentation at any point between ' + clock_(tm.start) + ' and ' + clock_(tm.end) + ', and we will work around your schedule. Just reply to let us know what time works best for you.';
+  const rows = [['Topic', t.topic], ['Date', when], ['Time', flexible ? time + ' (flexible)' : time], ['Location', t.location], ['Join link', link]].filter(r => r[1]);
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 
   // Calendar: Google / Outlook buttons plus an attached .ics file (Apple Calendar, Outlook desktop, anything else).
@@ -1004,12 +1006,14 @@ function reminderEmail_(t, l, settings) {
   const subject = 'Reminder: your PM&R lecture on ' + when;
   const plain = 'Dear ' + greet + ',\n\nThank you again for teaching our PM&R residents. This is a friendly reminder about your upcoming lecture:\n\n' +
     rows.map(r => r[0] + ': ' + r[1]).join('\n') +
+    (flexible ? '\n\n' + flexNote : '') +
     '\n\nAdd it to your calendar:\nGoogle Calendar: ' + google + '\nOutlook: ' + outlook + '\nApple Calendar or other apps: open the attached .ics file.' +
     '\n\nIf anything has changed, or you would like to share slides or materials ahead of time, just reply to this email.\n\nThank you,\n' + sign;
   const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f2937">' +
     '<p>Dear ' + esc(greet) + ',</p><p>Thank you again for teaching our PM&amp;R residents. This is a friendly reminder about your upcoming lecture:</p>' +
     '<table style="border-collapse:collapse;margin:8px 0 14px">' + rows.map(r => '<tr><td style="padding:3px 16px 3px 0;color:#6b7280">' + r[0] + '</td><td style="padding:3px 0;font-weight:bold">' +
       (r[0] === 'Join link' ? '<a href="' + esc(r[1]) + '">' + esc(r[1]) + '</a>' : esc(r[1])) + '</td></tr>').join('') + '</table>' +
+    (flexible ? '<p style="margin:0 0 16px;padding:10px 14px;border-left:4px solid #0F766E;background:#F0FDFA">' + esc(flexNote) + '</p>' : '') +
     '<p style="margin:0 0 6px">Add it to your calendar:</p><div>' + btn(google, 'Google Calendar') + btn(outlook, 'Outlook') + '</div>' +
     '<p style="margin:0 0 14px;color:#6b7280;font-size:13px">Apple Calendar or another app: open the attached .ics file.' + (link ? ' The join link is saved in the event.' : '') + '</p>' +
     '<p>If anything has changed, or you would like to share slides or materials ahead of time, just reply to this email.</p>' +
