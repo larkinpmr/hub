@@ -505,7 +505,7 @@ function parseDidactics_(rows) {
   const H = rows[hi].map(c => c.toLowerCase());
   const col = re => H.findIndex(h => re.test(h));
   const cDate = col(/^date$/), cLoc = col(/location/), cTime = col(/^time/), cTopic = col(/topic/), cSpk = col(/speaker|presenter|resident\/|attending/);
-  const cLink = col(/meeting|zoom|join|^link$|^url$/);
+  const cLink = col(/meeting|zoom|join|^link$|^url$/), cConf = col(/confirm/);
   const out = []; let cur = { date: '', location: '', time: '', link: '' }, block = '';
   rows.slice(hi + 1).forEach(r => {
     const g = i => (i >= 0 ? (r[i] || '') : '');
@@ -518,7 +518,8 @@ function parseDidactics_(rows) {
     if (/^https?:\/\//i.test(g(cLink))) cur.link = g(cLink);   // a meeting link carries down to the rest of that day
     const topic = g(cTopic);
     if (!topic || !cur.date) return;
-    out.push({ date: cur.date, time: cur.time, rowTime: g(cTime), location: cur.location, topic: topic, speaker: g(cSpk), block: block, link: cur.link });
+    out.push({ date: cur.date, time: cur.time, rowTime: g(cTime), location: cur.location, topic: topic, speaker: g(cSpk), block: block, link: cur.link,
+      confKnown: cConf >= 0, confirmed: /^(y|yes|confirmed|✓|✔|true|x)$/i.test(g(cConf)) });
   });
   return out;
 }
@@ -1012,7 +1013,7 @@ function dueReminders_(settings, horizon, talks) {
   talks = talks || readTalks_(settings);
   const lecturers = readLecturers_();
   const days = reminderDays_(settings);
-  const done = reminderMode_(settings) === 'on' ? /^sent/i : /^test sent/i;
+  const done = reminderMode_(settings) === 'on' ? /^(sent|not confirmed)/i : /^(test sent|not confirmed)/i;
   const sent = {}, datesFor = {};
   values_(reminderLog_()).slice(1).forEach(r => {
     if (!done.test(r[6])) return;
@@ -1117,12 +1118,22 @@ function sendLectureReminders() {
   lectureLocationsTab_();
   const settings = panelSettings_();
   const mode = reminderMode_(settings);
-  if (mode === 'off') return;
+  if (mode === 'off') {
+    if (Utilities.formatDate(new Date(), TZ, 'u') === '1') draftUpcomingInvitations();
+    return;
+  }
   const log = reminderLog_();
   const stamp = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm');
   const talks = readTalks_(settings);
   const failed = [];
-  dueReminders_(settings, 0, talks).filter(r => r.lecturer && r.slot && !r.already).forEach(r => {
+  const due = dueReminders_(settings, 0, talks).filter(r => r.lecturer && r.slot && !r.already);
+  const held = due.filter(r => r.talk.confKnown && !r.talk.confirmed);
+  held.forEach(r => log.appendRow([stamp, r.talk.date, r.talk.topic, r.talk.speaker, r.lecturer.email, r.slot, 'Not confirmed: no reminder sent, chiefs alerted']));
+  if (held.length) MailApp.sendEmail({ to: chiefEmail_(), subject: 'Hub: ' + held.length + ' guest lecture(s) coming up but not confirmed', name: 'PM&R Hub',
+    body: 'These guest lectures are coming up soon, but "Confirmed" is not marked yes in the Didactic Schedule, so no reminder went out:\n\n' +
+      held.map(r => r.talk.date + ' · ' + r.talk.topic + ' — ' + r.talk.speaker + ' <' + r.lecturer.email + '>').join('\n') +
+      '\n\nIf they confirmed, type yes under Confirmed and they will get their reminder at the next 8 AM check. If not, please reach out to them.' });
+  due.filter(r => held.indexOf(r) < 0).forEach(r => {
     const to = mode === 'on' ? r.lecturer.email : testAddress_(settings);
     let status = mode === 'on' ? 'Sent' : 'Test sent to ' + to;
     try { mailReminder_(r, settings, mode, to); }
@@ -1132,7 +1143,10 @@ function sendLectureReminders() {
   if (failed.length) MailApp.sendEmail({ to: chiefEmail_(), subject: 'Hub: ' + failed.length + ' lecture reminder(s) could not be sent', name: 'PM&R Hub',
     body: 'These reminders failed (details on the Lecture Reminders tab). Please contact the lecturers directly:\n\n' + failed.join('\n') });
   checkCancellations_(settings, talks, mode);
-  if (Utilities.formatDate(new Date(), TZ, 'u') === '1') checkLecturerEmails(talks);   // Mondays
+  if (Utilities.formatDate(new Date(), TZ, 'u') === '1') {   // Mondays
+    checkLecturerEmails(talks);
+    try { draftUpcomingInvitations(talks); } catch (err) { /* reported in its own email */ }
+  }
 }
 
 function mailReminder_(r, settings, mode, to) {
@@ -1227,11 +1241,12 @@ function sendTestReminder() {
  * blank, the draft suggests upcoming Monday didactics that don't have a guest speaker yet.
  *   installInvitations       run once: creates the tab and makes "yes" create the draft right away
  *   createInvitationDrafts   makes drafts for every row marked "yes" that has no status yet */
-const INVITE_HEAD = ['Name', 'Email', 'Topic (optional)', 'Proposed dates (optional; blank = suggest open Mondays)', 'Format (virtual / in person / either)', 'Create draft? (yes)', 'Status'];
+const INVITE_HEAD = ['Name', 'Email', 'Topic (optional)', 'Proposed dates (optional; blank = suggest open Mondays)', 'Format (virtual / in person / either)', 'Create draft? (yes)', 'Status', 'Notes for chiefs (not in the email)'];
 
 function installInvitations() {
   const sh = panelSheet_('Invitations', INVITE_HEAD);
-  [180, 230, 220, 300, 200, 130, 260].forEach((w, i) => sh.setColumnWidth(i + 1, w));
+  if (sh.getLastColumn() < INVITE_HEAD.length) sh.getRange(1, 1, 1, INVITE_HEAD.length).setValues([INVITE_HEAD]).setFontWeight('bold');
+  [180, 230, 220, 300, 200, 130, 260, 360].forEach((w, i) => sh.setColumnWidth(i + 1, w));
   ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'onInvitationsEdit').forEach(t => ScriptApp.deleteTrigger(t));
   ScriptApp.newTrigger('onInvitationsEdit').forSpreadsheet(SpreadsheetApp.getActiveSpreadsheet()).onEdit().create();
   Logger.log('The "Invitations" tab is ready. Fill in a row and type yes under "Create draft?": the invitation appears in the chief Gmail\'s Drafts folder within a few seconds.');
@@ -1332,5 +1347,67 @@ function invitationEmail_(x, settings, talks) {
   const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f2937"><p>Dear ' + esc(greet) + ',</p><p>' + esc(p1) + '</p><p>' + esc(p2) + '</p>' +
     (p3 ? '<p style="margin-bottom:4px">' + esc(p3) + '</p><ul style="margin-top:0">' + dates.map(d => '<li>' + esc(d) + '</li>').join('') + '</ul>' : '') +
     '<p>' + esc(p4) + '</p><p>Thank you for considering it,<br>' + esc(sign).replace(/\n/g, '<br>') + '</p></div>';
+  return { subject: subject, plain: plain, html: html };
+}
+
+
+/** Mondays (and on demand): draft an invitation for every guest lecture in the next few weeks that isn't marked
+ * Confirmed in the Didactic Schedule and hasn't been invited yet, then tell the chiefs the drafts are ready.
+ * Settings: "Invitation lead (weeks)" (blank = 6) · "Automatic invitations" (off to stop). */
+function draftUpcomingInvitations(talks) {
+  const settings = panelSettings_();
+  if (/^(off|no|false|0)$/i.test(String(settings['Automatic invitations'] || '').trim())) return;
+  talks = Array.isArray(talks) ? talks : readTalks_(settings);
+  if (!talks.some(t => t.confKnown)) { Logger.log('Add a "Confirmed" column to the Didactic Schedule first, so the script can tell confirmed guests from planned ones.'); return; }
+  const weeks = Number(settings['Invitation lead (weeks)']) || 6;
+  const sh = panelSheet_('Invitations', INVITE_HEAD);
+  if (sh.getLastColumn() < INVITE_HEAD.length) sh.getRange(1, 1, 1, INVITE_HEAD.length).setValues([INVITE_HEAD]).setFontWeight('bold');
+  // one invitation per lecture: same topic on the same date (names can be spelled differently, e.g. Joe / Joseph)
+  const have = {}; values_(sh).slice(1).forEach(r => String(r[3] || '').split(/\s*;\s*/).forEach(d => { const iso = isoDate_(d) || futureDate_(d); if (iso) { have[normName_(r[2]) + '|' + iso] = true; have[normName_(r[0]) + '|' + iso] = true; } }));
+  const tokens = residentTokens_(settings), lecturers = readLecturers_();
+  const made = [];
+  talks.forEach(t => {
+    const n = daysUntil_(t.date);
+    if (n < 1 || n > weeks * 7 || t.confirmed || /cancel|no didactics|holiday/i.test(t.topic)) return;
+    guestParts_(t.speaker, tokens).forEach(guest => {
+      const k = normName_(t.topic) + '|' + t.date;
+      if (have[k] || have[normName_(guest) + '|' + t.date]) return; have[k] = true;
+      const lec = matchLecturers_(guest, lecturers)[0];
+      const email = lec ? lec.email : '';
+      const virtual = /virtual/i.test(t.location || '');
+      const pairs = talks.filter(x => x.date === t.date && x !== t && !guestParts_(x.speaker, tokens).length).map(x => x.topic).join('; ');
+      const note = [t.block, pairs ? 'Same day: ' + pairs : ''].filter(Boolean).join(' · ');
+      let status;
+      try {
+        const m = dateInvitationEmail_({ name: lec ? lec.name : guest, topic: t.topic, date: t.date, virtual: virtual, location: t.location }, settings);
+        GmailApp.createDraft(email, m.subject, m.plain, { htmlBody: m.html, name: 'Larkin PM&R Chief Residents' });
+        status = 'Draft created ' + Utilities.formatDate(new Date(), TZ, 'MMM d, yyyy') + ' (automatic)' + (email ? '' : ' · add their email in the draft');
+        made.push(t.date + ' · ' + t.topic + ' — ' + guest + (email ? '' : '  (no email on file: add it in the draft)'));
+      } catch (err) { status = 'Problem: ' + err.message; }
+      const d = new Date(t.date + 'T12:00:00Z');
+      sh.appendRow([lec ? lec.name : guest, email, t.topic, (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + '/' + d.getUTCFullYear(), virtual ? 'virtual' : 'in person', 'auto', status, note]);
+    });
+  });
+  Logger.log(made.length ? made.length + ' invitation draft(s) created:\n' + made.join('\n') : 'No new unconfirmed guest lectures in the next ' + weeks + ' weeks.');
+  if (made.length) MailApp.sendEmail({ to: chiefEmail_(), subject: 'Hub: ' + made.length + ' lecture invitation draft(s) ready to send', name: 'PM&R Hub',
+    body: 'These guest lectures in the next ' + weeks + ' weeks are not marked Confirmed yet, so an invitation is waiting in Gmail ▸ Drafts for each one:\n\n' + made.join('\n') +
+      '\n\nOpen each draft, adjust it if you like, and press Send. When a lecturer confirms, type yes under "Confirmed" in the Didactic Schedule (and add them to the Lecturers tab if they are not there yet).' });
+}
+
+/** The first ask for a lecture that is already on the schedule: that date, or another date that month. */
+function dateInvitationEmail_(x, settings) {
+  const sign = settings['Lecture reminder signature'] || 'PM&R Chief Residents\nLarkin Community Hospital South Miami';
+  const bare = String(x.name).replace(/\([^)]*\)/g, '').trim();
+  const greet = /^\s*dr\b/i.test(bare) ? 'Dr. ' + bare.split(/\s+/).pop() : bare;
+  const day = Utilities.formatDate(new Date(x.date + 'T12:00:00Z'), 'UTC', 'EEEE, MMMM d'), month = Utilities.formatDate(new Date(x.date + 'T12:00:00Z'), 'UTC', 'MMMM');
+  const tm = lectureTimes_({ time: '' }, settings);
+  const where = x.virtual ? 'virtual, over Zoom' : 'in person' + (lectureLocation_(x.location).name ? ' at ' + lectureLocation_(x.location).name : '');
+  const p1 = 'We are the PM&R chief residents at Larkin Community Hospital South Miami, and we would love to have you give a lecture on ' + x.topic + ' for our residents.';
+  const p2 = 'Would you be available on ' + day + '? Didactics start at ' + clock_(tm.start) + ', and you can present anytime between ' + clock_(tm.start) + ' and ' + clock_(tm.end) + '. The session would be ' + where + '.';
+  const p3 = 'If that day does not work, could you let us know another date in ' + month + ' that would? We are happy to work around your schedule.';
+  const subject = 'Lecture request: ' + x.topic + ' (' + Utilities.formatDate(new Date(x.date + 'T12:00:00Z'), 'UTC', 'MMM d') + ')';
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const plain = 'Dear ' + greet + ',\n\n' + p1 + '\n\n' + p2 + '\n\n' + p3 + '\n\nThank you,\n' + sign;
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f2937"><p>Dear ' + esc(greet) + ',</p><p>' + esc(p1) + '</p><p>' + esc(p2) + '</p><p>' + esc(p3) + '</p><p>Thank you,<br>' + esc(sign).replace(/\n/g, '<br>') + '</p></div>';
   return { subject: subject, plain: plain, html: html };
 }

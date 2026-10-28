@@ -89,6 +89,8 @@ The private **Invitations** tab in the Control Panel turns a row into a ready-to
 
 If "Proposed dates" is blank, the draft suggests the next few Monday didactics (2–10 weeks out) that don't have a guest speaker yet. When someone says yes, add them to the Didactic Schedule and the **Lecturers** tab; the 7-day reminder then happens on its own.
 
+**Automatic invitations (the first ask):** add a **Confirmed** column to the Didactic Schedule and type `yes` once a guest has agreed. Every Monday morning, the script looks up to 6 weeks ahead for guest lectures (speakers who aren't residents) that aren't marked Confirmed and haven't been invited, creates an invitation draft for each in Gmail ▸ Drafts ("would you be available on [date], 2–4 PM? if not, another date in [month]?"), lists them on the Invitations tab with the block theme and same-day resident lectures as a note for the chiefs, and emails the chief Gmail that drafts are ready. The guest's email is filled in when they're on the Lecturers tab; otherwise add it in the draft. Run **draftUpcomingInvitations** to do it right away. Settings rows: **Invitation lead (weeks)** (blank = 6), **Automatic invitations** (`off` to stop). Reminders go only to lecturers marked Confirmed; an unconfirmed lecture a week out triggers an alert to the chiefs instead.
+
 # Start of each academic year (July)
 
 1. **Accounts:** give the new chiefs the chief Gmail and update its recovery phone/email and 2-step verification.
@@ -118,7 +120,7 @@ Open the **Hub Control Panel** sheet ▸ **Extensions ▸ Apps Script**. Choose 
 | **testHub** | If the site says "Saved copy" or something looks missing: lists errors and sizes |
 | **testCalendar** / **testMyCalendar** | To preview the didactics calendar or one resident's personal calendar |
 | **installLectureReminders** / **previewLectureReminders** / **sendTestReminder** / **checkLecturerEmails** | Guest lecturer reminder emails (see above) |
-| **installInvitations** / **createInvitationDrafts** | Lecture invitation drafts (see above) |
+| **installInvitations** / **createInvitationDrafts** / **draftUpcomingInvitations** | Lecture invitation drafts (see above) |
 | **installAutoRefresh** | Only if the automatic 5-minute refresh ever stops (check the clock icon, "Triggers", on the left) |
 
 **If you ever paste new code into Code.gs or Admin.html:** click **Deploy ▸ Manage deployments**. For **each** of the two deployments, click the pencil, set Version to **New version**, and click **Deploy**. Without this, the site keeps running the old code. The links stay the same.
