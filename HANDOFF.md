@@ -27,6 +27,8 @@ The hub website (**https://larkinpmr.github.io**) is built from Google Drive. No
 
 **Home page headline:** the Settings tab rows "Home headline" and "Home subtitle" change the big welcome line and the sentence under it. Put *asterisks* around the words that should get the theme color (for example `Everything for the year, *in one place.*`). Leave a row blank for the default; a single `-` hides the subtitle.
 
+**Holiday themes:** on certain days the whole site switches to holiday colors on its own, then back the next day: New Year's (Dec 31–Jan 1), Valentine's Day, Match season (Match Day through March 31), St. Patrick's Day, National Doctors' Day (March 30), graduation week (June 24–30), July 4, Halloween, Thanksgiving (Thursday–Sunday) and Christmas (Dec 24–26). July 1 shows a "Welcome" greeting only. To turn them all off, set the Settings row "Holiday themes" to `off`. To preview one, add `?holiday=halloween` (or match, doctors, thanksgiving, christmas…) to the site address.
+
 **Chief editor:** open the gear menu on the site and choose "Chief editor". It only works when you are signed in as the chief Gmail, and it edits the Control Panel tabs without opening the sheet.
 
 # Editing the Handbooks (the rules that keep the site working)

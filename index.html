@@ -205,6 +205,7 @@ main { padding-block: 28px 64px; }
 :root:not([data-accent]) .today::before, :root[data-accent="vice"] .today::before { background: linear-gradient(180deg, var(--accent), var(--sun)); }
 .today b { display: block; font: 700 20px/1.15 var(--display); white-space: nowrap; }
 .today .muted { font-size: 14px; }
+.today .hol { font: 700 12px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin-top: 2px; }
 .today b em { font-style: normal; color: var(--accent); background: var(--hero-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; align-items: start; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; min-width: 0; }
@@ -726,6 +727,78 @@ async function boot() {
   else setStatus();
 }
 
+/* ----------------------------------------------------------- holiday themes
+ * On these days everyone gets the holiday's colors (light and dark versions), overriding the chosen color scheme.
+ * Turn off with Control Panel ▸ Settings ▸ "Holiday themes" = off. Preview any time with ?holiday=halloween (etc.). */
+const nthWeekday = (y, m, wd, n) => { const d = new Date(y, m, 1); return 1 + ((wd - d.getDay() + 7) % 7) + 7 * (n - 1); };   // m 0-based, wd 0=Sun
+const HOLIDAYS = [
+  { id: "newyear", greet: "Happy New Year", when: d => (d.getMonth() === 11 && d.getDate() === 31) || (d.getMonth() === 0 && d.getDate() === 1),
+    light: ["#F7F6F2", "#FFFFFF", "#ECEAE2", "#14141C", "#5A5A66", "#DDDAD0", "#8A6A00", "#F4EBCB", "#FFFFFF", "#4B5563", "#E5E7EB", ["#B8860B", "#E5C76B", "#9CA3AF"]],
+    dark: ["#0A0A12", "#14141F", "#1D1D2B", "#F5F3EA", "#B3B0A6", "#2A2A3A", "#F2C94C", "#33290E", "#1A1400", "#D1D5DB", "#24262E", ["#F2C94C", "#FFF3C4", "#D1D5DB"]] },
+  { id: "valentines", greet: "Happy Valentine's Day", when: d => d.getMonth() === 1 && d.getDate() === 14,
+    light: ["#FFF5F7", "#FFFFFF", "#FCE7EC", "#2A0E18", "#74505C", "#F5D3DC", "#BE123C", "#FFE0E8", "#FFFFFF", "#BE185D", "#FCE3EF", ["#E11D48", "#F472B6", "#FB7185"]],
+    dark: ["#1A0A10", "#26111A", "#331824", "#FBEFF3", "#CFA9B6", "#45202F", "#FB7185", "#3F1422", "#2A0610", "#F9A8D4", "#3B1630", ["#FB7185", "#F9A8D4", "#FDA4AF"]] },
+  { id: "stpatricks", greet: "Happy St. Patrick's Day", when: d => d.getMonth() === 2 && d.getDate() === 17, pri: 2,
+    light: ["#F3FAF5", "#FFFFFF", "#E2F2E7", "#0F2418", "#4D6656", "#CFE6D7", "#15803D", "#D7F2E0", "#FFFFFF", "#A16207", "#FBF0CF", ["#16A34A", "#84CC16", "#EAB308"]],
+    dark: ["#0A1A10", "#102517", "#17321F", "#ECF8EF", "#A6C4AF", "#1F4029", "#4ADE80", "#123A20", "#04200E", "#FACC15", "#3A3010", ["#4ADE80", "#BEF264", "#FACC15"]] },
+  { id: "doctors", greet: "Happy National Doctors' Day", when: d => d.getMonth() === 2 && d.getDate() === 30, pri: 2,
+    light: ["#F4F8FC", "#FFFFFF", "#E4EEF8", "#0E1E33", "#4C5E75", "#D2E0EE", "#1D5FA6", "#DCE9F7", "#FFFFFF", "#C81E3A", "#FBE1E5", ["#1D5FA6", "#2BB3A3", "#C81E3A"]],
+    dark: ["#0A1424", "#111F35", "#182A45", "#EDF3FA", "#A3B4C9", "#22385A", "#7DB3F0", "#17304D", "#06182E", "#FF6B81", "#3D1621", ["#7DB3F0", "#5EEAD4", "#FF6B81"]] },
+  { id: "match", greet: "Happy Match season", when: d => d.getMonth() === 2 && d.getDate() >= nthWeekday(d.getFullYear(), 2, 5, 3), pri: 1,
+    light: ["#F8FAFF", "#FFFFFF", "#EAF0FF", "#0F1733", "#4E5A7A", "#D7E0F5", "#2554D9", "#DCE6FF", "#FFFFFF", "#C0267A", "#FCE1EF", ["#2563EB", "#EC4899", "#EAB308", "#10B981"]],
+    dark: ["#0B1028", "#131A3A", "#1B2450", "#EEF2FF", "#A9B3D6", "#26306A", "#7FA3FF", "#1E2A5C", "#0A1030", "#FF7AC6", "#3A1838", ["#7FA3FF", "#FF7AC6", "#FDE047", "#34D399"]] },
+  { id: "graduation", greet: "Congratulations, graduates", when: d => d.getMonth() === 5 && d.getDate() >= 24,
+    light: ["#F8F6FC", "#FFFFFF", "#ECE7F7", "#1A1030", "#5B5175", "#DCD4EE", "#5B21B6", "#E9E0FB", "#FFFFFF", "#8A6A00", "#F4EBCB", ["#6D28D9", "#C9A227", "#6D28D9"]],
+    dark: ["#120B22", "#1C1333", "#261B44", "#F3EEFF", "#B7AAD6", "#34275A", "#B79CFF", "#2E2152", "#160B30", "#F2C94C", "#33290E", ["#B79CFF", "#F2C94C", "#B79CFF"]] },
+  { id: "welcome", greet: "Welcome to the new academic year", when: d => d.getMonth() === 6 && d.getDate() === 1, light: null, dark: null },
+  { id: "july4", greet: "Happy Fourth of July", when: d => d.getMonth() === 6 && d.getDate() === 4,
+    light: ["#F6F8FC", "#FFFFFF", "#E6ECF7", "#0D1838", "#4D5878", "#D3DCEE", "#B91C1C", "#FBE0E0", "#FFFFFF", "#1D4ED8", "#DCE6FB", ["#DC2626", "#94A3B8", "#2563EB"]],
+    dark: ["#0A1128", "#111A38", "#19244A", "#F1F4FB", "#A9B3CF", "#24305A", "#F87171", "#3B1616", "#2A0606", "#7AA2FF", "#18264D", ["#F87171", "#F8FAFC", "#7AA2FF"]] },
+  { id: "halloween", greet: "Happy Halloween", when: d => d.getMonth() === 9 && d.getDate() === 31,
+    light: ["#FFF6EC", "#FFFFFF", "#FBE9D6", "#1E1026", "#6B5560", "#F0D9C2", "#C2410C", "#FDE3CC", "#FFFFFF", "#6D28D9", "#EDE4FB", ["#F97316", "#A855F7", "#22C55E"]],
+    dark: ["#130B17", "#1E1424", "#2A1B31", "#F6EEE6", "#B9A6B5", "#3A2840", "#FF8A2A", "#3A2112", "#1A0C02", "#B98CFF", "#2A1A44", ["#FF8A2A", "#B98CFF", "#7CF27C"]] },
+  { id: "thanksgiving", greet: "Happy Thanksgiving", when: d => { if (d.getMonth() !== 10) return false; const t = nthWeekday(d.getFullYear(), 10, 4, 4); return d.getDate() >= t && d.getDate() <= t + 3; },
+    light: ["#FBF5EC", "#FFFFFF", "#F3E6D3", "#2B1A10", "#6E5A49", "#E7D6BF", "#A3361B", "#F6DCD2", "#FFFFFF", "#9A6412", "#F8EACB", ["#C2410C", "#B45309", "#7C2D12"]],
+    dark: ["#1A120C", "#251A12", "#312318", "#F5EBDD", "#C2AE97", "#3E2E21", "#F08A5D", "#3D2116", "#241008", "#F2B65A", "#3A2A12", ["#F08A5D", "#F2B65A", "#E0784A"]] },
+  { id: "christmas", greet: "Merry Christmas", when: d => d.getMonth() === 11 && d.getDate() >= 24 && d.getDate() <= 26,
+    light: ["#F6FAF6", "#FFFFFF", "#E8F1EA", "#10241A", "#4F6658", "#D3E3D7", "#B91C1C", "#FBE0E0", "#FFFFFF", "#15803D", "#DDF1E3", ["#DC2626", "#CA8A04", "#16A34A"]],
+    dark: ["#0B1A12", "#12251A", "#1A3123", "#EEF6EF", "#A7BFAE", "#24402E", "#F87171", "#3B1616", "#2A0606", "#4ADE80", "#123322", ["#F87171", "#FACC15", "#4ADE80"]] },
+];
+const HOL_VARS = ["--bg", "--surface", "--raised", "--ink", "--muted", "--line", "--accent", "--accent-soft", "--on-accent", "--sun", "--sun-soft"];
+const HOL_ALL = HOL_VARS.concat(["--stripe", "--hero-grad", "--wm-pink", "--wm-cyan", "--wm-cyanbg", "--wm-shadow", "--wm-body", "--wm-soft", "--wm-neon", "--wm-neon-glow",
+  "--wm-cyan-glow", "--wm-pink-glow", "--wm-tube", "--wm-tube-glow", "--wm-tube2", "--wm-tube2-glow", "--wm-sunset", "--wm-chrome", "--wm-chrome2", "--wm-chrome2-glow", "color-scheme"]);
+function holidayNow() {
+  if (S && /^(off|no|false|0)$/i.test(String(S.holidayThemes || "").trim())) return null;
+  const pick = new URLSearchParams(location.search).get("holiday");
+  if (pick) return HOLIDAYS.find(h => h.id === pick) || null;
+  const d = new Date();
+  return HOLIDAYS.filter(h => h.when(d)).sort((a, b) => (b.pri || 0) - (a.pri || 0))[0] || null;
+}
+function applyHoliday() {
+  const root = document.documentElement, h = holidayNow();
+  const dark = root.dataset.theme === "dark" || (root.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+  const pal = h && (dark ? h.dark : h.light);
+  root.dataset.holiday = h ? h.id : "";
+  if (!pal) { HOL_ALL.forEach(v => root.style.removeProperty(v)); return; }
+  const set = (k, v) => root.style.setProperty(k, v);
+  HOL_VARS.forEach((v, i) => set(v, pal[i]));
+  const g = pal[11], rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+  const [bg, , , ink, , , acc, , , sun] = pal;
+  set("--stripe", `linear-gradient(90deg, ${g.join(", ")})`); set("--hero-grad", `linear-gradient(95deg, ${g.join(", ")})`);
+  set("--wm-pink", acc); set("--wm-cyan", sun); set("--wm-cyanbg", sun); set("--wm-shadow", dark ? "#000000" : ink); set("--wm-body", ink); set("--wm-soft", ink);
+  set("--wm-neon", dark ? "#FFFFFF" : acc); set("--wm-neon-glow", dark ? `0 0 3px ${acc}, 0 0 12px ${acc}, 0 0 24px ${acc}` : `0 0 1px #fff, 0 0 6px ${rgba(acc, .7)}, 0 0 16px ${rgba(acc, .4)}`);
+  set("--wm-cyan-glow", `0 0 8px ${rgba(sun, dark ? .8 : .5)}`); set("--wm-pink-glow", `0 0 6px ${rgba(acc, dark ? .9 : .5)}`);
+  set("--wm-tube", dark ? "#FFFFFF" : acc); set("--wm-tube-glow", dark ? `0 0 3px ${acc}, 0 0 10px ${acc}, 0 0 22px ${acc}` : `0 0 8px ${rgba(acc, .35)}`);
+  set("--wm-tube2", dark ? "#FFFFFF" : sun); set("--wm-tube2-glow", dark ? `0 0 3px ${sun}, 0 0 10px ${sun}, 0 0 20px ${sun}` : `0 0 8px ${rgba(sun, .35)}`);
+  set("--wm-sunset", `linear-gradient(180deg, ${g.join(", ")})`);
+  set("--wm-chrome", `linear-gradient(180deg, ${dark ? "#FFFFFF" : ink} 0%, ${g[0]} 45%, ${dark ? bg : ink} 50%, ${g[1]} 58%, ${g[g.length - 1]} 100%)`);
+  set("--wm-chrome2", acc); set("--wm-chrome2-glow", dark ? `0 0 6px ${acc}, 0 0 14px ${acc}` : "none");
+  set("color-scheme", dark ? "dark" : "light");
+}
+new MutationObserver(applyHoliday).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", applyHoliday);
+(function atMidnight() { const n = new Date(), t = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 5); setTimeout(() => { applyHoliday(); if (S) route(true); atMidnight(); }, t - n); })();
+
 /* ----------------------------------------------------------- rotating header wordmark
  * Seven styles; everyone sees the same one, and it changes every 75 minutes (also while the page stays open).
  * Preview a style with ?wm=1 … ?wm=7 in the address. Screen readers always get the plain title. */
@@ -918,6 +991,7 @@ function mergeLive(snap, live) {
   const settings = {}; (tab("settings") || []).forEach(r => { if (r[0]) settings[String(r[0]).trim().toLowerCase()] = String(r[1] ?? "").trim(); });
   if (settings["academic year"]) d.academicYear = settings["academic year"];
   if (settings["home headline"]) d.heroHeadline = settings["home headline"];
+  if (settings["holiday themes"]) d.holidayThemes = settings["holiday themes"];
   if (settings["home subtitle"]) d.heroSub = settings["home subtitle"] === "-" ? "" : settings["home subtitle"];   // a single "-" hides the line
   d.passcode = settings["site passcode"] || "";   // blank = no passcode screen
   const contacts = rowsOf(tab("contacts"));
@@ -1159,6 +1233,7 @@ const VIEWS = { home: viewHome, didactics: viewDidactics, schedule: viewSchedule
 function route(keepScroll) {
   if (!S) return;
   $("#ayear").textContent = S.academicYear;
+  applyHoliday();
   showWordmark();
   setStatus();
   const q = $("#q").value.trim();
@@ -1386,7 +1461,7 @@ function viewHome() {
       <h1>${heroHeadline()}</h1>
       ${S.heroSub !== "" ? `<p>${esc(S.heroSub || "Rotation guides, the didactic calendar, block schedules, policies and note templates for Larkin Community Hospital South Miami residents.")}</p>` : ""}
     </div>
-    <div class="today"><span class="eyebrow">Today</span><b>${d.toLocaleDateString("en-US", { weekday: "long" })}, ${d.toLocaleDateString("en-US", { month: "long" })} <em>${d.getDate()}</em></b><span class="muted">Block month: ${MONTH_FULL[mi]}</span></div>
+    <div class="today"><span class="eyebrow">Today</span><b>${d.toLocaleDateString("en-US", { weekday: "long" })}, ${d.toLocaleDateString("en-US", { month: "long" })} <em>${d.getDate()}</em></b><span class="muted">Block month: ${MONTH_FULL[mi]}</span>${(h => h ? `<span class="hol">${esc(h.greet)}</span>` : "")(holidayNow())}</div>
   </section>
   ${meCard()}
   ${ann}
