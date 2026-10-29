@@ -853,13 +853,18 @@ function showEditLink() {
 /* ----------------------------------------------------------- install as app */
 let installEvt = null;
 const standalone = () => window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+/** How to put the hub on the home screen, worded for the phone in hand. */
+const SHARE_SVG = '<svg width="13" height="15" viewBox="0 0 13 15" aria-hidden="true" style="vertical-align:-2px"><path d="M6.5 1v8M3.5 4l3-3 3 3M1.5 7v6.5h10V7" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const IOS_HOW = `In <b>Safari</b>, tap <b>Share</b> ${SHARE_SVG} (on newer iPhones it's inside the <b>•••</b> menu), then <b>Add to Home Screen</b> ▸ <b>Add</b>.`;
+const ANDROID_HOW = `In <b>Chrome</b>, tap <b>⋮</b> (top right), then <b>Install app</b> ▸ <b>Install</b>. (On some phones it's <b>Add to home screen</b> ▸ <b>Install</b>.)`;
+const ANY_HOW = `On your phone, open <b>larkinpmr.github.io</b>. iPhone: Safari ▸ <b>Share</b> (or <b>•••</b> ▸ Share) ▸ <b>Add to Home Screen</b>. Android: Chrome ▸ <b>⋮</b> ▸ <b>Install app</b>.`;
 function renderInstall() {
   const box = $("#install-box"), body = $("#install-body"); if (!box) return;
   if (standalone()) { box.hidden = true; return; }
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   body.innerHTML = installEvt ? `<button type="button" class="btn small" id="install-btn">Install the hub</button><span>Adds an icon to your home screen or desktop.</span>`
-    : ios ? `<span>In Safari, tap <b>Share</b> <svg width="13" height="15" viewBox="0 0 13 15" aria-hidden="true" style="vertical-align:-2px"><path d="M6.5 1v8M3.5 4l3-3 3 3M1.5 7v6.5h10V7" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> then <b>Add to Home Screen</b>.</span>`
-    : `<span>In your browser menu (⋮), choose <b>Install app</b> or <b>Add to Home screen</b>.</span>`;
+    : ios ? `<span>${IOS_HOW}</span>`
+    : /android/i.test(navigator.userAgent) ? `<span>${ANDROID_HOW}</span>` : `<span>${ANY_HOW}</span>`;
   const b = $("#install-btn"); if (b) b.onclick = async () => { installEvt.prompt(); await installEvt.userChoice; installEvt = null; renderInstall(); };
 }
 window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; renderInstall(); });
@@ -1060,8 +1065,8 @@ function tourSteps() {
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const android = /android/i.test(navigator.userAgent);
   const home = standalone() ? "You already have the hub on your home screen. You're all set."
-    : ios ? "In Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>. The hub opens like an app."
-    : android ? "In Chrome's menu (⋮), tap <b>Add to Home screen</b> or <b>Install app</b>."
+    : ios ? IOS_HOW + " The hub then opens like an app."
+    : android ? ANDROID_HOW
     : "Bookmark this page (⌘D or Ctrl+D). On your phone, add it to your home screen. The steps are in this gear menu.";
   return [
     { title: "Welcome to the PM&R Hub", text: "Schedules, didactics, rotation guides and resources for the residency, all in one place. Here's a 30-second tour." },
@@ -2304,7 +2309,7 @@ function renderHomeSetup() {
   const android = /android/i.test(navigator.userAgent);
   const me = meResident(), did = store.get("hub.cal.did") === "1", mine = store.get("hub.cal.me") === "1", app = standalone();
   const share = `<svg width="13" height="15" viewBox="0 0 13 15" aria-hidden="true" style="vertical-align:-2px"><path d="M6.5 1v8M3.5 4l3-3 3 3M1.5 7v6.5h10V7" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  const appHow = app ? "Done: you opened the hub from your home screen." : ios ? `In Safari, tap <b>Share</b> ${share} then <b>Add to Home Screen</b>.` : android ? `In Chrome's menu (⋮), tap <b>Add to Home screen</b> or <b>Install app</b>.` : `On your phone, open this page and add it to your home screen (iPhone: Share ▸ Add to Home Screen · Android: ⋮ ▸ Add to Home screen).`;
+  const appHow = app ? "Done: you opened the hub from your home screen." : ios ? IOS_HOW : android ? ANDROID_HOW : ANY_HOW;
   const widget = ios ? `Touch and hold an empty spot on your home screen, tap <b>+</b> (or <b>Edit ▸ Add Widget</b>), choose <b>Calendar</b>, pick <b>Up Next</b> or <b>List</b>, and tap <b>Add Widget</b>.`
     : android ? `Touch and hold an empty spot on your home screen, tap <b>Widgets</b>, find <b>Google Calendar</b>, and drag <b>Schedule</b> onto your screen.`
     : `iPhone: touch and hold the home screen ▸ <b>+</b> ▸ <b>Calendar</b> ▸ <b>Up Next</b>. Android: touch and hold the home screen ▸ <b>Widgets</b> ▸ <b>Google Calendar</b> ▸ <b>Schedule</b>.`;
