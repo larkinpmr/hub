@@ -344,7 +344,7 @@ body.gated > :not(.gate) { visibility: hidden; }
 .assign-h { display: flex; align-items: center; gap: 8px; font-size: 17px; } .assign-ic { font-size: 20px; }
 .assign ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .assign li a { font-weight: 700; color: var(--ink); } .assign li span { display: block; font-size: 14px; color: var(--muted); }
-.assign .btn { justify-self: start; }
+.assign-act { display: flex; flex-wrap: wrap; gap: 8px; } .assign-act .btn { text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
 .announce { border-left: 3px solid var(--sun); background: var(--sun-soft); border-radius: 0 var(--r) var(--r) 0; padding: 12px 16px; margin-bottom: 20px; }
 .announce b { display: block; }
 
@@ -421,6 +421,7 @@ table.sched tr.dim { opacity: .35; }
 .mycard .hi .calicon:hover { border-color: var(--accent); }
 .calbtn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--accent); background: transparent; color: var(--accent); font: 600 13.5px/1.2 var(--body); cursor: pointer; white-space: nowrap; }
 .calbtn:hover { background: var(--accent-soft); }
+a.calbtn { text-decoration: none; }
 .calbtn.done { border-color: var(--line); color: var(--muted); font-weight: 500; }
 .prefs-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .hsheet { position: fixed; z-index: 32; left: 0; right: 0; top: 50%; transform: translateY(-50%); margin: 0 auto; width: min(460px, calc(100vw - 24px)); max-height: calc(100vh - 32px); overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 20px 50px rgb(0 0 0 / .3); padding: 18px 18px 8px; }
@@ -1344,7 +1345,8 @@ function mergeLive(snap, live) {
   if (settings["holiday themes"]) d.holidayThemes = settings["holiday themes"];
   if (settings["home subtitle"]) d.heroSub = settings["home subtitle"] === "-" ? "" : settings["home subtitle"];   // a single "-" hides the line
   d.passcode = settings["site passcode"] || "";   // blank = no passcode screen
-  d.zoomLink = /^https?:\/\//i.test(settings["virtual lecture link"] || "") ? settings["virtual lecture link"] : "";   // the usual Zoom for "Virtual" sessions
+  d.zoomLink = /^https?:\/\//i.test(settings["virtual lecture link"] || "") ? settings["virtual lecture link"] : "";
+  d.slidesLink = /^https?:\/\//i.test(settings["lecture slides folder"] || "") ? settings["lecture slides folder"] : "";   // Drive folder where residents upload their slides   // the usual Zoom for "Virtual" sessions
   const contacts = rowsOf(tab("contacts"));
   if (contacts.length) d.contacts = contacts.map(r => ({ role: r.role || "", name: r.name || "", phone: r.phone || "", email: r.email || "" }));
   const links = rowsOf(tab("quick links") || tab("links"));
@@ -1810,13 +1812,16 @@ function myNewTalks() {
   let seen = []; try { seen = JSON.parse(store.get(SEEN_KEY) || "[]"); } catch {}
   return S.didactics.filter(t => t.date >= todayISO && presentsTalk(t.speaker, p.name) && !seen.includes(talkKey(t)));
 }
+const UPLOAD_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4 14v4.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V14"/></svg>';
+/** "Upload slides" button: opens the shared Drive folder from Settings "Lecture slides folder". */
+function slidesBtn() { return S.slidesLink ? `<a class="calbtn" href="${esc(S.slidesLink)}" target="_blank" rel="noopener" title="Opens the shared Google Drive folder for lecture slides">${UPLOAD_SVG}Upload slides</a>` : ""; }
 function assignAlert() {
   const list = myNewTalks(); if (!list.length) return "";
   const first = store.get(SEEN_KEY) === null, n = list.length;
   const head = first ? (n === 1 ? "You're presenting at didactics" : `You're presenting at didactics ${n} times this year`) : (n === 1 ? "You've been added to the didactic schedule" : `You've been added to the didactic schedule ${n} times`);
   return `<section class="assign" role="status"><div class="assign-h"><span class="assign-ic" aria-hidden="true">📣</span><b>${head}</b></div>
     <ul>${list.slice(0, 3).map(t => `<li><a href="#didactics">${esc(t.topic)}</a><span>${fmtDate(t.date)}${t.time ? " · " + esc(t.time) : ""}${t.location ? " · " + esc(t.location) : ""}${t.speaker && t.speaker.split(/[,&/]| and /).length > 1 ? " · with " + esc(t.speaker) : ""}</span></li>`).join("")}${n > 3 ? `<li><a href="#didactics" class="muted">+ ${n - 3} more on the Didactics tab</a></li>` : ""}</ul>
-    <button type="button" class="btn" id="assign-ok">Got it</button></section>`;
+    <div class="assign-act"><button type="button" class="btn" id="assign-ok">Got it</button>${S.slidesLink ? `<a class="btn ghost" href="${esc(S.slidesLink)}" target="_blank" rel="noopener">${UPLOAD_SVG} Upload your slides</a>` : ""}</div></section>`;
 }
 function presentsTalk(speaker, name) {
   if (!speaker || !name) return false;
@@ -1941,7 +1946,7 @@ function viewDidactics() {
   const months = [...new Set(S.didactics.map(t => t.date.slice(0, 7)))];
   return `
   <div class="didtop"><div>
-  <div class="view-head"><div><div class="eyebrow">Didactic Schedule · ${esc(S.academicYear)}</div><div class="titlerow"><h1>Didactics</h1>${calPanel()}</div>
+  <div class="view-head"><div><div class="eyebrow">Didactic Schedule · ${esc(S.academicYear)}</div><div class="titlerow"><h1>Didactics</h1>${calPanel()}${slidesBtn()}</div>
     <p>Braddom chapter lectures, board review, journal club and workshops. Edits made in the Didactic Schedule sheet appear here.</p></div></div>
     <div class="filters">
     <div class="seg" role="group" aria-label="Show">

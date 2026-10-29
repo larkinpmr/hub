@@ -31,6 +31,8 @@ The hub website (**https://larkinpmr.github.io**) is built from Google Drive. No
 
 **Zoom links for virtual didactics:** the Settings row "Virtual lecture link" holds the usual Zoom link. Every session whose Location says "Virtual" gets a **Join Zoom** button on the site and the link in its calendar event (didactics and personal calendars). For a one-off meeting, add a column named **Meeting link** to the Didactic Schedule and paste that day's link on its first row; it overrides the usual one. Keep a passcode or waiting room on the Zoom meeting, since the calendar links are open.
 
+**Lecture slides upload:** the Settings row **Lecture slides folder** holds the link to the shared Google Drive folder (not in the chief account) where residents put their slides. When it's filled in, the Didactics page shows an **Upload slides** button and the "You've been added" box on Home shows **Upload your slides**. Both simply open that folder, so residents need **edit** access to it (Contributor or above in a shared drive). Leave the row blank to hide the buttons.
+
 **Journal Club and the Didactics page:** sessions marked "Journal Club" in the Didactic Schedule's **Type** column (or with "Journal Club" in the topic) get a teal accent and a book icon. On computers, the Didactics page shows a small calendar of the current month; tap a dotted day to jump to it.
 
 **First-visit tour:** new devices see a 5-step tour of the hub once. Anyone can replay it from the gear menu ▸ "Take a tour".
