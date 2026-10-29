@@ -354,6 +354,34 @@ table.sched tr.dim { opacity: .35; }
 .mc-k i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; } .mc-k i.lec { background: var(--accent); } .mc-k i.jc { background: var(--sun); }
 @media (max-width: 899px) { .minical { display: none; } .didtop { display: block; } }
 .day.flash { animation: dayflash 1.6s ease-out; } @keyframes dayflash { 0%, 40% { background-color: var(--accent-soft); } 100% { background-color: transparent; } }
+/* readiness banner, first-day card, jump menu, onboarding toggle, more button */
+details.ready { margin: 0 0 18px; border-radius: var(--r); border: 2px solid var(--warn-line, #E2A274); background: var(--warn-soft); overflow: hidden; }
+details.ready > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+details.ready > summary::-webkit-details-marker { display: none; }
+details.ready > summary b { display: block; font-size: 16.5px; color: var(--ink); }
+details.ready > summary small { display: block; color: var(--muted); font-size: 13.5px; margin-top: 1px; }
+.ready-ic { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--warn-line, #E2A274); color: #fff; font: 800 17px/1 var(--display); }
+.ready-chev { margin-left: auto; font: 700 24px/1 var(--display); color: var(--muted); transition: transform .2s; }
+details.ready[open] .ready-chev { transform: rotate(90deg); }
+details.ready > .prose { padding: 0 18px 14px; margin: 0; max-width: none; }
+.firstday { border: 1px solid var(--line); border-left: 4px solid var(--accent); background: var(--surface); border-radius: var(--r); padding: 14px 16px 12px; margin: 0 0 14px; }
+.firstday h2 { font: 700 13px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; }
+.fd-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 4px 12px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 15px; }
+.fd-row:first-of-type { border-top: 0; }
+.fd-k { color: var(--muted); font-size: 13px; font-weight: 600; padding-top: 2px; }
+.fd-v { min-width: 0; } .fd-ph { display: block; } ul.fd-v { margin: 0; padding-left: 18px; }
+.fd-v .addr { text-align: left; }
+.jump { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 18px; }
+.jump-k { white-space: nowrap; font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+.jump a { font-size: 13.5px; font-weight: 600; text-decoration: none; padding: 5px 10px; border-radius: 999px; background: var(--raised); color: var(--ink); white-space: nowrap; }
+.jump a[hidden] { display: none; }
+.jump-more { border: 1px dashed var(--line); background: none; color: var(--muted); font: inherit; font-size: 13.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px; cursor: pointer; }
+.jump a:hover { background: var(--accent-soft); color: var(--accent); }
+.jumptarget { scroll-margin-top: 110px; }
+.onbtoggle, .linkbtn.onbtoggle { border: 0; background: none; padding: 0; margin-top: 10px; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.onbnone { color: var(--muted); font-size: 14px; margin: 0; }
+.morebtn { display: block; margin: 18px auto 0; }
+@media (max-width: 640px) { .fd-row { grid-template-columns: 1fr; gap: 2px; } .jump { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; } .jump::-webkit-scrollbar { display: none; } }
 
 /* first-visit tour (lives outside <body>, so it has its own font) */
 .tour { position: fixed; inset: 0; z-index: 60; font: 16px/1.5 var(--body); color: var(--ink); } .tour button { font: inherit; }
@@ -1574,11 +1602,18 @@ function onboardingPanel() {
   S.residents.forEach(p => onboardingDue(p).forEach(x => rows.push({ p, x })));
   if (!rows.length) return "";
   rows.sort((a, b) => a.x.start - b.x.start || a.p.name.localeCompare(b.p.name));
-  const dates = [...new Set(rows.map(r => +r.x.start))];
+  // Once you've picked your name, the box shows only your own onboarding until you choose "Show everyone".
+  const all = !ME || store.get("hub.onb.all") === "1";
+  const mine = rows.filter(r => r.p.name === ME);
+  const shown = all ? rows : mine;
+  const toggle = ME && rows.length > mine.length ? `<button type="button" class="linkbtn onbtoggle" id="onbtoggle">${all ? "Show only mine" : `Show everyone (${rows.length})`}</button>` : "";
+  const dates = [...new Set(shown.map(r => +r.x.start))];
   return `<section class="panel onbpanel"><h2>Onboarding due</h2><p class="sub">Inpatient rehab and WPB VA: 7 weeks ahead. Other rotations: 3 weeks ahead.</p>
-    ${dates.map(t => { const grp = rows.filter(r => +r.x.start === t), x0 = grp[0].x;
+    ${!shown.length ? `<p class="onbnone">Nothing due for you right now. ${rows.length} other resident${rows.length === 1 ? " has" : "s have"} onboarding coming up.</p>` : ""}
+    ${dates.map(t => { const grp = shown.filter(r => +r.x.start === t), x0 = grp[0].x;
       return `<div class="onbgrp"><div class="onbdate">Starts ${fmtDay(x0.start)} <span>· ${x0.days} days</span></div><ul class="onblist">${grp.map(({ p, x }) =>
         `<li class="${p.name === ME ? "mine" : ""}"><span class="who">${esc(p.name)}</span>${x.rot ? `<a href="#rot-${x.rot.id}" title="${esc(x.rot.title)}">${chipSpan(x.rot)}</a>` : `<span class="code">${esc(x.raw)}</span>`}</li>`).join("")}</ul></div>`; }).join("")}
+    ${toggle}
   </section>`;
 }
 
@@ -1765,7 +1800,7 @@ function quickLinks() {
       <span class="ql-t"><b>${esc(l.label)}</b><small>${esc(l.note || lab)}</small></span></a>`; }).join("")}</div></section>`;
 }
 
-let dState = { scope: store.get("hub.d.scope") || "upcoming", month: "all", q: "" };
+let dState = { scope: store.get("hub.d.scope") || "upcoming", month: "all", q: "", more: false };
 function viewDidactics() {
   const months = [...new Set(S.didactics.map(t => t.date.slice(0, 7)))];
   return `
@@ -1825,6 +1860,13 @@ function didacticList() {
   else if (dState.scope === "upcoming") list = list.filter(t => t.date >= todayISO);
   if (dState.q) { const q = dState.q.toLowerCase(); list = list.filter(t => (t.topic + " " + t.speaker).toLowerCase().includes(q)); }
   if (!list.length) return `<div class="empty">No sessions match. Try another month or clear the filter.</div>`;
+  // Upcoming: the next 4 weeks first, the rest of the year one tap away
+  let moreBtn = "";
+  if (dState.scope === "upcoming" && dState.month === "all" && !dState.q && !dState.more) {
+    const cut = isoOf(new Date(today.getTime() + 28 * DAY));
+    const soon = list.filter(t => t.date <= cut), rest = byDate(list.filter(t => t.date > cut)).length;
+    if (soon.length && rest) { list = soon; moreBtn = `<button type="button" class="btn ghost morebtn" id="dmore">Show the rest of the year (${rest} more day${rest === 1 ? "" : "s"})</button>`; }
+  }
   let lastBlock = "";
   return byDate(list).map(([date, talks]) => {
     const d = parseISO(date);
@@ -1838,7 +1880,7 @@ function didacticList() {
         ${off ? "" : `<div class="dmeta"><span>${esc(talks[0].location || "Location TBA")}</span>${talks[0].time ? `<span>${esc(talks[0].time)}</span>` : ""}${date >= todayISO ? joinBtn(talks) : ""}</div>`}
         <ul class="talks">${talks.map(t => `<li><span class="t">${esc(t.topic)}${kindTag(t)}${ME && presentsTalk(t.speaker, ME) ? `<span class="tag you">You</span>` : ""}</span>${t.speaker ? `<span class="s">${esc(t.speaker)}</span>` : ""}</li>`).join("")}</ul>
       </div></div>`;
-  }).join("");
+  }).join("") + moreBtn;
 }
 
 let sState = { pgy: store.get("hub.s.pgy") || "all", view: "grid", month: curMonth, who: "", span: window.innerWidth < 640 ? "3" : "12" };
@@ -1886,10 +1928,17 @@ function viewRotations() {
   return `
   <div class="view-head"><div><div class="eyebrow">Rotation Guides</div><h1>Rotation guides</h1>
     <p>Pick your rotation for site expectations, contacts, schedules, attachments and tips.</p></div></div>
-  <div class="prose" style="max-width:none">${S.readinessHtml || ""}</div>
+  ${readyBanner(true)}
   ${cats.map(c => `<section class="dir"><h2 class="dir-h">${esc(c)}</h2><ul class="dir-list">${S.rotations.filter(r => (r.category || "Other") === c).map(r =>
     `<li><a href="#rot-${r.id}">${chipSpan(r) || `<span aria-hidden="true"></span>`}<span class="dn">${esc(r.title)}<span class="dl">${esc(r.location)}</span></span><span class="dp">${esc(r.pgy)}</span><span class="ar" aria-hidden="true">→</span></a></li>`).join("")}</ul></section>`).join("")}
 `;
+}
+/** "Starting an inpatient rotation? Read this first" — the readiness note, folded into one obvious line. */
+function readyBanner(wide) {
+  if (!S.readinessHtml) return "";
+  const open = store.get("hub.ready.open") === "1";
+  return `<details class="ready${wide ? " wide" : ""}" ${open ? "open" : ""}><summary><span class="ready-ic" aria-hidden="true">!</span><span><b>Starting an inpatient rotation? Read this first.</b><small>Shadowing, credentialing and EMR access to finish before day one</small></span><span class="ready-chev" aria-hidden="true">›</span></summary>
+    <div class="prose">${S.readinessHtml}</div></details>`;
 }
 let gTab = "guide";
 function guideBody(it) {
@@ -1918,6 +1967,8 @@ function viewRotation(id) {
     <a class="crumb" href="#rotations">← All rotation guides</a>
     <div class="eyebrow">${esc(r.category)} · ${esc(r.type || "Rotation")}</div>
     <h1 style="font-size:clamp(28px,4vw,40px);letter-spacing:-.02em;margin-top:6px">${esc(r.title)}</h1>
+    ${/inpatient/i.test(r.category || "") ? readyBanner(false) : ""}
+    <div id="gfirst"></div>
     ${r.codes.length ? `<dl class="facts">
       <div><dt>Schedule code</dt><dd>${r.codes.map(c => `<span class="code" style="--h:${r.hue}">${esc(c)}</span>`).slice(0, 3).join(" ")}</dd></div>
       <div><dt>PGY level</dt><dd>${esc(r.pgy || "—")}</dd></div>
@@ -1926,6 +1977,7 @@ function viewRotation(id) {
       <div class="who"><dt>On this rotation in ${MONTH_FULL[curMonth]}</dt><dd>${now.length ? now.map(p => `${esc(p.name)} <span class="muted">(${esc(p.pgy)})</span>`).join(", ") : "No one this month"}</dd>
         <dd>${yearStrip(year)}</dd></div>
     </dl>` : ""}
+    <div id="gtop"></div>
     ${attachBox(r)}
     ${S.masterHandbook && S.hbNotice ? `<div class="prose hbnote">${S.hbNotice}</div>` : ""}
     ${guideBody(r)}
@@ -2094,11 +2146,59 @@ function closeMaps() {
 document.addEventListener("keydown", e => { if (e.key === "Escape" && document.querySelector(".mapsheet")) closeMaps(); });
 document.addEventListener("click", e => { const b = e.target.closest("button.addr"); if (b) { e.preventDefault(); openMaps(b); } });
 
+/* ----------------------------------------------------------- guide page: "First day" card + "Jump to" menu
+ * Built from the guide on screen each time, so they follow every Handbooks edit. */
+const PHONE_RE = /(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/;
+function guideTop() {
+  const box = $("#gtop"); if (!box) return;
+  const r = S.rotations.find(x => "#rot-" + x.id === location.hash);
+  const prose = [...document.querySelectorAll(".guide-layout article .prose")].filter(p => !p.classList.contains("hbnote") && !p.closest(".ready")).pop();
+  if (!r || !prose) return;
+  // Jump to: real headings, plus short paragraphs that are entirely bold ("Responsibilities:", "Tips from residents")
+  const blocks = [...prose.children];
+  const heads = [];
+  [...prose.querySelectorAll("h2, h3, h4, p")].forEach(el => {
+    const t = el.textContent.replace(/\s+/g, " ").trim().replace(/:$/, "");
+    if (!t || t.length > 48 || /\d{3}|@|https?:/i.test(t)) return;
+    const boldOnly = el.tagName === "P" && el.querySelector("strong, b") && [...el.childNodes].every(n => (n.nodeType === 3 && !n.nodeValue.trim()) || (n.nodeType === 1 && /^(STRONG|B|BR)$/.test(n.tagName)));
+    if (el.tagName === "P" && !boldOnly) return;
+    if (blocks.indexOf(el) > -1 && blocks.indexOf(el) < 2) return;            // the guide's own title lines
+    if (heads.some(h => h.t.toLowerCase() === t.toLowerCase())) return;
+    const nice = t === t.toUpperCase() ? t.toLowerCase().replace(/^\w/, c => c.toUpperCase()).replace(/\b(epic|emg|edx|cprs|pto|va|pm&r|snf|iss|wpb)\b/gi, w => w.toUpperCase()) : t;
+    heads.push({ el, t: nice });
+  });
+  heads.forEach((h, i) => { h.el.id = h.el.id || "sec-" + (i + 1); h.el.classList.add("jumptarget"); });
+  // First day: where, who to call, what to finish before you start
+  const addr = prose.querySelector("button.addr");
+  const phones = [];
+  const walker = document.createTreeWalker(prose, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode() && phones.length < 2) {
+    const n = walker.currentNode, m = n.nodeValue.match(PHONE_RE); if (!m) continue;
+    const block = n.parentElement.closest("p, li, td") || n.parentElement;
+    let label = block.textContent.replace(/\s+/g, " ").split(m[0])[0].replace(/[\s:–—-]+$/, "").replace(/^.*[.;]\s*/, "").trim();
+    if (label.length > 42) label = label.slice(-42).replace(/^\S*\s/, "…");
+    if (!phones.some(p => p.num === m[0])) phones.push({ num: m[0], label });
+  }
+  const steps = onboardingSteps(r).slice(0, 3);
+  const rows = [];
+  if (addr) rows.push(`<div class="fd-row"><span class="fd-k">Where</span><span class="fd-v"><button type="button" class="addr" id="fd-addr">${esc(addr.textContent)}</button></span></div>`);
+  if (phones.length) rows.push(`<div class="fd-row"><span class="fd-k">Call</span><span class="fd-v">${phones.map(p => `<span class="fd-ph">${p.label ? esc(p.label) + ": " : ""}<a href="tel:+1${p.num.replace(/\D/g, "").slice(-10)}">${esc(p.num)}</a></span>`).join("")}</span></div>`);
+  if (steps.length) rows.push(`<div class="fd-row fd-steps"><span class="fd-k">Before you start</span><ul class="fd-v">${steps.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>`);
+  const first = $("#gfirst"); if (first) first.innerHTML = rows.length ? `<section class="firstday" aria-label="First day"><h2>First day</h2>${rows.join("")}</section>` : "";
+  box.innerHTML = (heads.length >= 3 ? `<nav class="jump" aria-label="Jump to a section"><span class="jump-k">Jump to</span>${heads.map((h, i) => `<a href="#${h.el.id}" data-jump="${h.el.id}"${i >= 8 ? " hidden" : ""}>${esc(h.t)}</a>`).join("")}${heads.length > 8 ? `<button type="button" class="jump-more">More (${heads.length - 8})</button>` : ""}</nav>` : "");
+  const jm = box.querySelector(".jump-more"); if (jm) jm.onclick = () => { box.querySelectorAll(".jump a[hidden]").forEach(a => a.hidden = false); jm.remove(); };
+  const fa = document.getElementById("fd-addr"); if (fa && addr) fa.onclick = e => { e.preventDefault(); addr.click(); };
+  box.querySelectorAll("[data-jump]").forEach(a => a.onclick = e => { e.preventDefault(); document.getElementById(a.dataset.jump)?.scrollIntoView({ behavior: "smooth", block: "start" }); });
+}
+
 function bindView() {
   const mcb = $("#mycal"); if (mcb) mcb.onclick = () => { const p = meResident(); if (p) openCalSheet(myCalUrl(p.name), "My PM&R calendar · " + p.name.split(" ")[0], "Rotations, your lectures, and onboarding reminders."); };
   const dq2 = $("#dirq"); if (dq2) dq2.oninput = () => { dirQ = dq2.value; $("#dirlist").innerHTML = directoryList(); };
   const ms = $("#mesel"); if (ms) ms.onchange = () => { ME = ms.value; store.set("hub.me", ME); route(true); };
   const mc = $("#mechange"); if (mc) mc.onclick = () => { ME = ""; store.set("hub.me", ""); route(true); };
+  const ot = $("#onbtoggle"); if (ot) ot.onclick = () => { store.set("hub.onb.all", store.get("hub.onb.all") === "1" ? "0" : "1"); route(true); };
+  if (/^#rot-/.test(location.hash)) setTimeout(guideTop, 0);   // after addresses are made tappable
+  document.querySelectorAll("details.ready").forEach(d => d.addEventListener("toggle", () => store.set("hub.ready.open", d.open ? "1" : "0")));
   const sw2 = $(".sched-wrap");
   if (sw2 && sw2.scrollWidth > sw2.clientWidth) {
     const th = sw2.querySelector("thead th.now"), nm = sw2.querySelector("thead th.name");
@@ -2106,7 +2206,9 @@ function bindView() {
   }
   document.querySelectorAll(".prose").forEach(linkAddresses);
   document.querySelectorAll("[data-scope]").forEach(b => b.onclick = () => { dState.scope = b.dataset.scope; dState.month = "all"; store.set("hub.d.scope", dState.scope); route(true); });
-  const dm = $("#dmonth"); if (dm) dm.onchange = () => { dState.month = dm.value; $("#dlist").innerHTML = didacticList(); };
+  const dm = $("#dmonth"); if (dm) dm.onchange = () => { dState.month = dm.value; $("#dlist").innerHTML = didacticList(); bindMore(); };
+  const bindMore = () => { const b = $("#dmore"); if (b) b.onclick = () => { dState.more = true; $("#dlist").innerHTML = didacticList(); }; };
+  bindMore();
   document.querySelectorAll(".minical [data-go]").forEach(x => x.onclick = e => {
     e.preventDefault();
     const iso = x.dataset.go; let row = document.getElementById("d-" + iso);
