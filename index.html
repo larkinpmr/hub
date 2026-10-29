@@ -209,6 +209,10 @@ header.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: 
 .wm-signed svg { display: block; width: 15em; height: .7em; margin: -.3em 0 0 1.6em; overflow: visible; } .wm-signed svg path { stroke: var(--wm-cyan); filter: drop-shadow(0 0 3px rgba(59, 224, 227, .8)); }
 .wm-signed .r { margin: .2em 0 0 8em; } .wm-signed .k { color: var(--wm-cyan); text-shadow: var(--wm-cyan-glow); } .wm-signed .yr { color: var(--wm-pink); text-shadow: var(--wm-pink-glow); }
 .search { position: relative; flex: 1 1 240px; max-width: 340px; }
+/* Phones zoom the whole page in when a text box with text smaller than 16px is tapped (iPhone), and stay zoomed.
+   16px text in every box on phones prevents that; overflow-x: clip stops the page from sliding sideways. */
+html { overflow-x: clip; }
+@media (max-width: 899px) { input, select, textarea { font-size: 16px !important; } }
 .search input { width: 100%; padding: 8px 12px 8px 34px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); color: var(--ink); font: inherit; font-size: 15px; }
 .search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); }
 nav.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding-block: 6px 10px; }
