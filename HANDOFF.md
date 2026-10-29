@@ -39,6 +39,16 @@ The hub website (**https://larkinpmr.github.io**) is built from Google Drive. No
 
 **Chief editor:** open the gear menu on the site and choose "Chief editor". It only works when you are signed in as the chief Gmail, and it edits the Control Panel tabs without opening the sheet.
 
+# Email sign-in (who can use the hub)
+
+With the Settings row **Email sign-in** set to `on`, the hub has no passcode. The first time someone opens it on a phone or computer, they enter their email and receive a 6-digit code from the chief Gmail; after that, that device stays signed in. Google only sends schedules, contacts and the Handbook to verified devices, so the data is protected at the source, not just hidden. (The saved copy in the public GitHub repo and the calendar links stay open, as decided.)
+
+- **Approved Emails tab** (private): email(s), name, role, Active. Only these emails can get a code; several emails per person are fine, separated by commas. To remove someone, set Active to `no` or delete the row: they are signed out on their next visit (within about a minute).
+- **Sign-ins tab** (private): every verified device, when it was last used, and Status. Type `revoked` in Status to sign out one device (a lost phone, say). Don't edit the Key column.
+- **New academic year:** changing "Academic Year" in Settings makes every device verify once more.
+- **Turning it off:** set "Email sign-in" to `off`; the old passcode screen (Settings "Site passcode") applies again.
+- Setup (once): run **installSignIn** to create the two tabs, fill in Approved Emails, then set "Email sign-in" to `on`. Codes are limited to 5 an hour per email and expire after 15 minutes; 5 wrong tries cancel a code.
+
 # Editing the Handbooks (the rules that keep the site working)
 
 The **Handbooks** folder holds one Google Doc per page. Its link is in the Control Panel **Settings** tab next to "Handbooks Folder".

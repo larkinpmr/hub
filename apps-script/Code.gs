@@ -25,6 +25,7 @@ function doGet(e) {
       .setTitle('Larkin South Miami PM&R Hub · Editor')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   }
+  if (e && e.parameter && e.parameter.auth) return json_(authRequest_(e.parameter));
   const fresh = e && e.parameter && e.parameter.refresh;
   const cache = CacheService.getScriptCache();
   if (e && e.parameter && e.parameter.calendar === 'me') {
@@ -42,6 +43,8 @@ function doGet(e) {
     }
     return ContentService.createTextOutput(ics).setMimeType(ContentService.MimeType.ICAL);
   }
+  // Email sign-in: when it is on, schedules, contacts and the Handbook go only to verified devices.
+  if (signInOn_()) { const who = checkToken_(e && e.parameter && e.parameter.token); if (!who.ok) return json_({ ok: false, auth: 'required', reason: who.reason }); }
   // Two parts so the website can show schedules immediately: ?part=handbook is the (large) Handbook, anything else is the rest.
   const part = e && e.parameter && e.parameter.part === 'handbook' ? 'handbook' : 'core';
   const prefix = part === 'handbook' ? 'hb_' : 'core_';
@@ -105,7 +108,7 @@ function build_() {
     if (panel) panel.getSheets().forEach(sh => {
       if (PRIVATE_TABS.indexOf(sh.getName()) >= 0) return;
       let v = values_(sh);
-      if (sh.getName() === 'Settings') v = v.filter(r => !/^lecture reminder/i.test(String(r[0] || '').trim()));   // test address etc. stay private
+      if (sh.getName() === 'Settings') v = v.filter(r => !/^(lecture reminder|site passcode)/i.test(String(r[0] || '').trim()) || (/^site passcode/i.test(String(r[0] || '').trim()) && !signInOn_()));   // private rows; the passcode only while email sign-in is off
       out.panel[sh.getName()] = v;
     });
   } catch (err) { out.errors.push('Control Panel: ' + err.message); }
@@ -917,7 +920,7 @@ function checkHandbookLinks() {
  * Lecture reminder test email · Lecture reminder days ("7" or "7, 1") · Didactics start time (blank = 2:00 PM) ·
  * Guest lecture length (hours) (blank = 2) · Virtual lecture link · Lecture reminder signature.
  * "Lecture reminder…" rows are kept off the public website. */
-const PRIVATE_TABS = ['Lecturers', 'Lecture Reminders', 'Lecture Locations', 'Invitations'];
+const PRIVATE_TABS = ['Lecturers', 'Lecture Reminders', 'Lecture Locations', 'Invitations', 'Approved Emails', 'Sign-ins'];
 const LOCATION_HEAD = ['Location (as written in the Didactic Schedule)', 'What the email says', 'Address (optional: becomes a directions link)'];
 const LECTURER_HEAD = ['Name (as written in the Didactic Schedule)', 'Email', 'Also written as (separate with ;)', 'Send reminders (yes/no)', 'Notes'];
 const REMINDER_HEAD = ['Sent', 'Lecture date', 'Topic', 'Speaker', 'Email', 'Days before', 'Status'];
@@ -1460,7 +1463,13 @@ const HOWTO_LINES = [
   ['Resident schedule → the Resident Schedule sheet, using the codes in the Rotations tab (SCW, WGRH, EMG…). To split a month in half, give that month two columns (merge the month header or leave the new header blank): the first column is the 1st–15th, the second starts on the 16th.'],
   ['Rotation guides & policies → the Handbooks folder in Drive: one Google Doc per page. The doc name is the page title, the folder is its group, and the Policies folder appears under Resources. To add a rotation, copy a doc in the right folder and rename it; add a Rotations-tab row with exactly the same name to give it a schedule code. Run refreshHandbookNow to update the site right away.'],
   ['Contacts, announcements, quick links → the tabs in this Control Panel. Contacts rows whose role contains "Chief" also become the signature on every lecture email.'],
-  ['Settings tab → Academic Year, Home headline and subtitle, Site passcode, Virtual lecture link (the usual Zoom link), Holiday themes (off to turn off), and the Lecture reminder settings.'],
+  ['Settings tab → Academic Year, Home headline and subtitle, Email sign-in (on/off), Virtual lecture link (the usual Zoom link), Holiday themes (off to turn off), and the Lecture reminder settings.'],
+  [''],
+  ['WHO CAN USE THE HUB (email sign-in)'],
+  ['Settings "Email sign-in" = on → the first time someone opens the hub on a phone or computer, they enter their email and get a 6-digit code from the chief Gmail. After that, that device stays signed in. No passcode is used.'],
+  ['Approved Emails tab → one row per person: their email(s) (several are fine, separated by commas), name, role, and Active (yes/no). Only these emails can get a code. To remove someone, set Active to no or delete the row: they are signed out on their next visit. This tab is never shown on the website.'],
+  ['Sign-ins tab → every verified device, when it was last used, and its Status. Type revoked in Status to sign that one device out (for example a lost phone). Do not edit the Key column.'],
+  ['When the Academic Year in Settings changes, every device verifies its email once more. Calendar subscription links keep working without sign-in. To turn sign-in off, set "Email sign-in" to off.'],
   [''],
   ['GUEST LECTURERS (automatic emails from the chief Gmail)'],
   ['Lecturers tab → one row per guest: name as written in the Didactic Schedule, email (several are fine, separated by commas), other spellings, and yes. This tab is never shown on the website.'],
@@ -1473,7 +1482,7 @@ const HOWTO_LINES = [
   [''],
   ['NEW ACADEMIC YEAR (each July)'],
   ['1. Make the new Didactic and Resident Schedule sheets (File ▸ Make a copy of last year\'s), paste their links into Settings, and update Academic Year (the website and the email signature show the new year).'],
-  ['2. Change the Site passcode in Settings: every phone and computer is asked for the new one once.'],
+  ['2. Update the Approved Emails tab: add the new class, set graduates to no. (Changing the Academic Year already makes every device verify once more. If email sign-in is off, change the Site passcode instead.)'],
   ['3. Update Contacts with the new chiefs (name and cell): the website and the email signature follow.'],
   ['4. Check the Rotations tab codes match the new Resident Schedule.'],
   ['5. Update the Lecturers tab (add new guests, remove old ones) and keep the Confirmed column in the new Didactic Schedule.'],
@@ -1519,4 +1528,123 @@ function syncHowToTab_() {
   const tab = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('How to update');
   if (tab && props.getProperty('howto_hash') === howToHash_()) return;
   writeHowToTab();
+}
+
+
+/* ------------------------------------------------------------------ email sign-in
+ * Settings "Email sign-in" = on: a device must verify an email on the private "Approved Emails" tab (a 6-digit code
+ * is emailed from the chief Gmail) before Google sends it schedules, contacts or the Handbook. A verified device stays
+ * signed in until its person is removed from Approved Emails (or set to "no"), its row on the "Sign-ins" tab is set to
+ * "revoked", or the Academic Year in Settings changes (everyone verifies once each July). Calendar feeds stay open.
+ *   installSignIn   run once: creates the Approved Emails and Sign-ins tabs */
+const APPROVED_HEAD = ['Email(s) (several are fine, separated by commas)', 'Name', 'Role (resident / faculty / staff)', 'Active (yes/no)', 'Notes'];
+const SIGNIN_HEAD = ['Signed in', 'Email', 'Name', 'Device', 'Academic year', 'Last seen', 'Status (type revoked to sign this device out)', 'Key (do not edit)'];
+
+function installSignIn() {
+  const a = panelSheet_('Approved Emails', APPROVED_HEAD); [340, 200, 200, 120, 300].forEach((w, i) => a.setColumnWidth(i + 1, w));
+  const b = panelSheet_('Sign-ins', SIGNIN_HEAD); [150, 240, 180, 160, 120, 150, 260, 120].forEach((w, i) => b.setColumnWidth(i + 1, w));
+  Logger.log('Approved Emails and Sign-ins tabs are ready. Fill in Approved Emails, then set Settings "Email sign-in" to on.');
+}
+
+function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function sha_(s) { return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s)).map(b => ('0' + (b & 255).toString(16)).slice(-2)).join(''); }
+function normEmail_(s) { return String(s || '').trim().toLowerCase().replace(/^mailto:/, ''); }
+
+function signInOn_() {
+  const cache = CacheService.getScriptCache();
+  let v = cache.get('signin_on');
+  if (v === null) { v = /^(on|yes|true|1)$/i.test(String(panelSettings_()['Email sign-in'] || '').trim()) ? '1' : '0'; cache.put('signin_on', v, 60); }
+  return v === '1';
+}
+function academicYear_() {
+  const cache = CacheService.getScriptCache();
+  let y = cache.get('acad_year');
+  if (y === null) { y = String(panelSettings_()['Academic Year'] || '').replace(/\s+/g, ' ').trim(); cache.put('acad_year', y, 60); }
+  return y;
+}
+
+/** email → {name, role} for every active row of Approved Emails (cached a minute, so removals apply quickly). */
+function approvedMap_() {
+  const cache = CacheService.getScriptCache(), hit = cache.get('approved_map');
+  if (hit) return JSON.parse(hit);
+  const map = {}, sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Approved Emails');
+  if (sh) values_(sh).slice(1).forEach(r => {
+    if (/^(no|n|off|false|0|inactive|removed)$/i.test(String(r[3] || '').trim())) return;
+    String(r[0] || '').split(/[\s,;]+/).map(normEmail_).filter(e => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)).forEach(e => { map[e] = { name: String(r[1] || '').trim(), role: String(r[2] || '').trim() }; });
+  });
+  try { cache.put('approved_map', JSON.stringify(map), 60); } catch (err) { /* uncached */ }
+  return map;
+}
+
+/** key hash → {email, year, status, row} from the Sign-ins tab (cached a minute). */
+function tokenMap_() {
+  const cache = CacheService.getScriptCache(), hit = cache.get('token_map');
+  if (hit) return JSON.parse(hit);
+  const map = {}, sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sign-ins');
+  if (sh) values_(sh).slice(1).forEach((r, i) => { if (r[7]) map[String(r[7])] = { email: normEmail_(r[1]), year: String(r[4] || '').trim(), status: String(r[6] || '').trim(), row: i + 2 }; });
+  try { cache.put('token_map', JSON.stringify(map), 60); } catch (err) { /* uncached */ }
+  return map;
+}
+
+function checkToken_(token) {
+  if (!token) return { ok: false, reason: 'none' };
+  const h = sha_(token), rec = tokenMap_()[h];
+  if (!rec) return { ok: false, reason: 'unknown' };
+  if (/revok|signed out|remove/i.test(rec.status)) return { ok: false, reason: 'revoked' };
+  if (rec.year !== academicYear_()) return { ok: false, reason: 'year' };
+  const who = approvedMap_()[rec.email];
+  if (!who) return { ok: false, reason: 'removed' };
+  const cache = CacheService.getScriptCache();
+  if (!cache.get('seen_' + h)) {   // "Last seen", at most every 6 hours per device
+    try { SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sign-ins').getRange(rec.row, 6).setValue(Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm')); } catch (err) { /* not essential */ }
+    cache.put('seen_' + h, '1', 6 * 3600);
+  }
+  return { ok: true, email: rec.email, name: who.name };
+}
+
+/** ?auth=start&email=… sends a code (only to approved emails; the answer is the same either way).
+ *  ?auth=verify&email=…&code=…&device=… returns a device key. */
+function authRequest_(p) {
+  const cache = CacheService.getScriptCache();
+  const email = normEmail_(p.email);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, error: 'email' };
+  const ek = sha_(email).slice(0, 40);
+  if (p.auth === 'start') {
+    const n = Number(cache.get('otpn_' + ek) || 0);
+    if (n >= 5) return { ok: true };                       // at most 5 codes an hour per email
+    cache.put('otpn_' + ek, String(n + 1), 3600);
+    const who = approvedMap_()[email];
+    if (!who) return { ok: true };                         // not on the list: nothing is sent, nothing is revealed
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    cache.put('otp_' + ek, JSON.stringify({ code: code, tries: 0 }), 15 * 60);
+    const hi = who.name ? 'Hi ' + who.name.split(/\s+/)[0] + ',' : 'Hi,';
+    MailApp.sendEmail({ to: email, name: 'Larkin PM&R Hub', subject: 'Your PM&R Hub code: ' + code,
+      body: hi + '\n\nYour sign-in code for the Larkin PM&R Hub is ' + code + '.\nIt works for 15 minutes. If you did not ask for it, you can ignore this email.\n\n' + signature_(panelSettings_()),
+      htmlBody: '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f2937"><p>' + hi + '</p><p>Your sign-in code for the Larkin PM&amp;R Hub is</p><p style="font-size:30px;font-weight:bold;letter-spacing:6px;margin:6px 0 14px">' + code + '</p><p>It works for 15 minutes. If you did not ask for it, you can ignore this email.</p><p>' + signHtml_(signature_(panelSettings_())) + '</p></div>' });
+    return { ok: true };
+  }
+  if (p.auth === 'verify') {
+    const raw = cache.get('otp_' + ek);
+    if (!raw) return { ok: false, error: 'expired' };
+    const otp = JSON.parse(raw);
+    if (String(p.code || '').replace(/\D/g, '') !== otp.code) {
+      otp.tries++;
+      if (otp.tries >= 5) { cache.remove('otp_' + ek); return { ok: false, error: 'locked' }; }
+      cache.put('otp_' + ek, JSON.stringify(otp), 15 * 60);
+      return { ok: false, error: 'wrong' };
+    }
+    cache.remove('otp_' + ek);
+    const who = approvedMap_()[email];
+    if (!who) return { ok: false, error: 'expired' };
+    const token = (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, '');
+    const lock = LockService.getScriptLock(); lock.waitLock(10000);
+    try {
+      const sh = panelSheet_('Sign-ins', SIGNIN_HEAD);
+      const now = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm');
+      sh.appendRow([now, email, who.name, String(p.device || '').slice(0, 60), academicYear_(), now, 'active', sha_(token)]);
+    } finally { lock.releaseLock(); }
+    cache.remove('token_map');
+    return { ok: true, token: token, name: who.name, email: email };
+  }
+  return { ok: false, error: 'request' };
 }

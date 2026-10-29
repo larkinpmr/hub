@@ -258,6 +258,8 @@ body.gated > :not(.gate) { visibility: hidden; }
 .gate-card input { font: 500 17px/1.2 var(--body); padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); text-align: center; width: 100%; box-sizing: border-box; }
 .gate-card input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .gate-card .btn { width: 100%; justify-content: center; padding: 12px; font-size: 16px; }
+.gate-help .linkbtn { border: 0; background: none; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; padding: 0; display: block; margin: 0 auto 6px; }
+.gate-card input[hidden], .gate-help [hidden] { display: none; }
 .gate-msg { min-height: 1.2em; color: #C0262D !important; font-weight: 600; }
 :root[data-theme="dark"] .gate-msg { color: #FF8A8A !important; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gate-msg { color: #FF8A8A !important; } }
@@ -660,6 +662,7 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
         <button type="button" class="swatch" data-ac="forest" title="Everglades green" aria-label="Everglades green" style="background:#2F6B33"></button></div></div>
       <div id="install-box"><h3>Use it like an app</h3><div id="install-body" class="install"></div></div>
       <div><h3>New here?</h3><button type="button" class="btn small ghost" id="tour-btn">Take a tour</button></div>
+      <div id="signout-box" hidden><h3>Signed in</h3><div class="install"><span id="signout-who"></span><button type="button" class="btn small ghost" id="signout-btn">Sign out of this device</button></div></div>
       <div class="edit" id="prefs-edit">Chief residents: <span id="edit-link">editing turns on once the hub is connected to Google.</span></div>
     </div>
     <nav class="tabs" aria-label="Sections">
@@ -730,6 +733,8 @@ prefsBox.addEventListener("click", e => {
 });
 applyPrefs();
 $("#tour-btn").onclick = e => { e.stopPropagation(); startTour(); };
+(() => { try { const a = JSON.parse(localStorage.getItem("hub.auth") || "null"); if (a && a.token) { $("#signout-box").hidden = false; $("#signout-who").textContent = (a.name ? a.name + " · " : "") + (a.email || ""); } } catch {} })();
+$("#signout-btn").onclick = () => signOut();
 function showEditLink() {
   if (!CFG.adminUrl) return;
   $("#edit-link").innerHTML = `<a href="${esc(CFG.adminUrl)}" target="_blank" rel="noopener">Open the hub editor →</a> <span style="display:block;margin-top:4px">Requires signing in as the chief Google account.</span>`;
@@ -897,7 +902,7 @@ async function gateHash(t) {
 }
 async function gateCheck(known) {
   if (known) gateKnown = true;
-  if (!gateKnown) { if (!store.get(GATE_KEY)) showGate(true); return; }  // first visit: a plain "loading" cover until we know if there is a passcode
+  if (!gateKnown) { if (!store.get(GATE_KEY) && !AUTH) showGate(true); return; }  // first visit: a plain "loading" cover until we know if there is a passcode
   const pc = String(S.passcode || "").trim();
   if (!pc) { hideGate(); return; }
   if (store.get(GATE_KEY) === await gateHash(pc)) hideGate(); else showGate(false);
@@ -929,7 +934,11 @@ function showGate(waiting) {
   if (!waiting) setTimeout(() => input.focus(), 50);
   if (waiting) setTimeout(() => { if (!gateKnown && document.querySelector(".gate.waiting")) hideGate(); }, 20000);   // Google unreachable: don't lock people out of the saved copy
 }
-function hideGate() { const had = !!document.querySelector(".gate"); document.querySelector(".gate")?.remove(); document.body.classList.remove("gated"); if (had || S) maybeStartTour(); }
+function hideGate() {
+  const g = document.querySelector(".gate");
+  if (g && g.querySelector("#gate-email")) return;   // the email sign-in screen stays until the device is verified
+  const had = !!g; g?.remove(); document.body.classList.remove("gated"); if (had || S) maybeStartTour();
+}
 
 /* ----------------------------------------------------------- first-visit tour
  * Five short cards that point at the real page. Shown once per device (after the passcode screen); "Take a tour"
@@ -1017,6 +1026,71 @@ document.addEventListener("keydown", e => {
   else if (e.key === "ArrowLeft" && tourI > 0) { tourI--; showTourStep(); }
 });
 
+/* ----------------------------------------------------------- email sign-in
+ * When the Control Panel turns on "Email sign-in", Google only sends data to verified devices. A device verifies once
+ * (email → 6-digit code) and keeps a key here; Google says "auth required" if the key is missing, removed or from last year. */
+const AUTH_KEY = "hub.auth";
+let AUTH = (() => { try { return JSON.parse(store.get(AUTH_KEY) || "null"); } catch { return null; } })();
+const withQ = (u, q) => q ? u + (u.includes("?") ? "&" : "?") + q : u;
+const authQ = () => AUTH && AUTH.token ? "token=" + encodeURIComponent(AUTH.token) : "";
+function deviceName() {
+  const ua = navigator.userAgent;
+  const os = /iPhone/.test(ua) ? "iPhone" : /iPad|Macintosh.*Mobile/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) ? "iPad" : /Android/.test(ua) ? "Android" : /Mac/.test(ua) ? "Mac" : /Windows/.test(ua) ? "Windows" : /CrOS/.test(ua) ? "Chromebook" : /Linux/.test(ua) ? "Linux" : "Device";
+  const br = /Edg\//.test(ua) ? "Edge" : /CriOS|Chrome\//.test(ua) ? "Chrome" : /FxiOS|Firefox\//.test(ua) ? "Firefox" : /Safari\//.test(ua) ? "Safari" : "browser";
+  return os + " · " + br + (standalone() ? " (app)" : "");
+}
+function signOut() { try { localStorage.removeItem(AUTH_KEY); localStorage.removeItem("hub.live.v1"); } catch {} AUTH = null; location.reload(); }
+function showSignIn(reason) {
+  try { localStorage.removeItem("hub.live.v1"); } catch {}
+  if (AUTH) { AUTH = null; try { localStorage.removeItem(AUTH_KEY); } catch {} }
+  document.querySelector(".gate")?.remove();
+  const why = { year: "It's a new academic year, so please verify your email once more.", removed: "This device was signed out. Verify your email to continue.", revoked: "This device was signed out. Verify your email to continue." }[reason] || "Enter your email and we'll send you a 6-digit code. You'll only need to do this once on this device.";
+  const g = document.createElement("div"); g.className = "gate"; g.setAttribute("role", "dialog"); g.setAttribute("aria-modal", "true"); g.setAttribute("aria-labelledby", "gate-h");
+  g.innerHTML = `<form class="gate-card" autocomplete="on" novalidate>
+      <img class="gate-logo" src="assets/logo.svg" alt="" width="64" height="64">
+      <h1 id="gate-h">Larkin South Miami PM&amp;R Hub</h1>
+      <p class="gate-step">${esc(why)}</p>
+      <label class="sr" for="gate-email">Email</label>
+      <input id="gate-email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="Your email" required>
+      <label class="sr" for="gate-code">6-digit code</label>
+      <input id="gate-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="6" placeholder="6-digit code" hidden>
+      <button type="submit" class="btn">Email me a code</button>
+      <p class="gate-msg" role="alert"></p>
+      <p class="gate-help"><button type="button" class="linkbtn" data-back hidden>Use a different email</button><span data-help>Use the email the chief residents have on file. Not working? Ask a chief resident.</span></p>
+    </form>`;
+  document.body.appendChild(g); document.body.classList.add("gated");
+  const form = g.querySelector("form"), em = g.querySelector("#gate-email"), cd = g.querySelector("#gate-code"), btn = g.querySelector("button[type=submit]"),
+    msg = g.querySelector(".gate-msg"), step = g.querySelector(".gate-step"), back = g.querySelector("[data-back]");
+  let stage = "email";
+  const base = CFG.liveDataUrl;
+  const ask = async q => { const r = await fetch(withQ(base, q)); return r.json(); };
+  const toEmail = () => { stage = "email"; cd.hidden = true; em.hidden = false; em.disabled = false; back.hidden = true; btn.textContent = "Email me a code"; step.textContent = why; msg.textContent = ""; em.focus(); };
+  back.onclick = toEmail;
+  form.onsubmit = async e => {
+    e.preventDefault(); msg.textContent = "";
+    const email = em.value.trim().toLowerCase();
+    if (stage === "email") {
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "Please enter a full email address."; return; }
+      btn.disabled = true; btn.textContent = "Sending…";
+      try { await ask("auth=start&email=" + encodeURIComponent(email)); } catch { msg.textContent = "Couldn't reach Google. Check your connection and try again."; btn.disabled = false; btn.textContent = "Email me a code"; return; }
+      stage = "code"; btn.disabled = false; btn.textContent = "Sign in"; em.hidden = true; cd.hidden = false; back.hidden = false; cd.value = "";
+      step.innerHTML = `If <b>${esc(email)}</b> is on the residency's list, a code is on its way. Check your inbox (and spam), then enter it below. It works for 15 minutes.`;
+      setTimeout(() => cd.focus(), 50);
+      return;
+    }
+    const code = cd.value.replace(/\D/g, "");
+    if (code.length !== 6) { msg.textContent = "Enter the 6 digits from the email."; return; }
+    btn.disabled = true; btn.textContent = "Checking…";
+    let r = null; try { r = await ask("auth=verify&email=" + encodeURIComponent(email) + "&code=" + code + "&device=" + encodeURIComponent(deviceName())); } catch {}
+    btn.disabled = false; btn.textContent = "Sign in";
+    if (r && r.ok && r.token) { AUTH = { token: r.token, email: r.email || email, name: r.name || "" }; store.set(AUTH_KEY, JSON.stringify(AUTH)); location.reload(); return; }
+    msg.textContent = !r ? "Couldn't reach Google. Try again." : r.error === "wrong" ? "That code isn't right. Check the email and try again."
+      : r.error === "locked" ? "Too many tries. Request a new code." : "That code has expired (or this email isn't on the list). Request a new code.";
+    if (r && r.error !== "wrong") toEmail();
+  };
+  setTimeout(() => em.focus(), 50);
+}
+
 const LIVE_KEY = "hub.live.v1";
 function readLiveCache() { try { return JSON.parse(localStorage.getItem(LIVE_KEY) || "null"); } catch { return null; } }
 function writeLiveCache(v) { try { localStorage.setItem(LIVE_KEY, JSON.stringify(v)); } catch {} }
@@ -1024,7 +1098,11 @@ function writeLiveCache(v) { try { localStorage.setItem(LIVE_KEY, JSON.stringify
 async function loadLive(url, snap) {
   const get = async (u, ms) => {
     const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
-    try { const r = await fetch(u, { signal: ctl.signal }); if (!r.ok) throw new Error("HTTP " + r.status); const j = await r.json(); if (!j || j.ok === false) throw new Error("bad data"); return j; }
+    try {
+      const r = await fetch(withQ(u, authQ()), { signal: ctl.signal }); if (!r.ok) throw new Error("HTTP " + r.status); const j = await r.json();
+      if (j && j.auth === "required") { const err = new Error("auth"); err.auth = j.reason || "none"; throw err; }
+      if (!j || j.ok === false) throw new Error("bad data"); return j;
+    }
     finally { clearTimeout(t); }
   };
   const show = (live, mode) => {
@@ -1053,6 +1131,7 @@ async function loadLive(url, snap) {
         show(Object.assign({}, core, cached.hb, { errors: (core.errors || []).concat(hb.errors || []) }), "live");
       }
     } catch (e) {
+      if (e && e.auth) { showSignIn(e.auth); return; }   // email sign-in is on and this device isn't verified (any more)
       if (n < 3) { setTimeout(() => attempt(n + 1), [3000, 10000, 30000][n]); if (!cached) setStatus("connecting"); return; }
       if (!cached) { source = { mode: "saved", when: snap.builtAt, failed: true }; setStatus(); }
       else { source.mode = "cached"; setStatus(); }
