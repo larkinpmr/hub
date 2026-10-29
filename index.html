@@ -355,7 +355,13 @@ table.sched tr.dim { opacity: .35; }
 @media (max-width: 899px) { .minical { display: none; } .didtop { display: block; } }
 .day.flash { animation: dayflash 1.6s ease-out; } @keyframes dayflash { 0%, 40% { background-color: var(--accent-soft); } 100% { background-color: transparent; } }
 /* didactics calendar button + home screen setup sheet */
-.calbtn { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--accent); background: transparent; color: var(--accent); font: 600 13.5px/1.2 var(--body); cursor: pointer; white-space: nowrap; }
+.titlerow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; }
+.calicon { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--accent); cursor: pointer; padding: 0; flex: none; }
+.calicon:hover { border-color: var(--accent); background: var(--accent-soft); }
+.mycard .hi .calicon { all: unset; display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--accent); cursor: pointer; margin-top: 6px; justify-self: start; }
+@media (max-width: 640px) { .mycard .hi .calicon { margin: 0 0 0 auto; align-self: center; } }
+.mycard .hi .calicon:hover { border-color: var(--accent); }
+.calbtn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--accent); background: transparent; color: var(--accent); font: 600 13.5px/1.2 var(--body); cursor: pointer; white-space: nowrap; }
 .calbtn:hover { background: var(--accent-soft); }
 .calbtn.done { border-color: var(--line); color: var(--muted); font-weight: 500; }
 .prefs-row { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -368,7 +374,6 @@ table.sched tr.dim { opacity: .35; }
 .hs-steps b { display: block; font-size: 15px; } .hs-steps p { margin: 2px 0 8px; font-size: 14px; color: var(--muted); } .hs-steps p b { display: inline; color: var(--ink); font-size: inherit; }
 .hs-n { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font: 700 13px/1 var(--mono); }
 .hs-steps li.done .hs-n { background: var(--accent); color: var(--on-accent); }
-@media (max-width: 640px) { .calbtn { margin-left: 0; } }
 /* readiness banner, first-day card, jump menu, onboarding toggle, more button */
 details.ready { margin: 0 0 18px; border-radius: var(--r); border: 2px solid var(--warn-line, #E2A274); background: var(--warn-soft); overflow: hidden; }
 details.ready > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
@@ -1721,7 +1726,7 @@ function meCard() {
   const onb = onboardingDue(p);
   const rotLink = (r, raw) => r ? `${chipSpan(r)}<a href="#rot-${r.id}">${esc(r.short)}</a>` : (raw ? esc(raw) : "—");
   return `<section class="mycard">
-    <div class="hi"><b>Hi, ${esc(p.name.split(" ")[0])}</b><span class="n">${esc(p.pgy)}</span><button type="button" id="mechange">Not you?</button></div>
+    <div class="hi"><b>Hi, ${esc(p.name.split(" ")[0])}</b><span class="n">${esc(p.pgy)}</span><button type="button" id="mechange">Not you?</button>${CFG.liveDataUrl && store.get("hub.cal.me") === "1" ? calButton("mycal", true, "", "Your calendar is added (tap for options)") : ""}</div>
     <div><span class="k">This month</span><span class="v">${rotLink(r0, raw0)}</span><span class="n">${MONTH_FULL[mi]}${until}</span></div>
     <div><span class="k">Next</span><span class="v">${j < 24 ? rotLink(nextR, nextRaw) : "End of year"}</span><span class="n">${j < 24 ? "Starts " + (j % 2 ? `${MONTH_FULL[j >> 1]} ${HALF_DAY}` : MONTH_FULL[j >> 1]) : ""}</span></div>
     <div class="lec"><span class="k">Your next lecture</span>${lec ? `<span class="v"><a href="#didactics">${esc(lec.topic)}</a></span><span class="n">${fmtDate(lec.date)}${lec.location ? " · " + esc(lec.location) : ""}</span>` : `<span class="n">None on the calendar</span>`}</div>
@@ -1732,7 +1737,7 @@ function meCard() {
         ${steps.length ? `<ul>${steps.map(t => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}
         ${x.rot ? `<a class="more" href="#rot-${x.rot.id}">Open the ${esc(x.rot.short)} guide →</a>` : ""}</div>`;
     }).join("")}
-    ${CFG.liveDataUrl ? `<div class="calrow"><button type="button" class="btn small ghost" id="mycal">Add my calendar</button><span class="n">Your rotations, lectures you present, and onboarding reminders, kept in sync.</span></div>` : ""}
+    ${CFG.liveDataUrl && store.get("hub.cal.me") !== "1" ? `<div class="calrow">${calButton("mycal", false, "Add my calendar", "")}<span class="n">Your rotations, lectures you present, and onboarding reminders, kept in sync.</span></div>` : ""}
   </section>`;
 }
 /** Key contacts on Home: leadership in one row; chief residents together in one compact row, sharing one email line when they share an inbox. */
@@ -1822,7 +1827,7 @@ function viewDidactics() {
   const months = [...new Set(S.didactics.map(t => t.date.slice(0, 7)))];
   return `
   <div class="didtop"><div>
-  <div class="view-head"><div><div class="eyebrow">Didactic Schedule · ${esc(S.academicYear)}</div><h1>Didactics</h1>
+  <div class="view-head"><div><div class="eyebrow">Didactic Schedule · ${esc(S.academicYear)}</div><div class="titlerow"><h1>Didactics</h1>${calPanel()}</div>
     <p>Braddom chapter lectures, board review, journal club and workshops. Edits made in the Didactic Schedule sheet appear here.</p></div></div>
     <div class="filters">
     <div class="seg" role="group" aria-label="Show">
@@ -1831,7 +1836,6 @@ function viewDidactics() {
     </div>
     <select id="dmonth" aria-label="Month"><option value="all">All months</option>${months.map(m => `<option value="${m}" ${dState.month === m ? "selected" : ""}>${MON[+m.slice(5) - 1]} ${m.slice(0, 4)}</option>`).join("")}</select>
     <input id="dq" type="search" placeholder="Filter by topic or presenter" value="${esc(dState.q)}" aria-label="Filter lectures">
-    ${calPanel()}
   </div>
   </div>${miniCal()}</div>
   <div id="dlist">${didacticList()}</div>`;
@@ -1860,13 +1864,17 @@ function miniCal() {
     <div class="mc-k"><span><i class="lec"></i>Didactics</span><span><i class="jc"></i>Journal Club</span></div>
   </div>`;
 }
+const CAL_PLUS = `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4M12 12.5v5M9.5 15h5"/></svg>`;
+/** Before subscribing: a small labeled pill. After: just a round calendar-plus icon (still opens the options). */
+function calButton(id, added, label, doneTitle) {
+  return added ? `<button type="button" class="calicon" id="${id}" title="${esc(doneTitle)}" aria-label="${esc(doneTitle)}">${CAL_PLUS}</button>`
+    : `<button type="button" class="calbtn" id="${id}">${CAL_PLUS}${esc(label)}</button>`;
+}
 const DID_ICS = () => CFG.liveDataUrl ? withQ(CFG.liveDataUrl, "calendar=didactics") : "";
 /** Small "Add to my calendar" button on Didactics; once you've subscribed it becomes a quiet "In your calendar". */
 function calPanel() {
   if (!DID_ICS()) return "";
-  const added = store.get("hub.cal.did") === "1";
-  return `<button type="button" class="calbtn${added ? " done" : ""}" id="calopen" title="${added ? "Didactics are in your calendar. Tap for the subscribe options again." : "Subscribe once and changes to the didactic sheet show up in your calendar."}">
-    ${added ? `<span aria-hidden="true">✓</span>In your calendar` : `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4M12 12.5v5M9.5 15h5"/></svg>Add to my calendar`}</button>`;
+  return calButton("calopen", store.get("hub.cal.did") === "1", "Add to my calendar", "Didactics are in your calendar (tap for options)");
 }
 function openDidCal() { openCalSheet(DID_ICS(), "Larkin PM&R Didactics", "Stays in sync with the didactic sheet (Google updates every few hours; Apple and Outlook about hourly).", "hub.cal.did"); }
 function didacticList() {
