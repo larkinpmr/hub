@@ -1645,10 +1645,10 @@ function openCalSheet(ics, name, blurb, doneKey) {
   const sheet = document.createElement("div"); sheet.className = "mapsheet"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-label", "Subscribe to calendar");
   sheet.innerHTML = `<div class="where-to">Subscribe in…</div><div class="addr-text">${esc(name)}</div>${blurb ? `<div class="where-to" style="margin-bottom:4px">${esc(blurb)}</div>` : ""}
     ${calLinks(ics, name).map(([l, h]) => `<a href="${esc(h)}" ${h.startsWith("webcal") ? "" : 'target="_blank" rel="noopener"'}>${l}</a>`).join("")}
-    <button type="button" data-copy>Copy link</button><button type="button" class="cancel" data-close>Cancel</button>`;
+    <button type="button" data-copy>Copy link</button>${doneKey && store.get(doneKey) !== "1" ? `<button type="button" data-already>I've already added it</button>` : ""}<button type="button" class="cancel" data-close>Cancel</button>`;
   back.onclick = closeMaps;
   const done = () => { if (doneKey) { store.set(doneKey, "1"); setTimeout(() => { route(true); if (!$("#hsheet")?.hidden) renderHomeSetup(); }, 300); } };
-  sheet.addEventListener("click", e => { if (e.target.closest("[data-copy]")) { copyText(ics); closeMaps(); done(); } else if (e.target.closest("a")) { closeMaps(); done(); } else if (e.target.closest("[data-close]")) closeMaps(); });
+  sheet.addEventListener("click", e => { if (e.target.closest("[data-copy]")) { copyText(ics); closeMaps(); done(); } else if (e.target.closest("a") || e.target.closest("[data-already]")) { closeMaps(); done(); } else if (e.target.closest("[data-close]")) closeMaps(); });
   document.body.append(back, sheet); sheet.querySelector("a").focus();
 }
 function myCalUrl(name) { const b = CFG.liveDataUrl; return b ? b + (b.includes("?") ? "&" : "?") + "calendar=me&name=" + encodeURIComponent(name) : ""; }
