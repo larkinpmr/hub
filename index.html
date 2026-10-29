@@ -126,7 +126,10 @@ header.top .wrap { position: relative; }
 .run.now { box-shadow: inset 0 0 0 2px var(--sun); }
 .run.none { background: transparent; border: 1px dashed var(--line); color: var(--muted); }
 .run.none span { font-weight: 400; }
-@media (max-width: 640px) { .strip { flex-direction: column; } .run { flex: none; grid-template-columns: 74px 1fr; align-items: baseline; } }
+.strip-more { display: none; }
+@media (max-width: 640px) { .strip { flex-direction: column; } .run { flex: none; grid-template-columns: 74px 1fr; align-items: baseline; }
+  .strip:not(.all) .run.later { display: none; }
+  .strip-more { display: inline-block; margin-top: 6px; padding: 4px 0; background: none; border: 0; color: var(--accent); font: 600 13px/1.2 var(--body); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; } }
 body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--body); }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
 a { color: var(--accent); text-underline-offset: 2px; }
@@ -2051,15 +2054,23 @@ function yearStrip(year) {
     if (last && last.key === key) last.to = y.i; else runs.push({ key, from: y.i, to: y.i, ppl: y.ppl });
   });
   const hues = [200, 32, 150, 280, 350, 95, 230, 12];
-  let k = 0;
-  return `<div class="strip" aria-label="Who is on this rotation each month">${runs.map(r => {
+  let k = 0, hidden = 0;
+  const html = `<div class="strip" aria-label="Who is on this rotation each month">${runs.map(r => {
     const past = r.to < curMonth, now = r.from <= curMonth && curMonth <= r.to, none = !r.ppl.length;
     const label = r.from === r.to ? MONTHS[r.from] : `${MONTHS[r.from]}–${MONTHS[r.to]}`;
-    const cls = ["run", past ? "past" : "", now ? "now" : "", none ? "none" : ""].join(" ");
+    const hide = past || r.from > curMonth + 2;   // phones show this month + the next two; the rest sits behind "Show all months"
+    if (hide) hidden++;
+    const cls = ["run", past ? "past" : "", now ? "now" : "", none ? "none" : "", hide ? "later" : ""].join(" ");
     const hue = !past && !none ? hues[k++ % hues.length] : 0;
     return `<div class="${cls}" style="--n:${r.to - r.from + 1}; --h:${hue}"><small>${label}${now ? " · now" : ""}</small><span>${none ? "—" : r.ppl.map(p => esc(p.name.split(" ")[0])).join("<br>")}</span></div>`;
   }).join("")}</div>`;
+  return html + (hidden ? `<button type="button" class="strip-more" aria-expanded="false">Show all months</button>` : "");
 }
+document.addEventListener("click", e => {
+  const b = e.target.closest(".strip-more"); if (!b) return;
+  const st = b.previousElementSibling, open = st.classList.toggle("all");
+  b.setAttribute("aria-expanded", open); b.textContent = open ? "Show fewer months" : "Show all months";
+});
 function viewSubpage(h) {
   const sp = (S.subpages || []).find(x => x.id === h);
   if (!sp) return `<div class="empty">That guide wasn't found. <a href="#rotations">See all guides</a>.</div>`;
