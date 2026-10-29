@@ -2182,7 +2182,7 @@ function linkAddresses(root) {
 }
 function openMaps(btn) {
   closeMaps();
-  const a = btn.dataset.addr, q = encodeURIComponent(a);
+  const a = btn.dataset.addr || btn.textContent.trim(), q = encodeURIComponent(a);
   const back = document.createElement("div"); back.className = "mapback";
   const sheet = document.createElement("div"); sheet.className = "mapsheet"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-label", "Open address in maps");
   sheet.innerHTML = `<div class="where-to">Open in…</div><div class="addr-text">${esc(a)}</div>
@@ -2278,13 +2278,12 @@ function guideTop() {
   }
   const steps = onboardingSteps(r).slice(0, 3);
   const rows = [];
-  if (addr) rows.push(`<div class="fd-row"><span class="fd-k">Where</span><span class="fd-v"><button type="button" class="addr" id="fd-addr">${esc(addr.textContent)}</button></span></div>`);
+  if (addr) rows.push(`<div class="fd-row"><span class="fd-k">Where</span><span class="fd-v"><button type="button" class="addr" id="fd-addr" data-addr="${esc(addr.dataset.addr || addr.textContent)}">${esc(addr.textContent)}</button></span></div>`);
   if (phones.length) rows.push(`<div class="fd-row"><span class="fd-k">Call</span><span class="fd-v">${phones.map(p => `<span class="fd-ph">${p.label ? esc(p.label) + ": " : ""}<a href="tel:+1${p.num.replace(/\D/g, "").slice(-10)}">${esc(p.num)}</a></span>`).join("")}</span></div>`);
   if (steps.length) rows.push(`<div class="fd-row fd-steps"><span class="fd-k">Before you start</span><ul class="fd-v">${steps.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>`);
   const first = $("#gfirst"); if (first) first.innerHTML = rows.length ? `<section class="firstday" aria-label="First day"><h2>First day</h2>${rows.join("")}</section>` : "";
   box.innerHTML = (heads.length >= 3 ? `<nav class="jump" aria-label="Jump to a section"><span class="jump-k">Jump to</span>${heads.map((h, i) => `<a href="#${h.el.id}" data-jump="${h.el.id}"${i >= 8 ? " hidden" : ""}>${esc(h.t)}</a>`).join("")}${heads.length > 8 ? `<button type="button" class="jump-more">More (${heads.length - 8})</button>` : ""}</nav>` : "");
   const jm = box.querySelector(".jump-more"); if (jm) jm.onclick = () => { box.querySelectorAll(".jump a[hidden]").forEach(a => a.hidden = false); jm.remove(); };
-  const fa = document.getElementById("fd-addr"); if (fa && addr) fa.onclick = e => { e.preventDefault(); addr.click(); };
   box.querySelectorAll("[data-jump]").forEach(a => a.onclick = e => { e.preventDefault(); document.getElementById(a.dataset.jump)?.scrollIntoView({ behavior: "smooth", block: "start" }); });
 }
 
