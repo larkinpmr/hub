@@ -61,6 +61,7 @@ The **Handbooks** folder holds one Google Doc per page. Its link is in the Contr
 - **"Note shown on every rotation"** (in the Handbooks folder itself) appears at the top of every rotation guide. "How to edit these Handbooks" is instructions only.
 - **To add a rotation:** in the right folder, open an existing guide and use File ▸ Make a copy (keeps the look), rename it, and write the guide. It appears on the site automatically. To give it a **schedule code** (so it shows in the resident schedule, "who's on this rotation" and personal calendars), add a row in the Control Panel **Rotations** tab with **exactly the same name** as the doc.
 - **To remove a rotation:** move its doc to the trash (and delete its Rotations-tab row if it has one).
+- **"Last updated" is automatic.** Each guide and policy page shows the date and time its doc was last edited in Drive (plus a "Recently updated" tag for a week), so don't type update dates into the docs. Any edit moves it, even a small typo fix.
 - Red text stays red on the site. Use it for warnings and "⚠ Confirm" notes. Pictures, tables and links all carry over; tapping a picture on the site makes it full screen.
 - Keep patient information out. The website and its code are public.
 - Use **Suggesting** mode for big changes, so the chiefs can review them.
