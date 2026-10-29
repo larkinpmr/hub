@@ -354,6 +354,21 @@ table.sched tr.dim { opacity: .35; }
 .mc-k i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; } .mc-k i.lec { background: var(--accent); } .mc-k i.jc { background: var(--sun); }
 @media (max-width: 899px) { .minical { display: none; } .didtop { display: block; } }
 .day.flash { animation: dayflash 1.6s ease-out; } @keyframes dayflash { 0%, 40% { background-color: var(--accent-soft); } 100% { background-color: transparent; } }
+/* didactics calendar button + home screen setup sheet */
+.calbtn { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--accent); background: transparent; color: var(--accent); font: 600 13.5px/1.2 var(--body); cursor: pointer; white-space: nowrap; }
+.calbtn:hover { background: var(--accent-soft); }
+.calbtn.done { border-color: var(--line); color: var(--muted); font-weight: 500; }
+.prefs-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.hsheet { position: fixed; z-index: 32; left: 0; right: 0; top: 50%; transform: translateY(-50%); margin: 0 auto; width: min(460px, calc(100vw - 24px)); max-height: calc(100vh - 32px); overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 20px 50px rgb(0 0 0 / .3); padding: 18px 18px 8px; }
+.hs-head { display: flex; align-items: start; gap: 8px; } .hs-head h2 { font: 700 19px/1.25 var(--display); margin: 0; flex: 1; }
+.hs-x { border: 0; background: none; font-size: 24px; line-height: 1; color: var(--muted); cursor: pointer; padding: 2px 6px; border-radius: 8px; } .hs-x:hover { background: var(--raised); color: var(--ink); }
+.hs-sub { color: var(--muted); font-size: 14px; margin: 6px 0 12px; }
+.hs-steps { list-style: none; margin: 0; padding: 0; }
+.hs-steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.hs-steps b { display: block; font-size: 15px; } .hs-steps p { margin: 2px 0 8px; font-size: 14px; color: var(--muted); } .hs-steps p b { display: inline; color: var(--ink); font-size: inherit; }
+.hs-n { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font: 700 13px/1 var(--mono); }
+.hs-steps li.done .hs-n { background: var(--accent); color: var(--on-accent); }
+@media (max-width: 640px) { .calbtn { margin-left: 0; } }
 /* readiness banner, first-day card, jump menu, onboarding toggle, more button */
 details.ready { margin: 0 0 18px; border-radius: var(--r); border: 2px solid var(--warn-line, #E2A274); background: var(--warn-soft); overflow: hidden; }
 details.ready > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
@@ -689,7 +704,7 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
         <button type="button" class="swatch" data-ac="plum" title="Plum" aria-label="Plum" style="background:#6E3F8F"></button>
         <button type="button" class="swatch" data-ac="forest" title="Everglades green" aria-label="Everglades green" style="background:#2F6B33"></button></div></div>
       <div id="install-box"><h3>Use it like an app</h3><div id="install-body" class="install"></div></div>
-      <div><h3>New here?</h3><button type="button" class="btn small ghost" id="tour-btn">Take a tour</button></div>
+      <div><h3>New here?</h3><div class="prefs-row"><button type="button" class="btn small ghost" id="tour-btn">Take a tour</button><button type="button" class="btn small ghost" id="home-btn">Home screen setup</button></div></div>
       <div id="signout-box" hidden><h3>Signed in</h3><div class="install"><span id="signout-who"></span><button type="button" class="btn small ghost" id="signout-btn">Sign out of this device</button></div></div>
       <div class="edit" id="prefs-edit">Chief residents: <span id="edit-link">editing turns on once the hub is connected to Google.</span></div>
     </div>
@@ -761,6 +776,7 @@ prefsBox.addEventListener("click", e => {
 });
 applyPrefs();
 $("#tour-btn").onclick = e => { e.stopPropagation(); startTour(); };
+$("#home-btn").onclick = e => { e.stopPropagation(); prefsBox.hidden = true; prefsBtn.setAttribute("aria-expanded", "false"); openHomeSetup(); };
 (() => { try { const a = JSON.parse(localStorage.getItem("hub.auth") || "null"); if (a && a.token) { $("#signout-box").hidden = false; $("#signout-who").textContent = (a.name ? a.name + " · " : "") + (a.email || ""); } } catch {} })();
 $("#signout-btn").onclick = () => signOut();
 function showEditLink() {
@@ -987,7 +1003,7 @@ function tourSteps() {
     { target: () => visible(".mycard"), title: "Make it yours", text: "Pick your name once. Home then shows your current and next rotation, your upcoming lectures, onboarding reminders and a personal calendar for your phone." },
     { target: () => [navLink("schedule"), navLink("didactics")], title: "Schedules and calendars", text: "The block schedule and the didactic calendar live here. Subscribe to the didactics calendar and your personal calendar: they're live subscriptions, so changes the chiefs make show up in your calendar on their own." },
     { target: () => navLink("rotations"), title: "Rotation guides", text: "Each rotation has its guide: expectations, daily workflow, where to go, who to call. Check it before your first day." },
-    { target: () => visible("#prefs-btn"), title: "Keep it handy", text: home + " Replay this tour anytime from this gear menu." },
+    { target: () => visible("#prefs-btn"), title: "Keep it handy", text: home + " This gear menu also has Home screen setup (calendars and a widget) and replays this tour." },
   ];
 }
 let tourEl = null, tourI = 0, tourList = [];
@@ -1623,7 +1639,7 @@ function calLinks(ics, name) {
   return [["Google Calendar", `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcal)}`], ["Apple Calendar", webcal],
     ["Outlook", `https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(ics)}&name=${encodeURIComponent(name)}`]];
 }
-function openCalSheet(ics, name, blurb) {
+function openCalSheet(ics, name, blurb, doneKey) {
   closeMaps();
   const back = document.createElement("div"); back.className = "mapback";
   const sheet = document.createElement("div"); sheet.className = "mapsheet"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-label", "Subscribe to calendar");
@@ -1631,7 +1647,8 @@ function openCalSheet(ics, name, blurb) {
     ${calLinks(ics, name).map(([l, h]) => `<a href="${esc(h)}" ${h.startsWith("webcal") ? "" : 'target="_blank" rel="noopener"'}>${l}</a>`).join("")}
     <button type="button" data-copy>Copy link</button><button type="button" class="cancel" data-close>Cancel</button>`;
   back.onclick = closeMaps;
-  sheet.addEventListener("click", e => { if (e.target.closest("[data-copy]")) { copyText(ics); closeMaps(); } else if (e.target.closest("[data-close]") || e.target.closest("a")) closeMaps(); });
+  const done = () => { if (doneKey) { store.set(doneKey, "1"); setTimeout(() => { route(true); if (!$("#hsheet")?.hidden) renderHomeSetup(); }, 300); } };
+  sheet.addEventListener("click", e => { if (e.target.closest("[data-copy]")) { copyText(ics); closeMaps(); done(); } else if (e.target.closest("a")) { closeMaps(); done(); } else if (e.target.closest("[data-close]")) closeMaps(); });
   document.body.append(back, sheet); sheet.querySelector("a").focus();
 }
 function myCalUrl(name) { const b = CFG.liveDataUrl; return b ? b + (b.includes("?") ? "&" : "?") + "calendar=me&name=" + encodeURIComponent(name) : ""; }
@@ -1807,15 +1824,16 @@ function viewDidactics() {
   <div class="didtop"><div>
   <div class="view-head"><div><div class="eyebrow">Didactic Schedule · ${esc(S.academicYear)}</div><h1>Didactics</h1>
     <p>Braddom chapter lectures, board review, journal club and workshops. Edits made in the Didactic Schedule sheet appear here.</p></div></div>
-  ${calPanel()}</div>${miniCal()}</div>
-  <div class="filters">
+    <div class="filters">
     <div class="seg" role="group" aria-label="Show">
       <button data-scope="upcoming" aria-pressed="${dState.scope === "upcoming"}">Upcoming</button>
       <button data-scope="all" aria-pressed="${dState.scope === "all"}">Full year</button>
     </div>
     <select id="dmonth" aria-label="Month"><option value="all">All months</option>${months.map(m => `<option value="${m}" ${dState.month === m ? "selected" : ""}>${MON[+m.slice(5) - 1]} ${m.slice(0, 4)}</option>`).join("")}</select>
     <input id="dq" type="search" placeholder="Filter by topic or presenter" value="${esc(dState.q)}" aria-label="Filter lectures">
+    ${calPanel()}
   </div>
+  </div>${miniCal()}</div>
   <div id="dlist">${didacticList()}</div>`;
 }
 /** Small month calendar (desktop only): today circled, this week shaded, a dot on didactic days. */
@@ -1842,18 +1860,15 @@ function miniCal() {
     <div class="mc-k"><span><i class="lec"></i>Didactics</span><span><i class="jc"></i>Journal Club</span></div>
   </div>`;
 }
+const DID_ICS = () => CFG.liveDataUrl ? withQ(CFG.liveDataUrl, "calendar=didactics") : "";
+/** Small "Add to my calendar" button on Didactics; once you've subscribed it becomes a quiet "In your calendar". */
 function calPanel() {
-  const base = CFG.liveDataUrl;
-  if (!base) return `<div class="cal"><div class="ct"><b>Add didactics to your calendar</b><span>Calendar subscription turns on once the hub is connected to Google Drive. After that, changes to the didactic sheet flow to everyone's Google, Apple or Outlook calendar.</span></div>
-    <div class="cb"><span class="btn small" aria-disabled="true">Google Calendar</span><span class="btn small ghost" aria-disabled="true">Apple Calendar</span><span class="btn small ghost" aria-disabled="true">Outlook</span></div></div>`;
-  const ics = base + (base.includes("?") ? "&" : "?") + "calendar=didactics";
-  const webcal = ics.replace(/^https?:/, "webcal:");
-  return `<div class="cal"><div class="ct"><b>Add didactics to your calendar</b><span>Stays in sync with the didactic sheet (Google updates every few hours; Apple and Outlook about hourly).</span></div>
-    <div class="cb"><a class="btn small" href="https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcal)}" target="_blank" rel="noopener">Google Calendar</a>
-    <a class="btn small ghost" href="${esc(webcal)}">Apple Calendar</a>
-    <a class="btn small ghost" href="https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(ics)}&name=${encodeURIComponent("Larkin PM&R Didactics")}" target="_blank" rel="noopener">Outlook</a>
-    <button class="btn small ghost" type="button" id="copycal" data-url="${esc(ics)}">Copy link</button></div></div>`;
+  if (!DID_ICS()) return "";
+  const added = store.get("hub.cal.did") === "1";
+  return `<button type="button" class="calbtn${added ? " done" : ""}" id="calopen" title="${added ? "Didactics are in your calendar. Tap for the subscribe options again." : "Subscribe once and changes to the didactic sheet show up in your calendar."}">
+    ${added ? `<span aria-hidden="true">✓</span>In your calendar` : `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4M12 12.5v5M9.5 15h5"/></svg>Add to my calendar`}</button>`;
 }
+function openDidCal() { openCalSheet(DID_ICS(), "Larkin PM&R Didactics", "Stays in sync with the didactic sheet (Google updates every few hours; Apple and Outlook about hourly).", "hub.cal.did"); }
 function didacticList() {
   let list = S.didactics;
   if (dState.month !== "all") list = list.filter(t => t.date.startsWith(dState.month));
@@ -2139,6 +2154,43 @@ function openMaps(btn) {
   mapsReturn = btn; sheet.querySelector("a").focus();
 }
 let mapsReturn = null;
+/* ----------------------------------------------------------- home screen setup (gear menu)
+ * Real widgets need a native app; the phone's own Calendar widget shows the same thing once both calendars are added. */
+function openMyCal() { const p = meResident(); if (p) openCalSheet(myCalUrl(p.name), "My PM&R calendar · " + p.name.split(" ")[0], "Rotations, your lectures, and onboarding reminders.", "hub.cal.me"); }
+function openHomeSetup() {
+  closeMaps(); document.getElementById("hsheet")?.remove(); document.querySelector(".hback")?.remove();
+  const back = document.createElement("div"); back.className = "mapback hback";
+  const box = document.createElement("div"); box.id = "hsheet"; box.className = "hsheet"; box.setAttribute("role", "dialog"); box.setAttribute("aria-modal", "true"); box.setAttribute("aria-labelledby", "hs-h");
+  back.onclick = closeHomeSetup;
+  document.body.append(back, box); renderHomeSetup();
+}
+function closeHomeSetup() { document.getElementById("hsheet")?.remove(); document.querySelector(".hback")?.remove(); }
+function renderHomeSetup() {
+  const box = document.getElementById("hsheet"); if (!box) return;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const android = /android/i.test(navigator.userAgent);
+  const me = meResident(), did = store.get("hub.cal.did") === "1", mine = store.get("hub.cal.me") === "1", app = standalone();
+  const share = `<svg width="13" height="15" viewBox="0 0 13 15" aria-hidden="true" style="vertical-align:-2px"><path d="M6.5 1v8M3.5 4l3-3 3 3M1.5 7v6.5h10V7" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const appHow = app ? "Done: you opened the hub from your home screen." : ios ? `In Safari, tap <b>Share</b> ${share} then <b>Add to Home Screen</b>.` : android ? `In Chrome's menu (⋮), tap <b>Add to Home screen</b> or <b>Install app</b>.` : `On your phone, open this page and add it to your home screen (iPhone: Share ▸ Add to Home Screen · Android: ⋮ ▸ Add to Home screen).`;
+  const widget = ios ? `Touch and hold an empty spot on your home screen, tap <b>+</b> (or <b>Edit ▸ Add Widget</b>), choose <b>Calendar</b>, pick <b>Up Next</b> or <b>List</b>, and tap <b>Add Widget</b>.`
+    : android ? `Touch and hold an empty spot on your home screen, tap <b>Widgets</b>, find <b>Google Calendar</b>, and drag <b>Schedule</b> onto your screen.`
+    : `iPhone: touch and hold the home screen ▸ <b>+</b> ▸ <b>Calendar</b> ▸ <b>Up Next</b>. Android: touch and hold the home screen ▸ <b>Widgets</b> ▸ <b>Google Calendar</b> ▸ <b>Schedule</b>.`;
+  const step = (n, done, title, body) => `<li class="${done ? "done" : ""}"><span class="hs-n" aria-hidden="true">${done ? "✓" : n}</span><div><b>${title}</b><p>${body}</p></div></li>`;
+  box.innerHTML = `<div class="hs-head"><h2 id="hs-h">Put the hub on your home screen</h2><button type="button" class="hs-x" aria-label="Close">×</button></div>
+    <p class="hs-sub">Your phone's own Calendar widget then shows today's rotation and the next didactics, updated on its own.</p>
+    <ol class="hs-steps">
+      ${step(1, app, "Save the hub as an app", appHow)}
+      ${step(2, did, "Add the didactics calendar", `Every session, with its Zoom link. ${did ? "Added on this device." : ""}`) .replace("</p></div></li>", `</p><button type="button" class="btn small ${did ? "ghost" : ""}" id="hs-did">${did ? "Subscribe again" : "Add didactics"}</button></div></li>`)}
+      ${step(3, mine, "Add your personal calendar", me ? `Your rotations, the lectures you present, and onboarding reminders. ${mine ? "Added on this device." : ""}` : `First pick your name on the Home page; then this step gets a button.`).replace("</p></div></li>", me ? `</p><button type="button" class="btn small ${mine ? "ghost" : ""}" id="hs-me">${mine ? "Subscribe again" : "Add my calendar"}</button></div></li>` : `</p><a class="btn small ghost" href="#home" id="hs-pick">Go to Home</a></div></li>`)}
+      ${step(4, false, "Add the Calendar widget", widget)}
+    </ol>`;
+  box.querySelector(".hs-x").onclick = closeHomeSetup;
+  const d = box.querySelector("#hs-did"); if (d) d.onclick = openDidCal;
+  const m = box.querySelector("#hs-me"); if (m) m.onclick = openMyCal;
+  const pk = box.querySelector("#hs-pick"); if (pk) pk.onclick = closeHomeSetup;
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape" && document.getElementById("hsheet")) closeHomeSetup(); });
+
 function closeMaps() {
   document.querySelectorAll(".mapback, .mapsheet").forEach(n => n.remove());
   if (mapsReturn) { mapsReturn.focus(); mapsReturn = null; }
@@ -2192,7 +2244,7 @@ function guideTop() {
 }
 
 function bindView() {
-  const mcb = $("#mycal"); if (mcb) mcb.onclick = () => { const p = meResident(); if (p) openCalSheet(myCalUrl(p.name), "My PM&R calendar · " + p.name.split(" ")[0], "Rotations, your lectures, and onboarding reminders."); };
+  const mcb = $("#mycal"); if (mcb) mcb.onclick = openMyCal;
   const dq2 = $("#dirq"); if (dq2) dq2.oninput = () => { dirQ = dq2.value; $("#dirlist").innerHTML = directoryList(); };
   const ms = $("#mesel"); if (ms) ms.onchange = () => { ME = ms.value; store.set("hub.me", ME); route(true); };
   const mc = $("#mechange"); if (mc) mc.onclick = () => { ME = ""; store.set("hub.me", ""); route(true); };
@@ -2232,7 +2284,7 @@ function bindView() {
     copyText(pres.length ? pres.map(p => p.textContent.replace(/\n$/, "")).join("\n\n") : $("#tplbody").innerText, ct);
   };
   document.querySelectorAll("[data-gtab]").forEach(b => b.onclick = () => { gTab = b.dataset.gtab; route(true); });
-  const cc = $("#copycal"); if (cc) cc.onclick = () => copyText(cc.dataset.url, cc);
+  const co = $("#calopen"); if (co) co.onclick = openDidCal;
   document.querySelectorAll("a.result").forEach(a => a.addEventListener("click", e => {
     if (a.dataset.who) { sState.who = a.dataset.who; sState.view = "grid"; sState.pgy = "all"; }
     e.preventDefault(); $("#q").value = "";
