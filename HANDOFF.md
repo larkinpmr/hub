@@ -47,6 +47,8 @@ With the Settings row **Email sign-in** set to `on`, the hub has no passcode. Th
 - **Sign-ins tab** (private): every verified device, when it was last used, and Status. Type `revoked` in Status to sign out one device (a lost phone, say). Don't edit the Key column.
 - **New academic year:** changing "Academic Year" in Settings makes every device verify once more.
 - **Turning it off:** set "Email sign-in" to `off`; the old passcode screen (Settings "Site passcode") applies again.
+- **Residents don't need to pick their name:** once signed in, Home shows their own rotation and lectures, as long as their name on the Approved Emails tab matches the Resident Schedule (first + last name).
+- **"You've been added" box:** when a resident's name appears on a didactics row (or one of their talks moves), Home shows a highlighted box with the talk until they tap **Got it**. No email is sent, by design.
 - Setup (once): run **installSignIn** to create the two tabs, fill in Approved Emails, then set "Email sign-in" to `on`. Codes are limited to 5 an hour per email and expire after 15 minutes; 5 wrong tries cancel a code.
 
 # Editing the Handbooks (the rules that keep the site working)
@@ -103,6 +105,15 @@ If "Proposed dates" is blank, the draft suggests the next few Monday didactics (
 
 **Guide pages:** each rotation guide shows a **First day** card (the first address in the doc, tap for directions, and the first phone numbers) and a **Jump to** menu built from its section titles (headings, or short lines that are entirely bold, like "Responsibilities:"). Both come from the doc itself, so editing the Handbooks doc updates them. Inpatient guides and the Rotation Guides page show the "Starting an inpatient rotation? Read this first" banner, which opens the readiness note. On Home, "Onboarding due" shows only your own row once you pick your name ("Show everyone" expands it); Didactics shows the next 4 weeks first ("Show the rest of the year" for more). The gear menu has **Home screen setup**: save the hub as an app, subscribe to the didactics and personal calendars, and add the phone's Calendar widget (real home-screen widgets would need a paid native app, so this uses the calendar widget instead).
 
+# Applicant page (larkinpmr.github.io/apply)
+
+A lean public page for interview season: header, quick stats, "Why Larkin PM&R" highlights, rotation cards (site, city, PGY, one line each, with a PGY filter), a typical week, interview day and where graduates went. It shows **only** the Control Panel's **Applicant Page** tab: no resident names, schedules, contacts or Handbook, and it needs no sign-in.
+
+- Setup (once): run **installApplicantPage**. It creates the tab with a starter draft (the stats, highlights and blurbs are a draft: check them).
+- One row per item; the **Section** column says what it is: Headline (text between *asterisks* gets the gradient), Subtitle, Stat (number + label), Highlight (title, starting with an emoji if you like, + text), Rotation (name, blurb, Where, PGY, Group), Week (day + text; *asterisks* highlight that day), Interview (time + what), Graduate (class year + where they went), Contact email.
+- **Show page** row: `on` = applicants see it; `off` = "coming soon". Check edits first at larkinpmr.github.io/apply/?preview. Changes appear within about 5 minutes.
+- `data/apply.json` in the repo is the saved copy used if Google is unreachable (it starts as the draft, with the page off).
+
 # Start of each academic year (July)
 
 1. **Accounts:** give the new chiefs the chief Gmail and update its recovery phone/email and 2-step verification.
@@ -134,6 +145,7 @@ Open the **Hub Control Panel** sheet ▸ **Extensions ▸ Apps Script**. Choose 
 | **testCalendar** / **testMyCalendar** | To preview the didactics calendar or one resident's personal calendar |
 | **installLectureReminders** / **previewLectureReminders** / **sendTestReminder** / **checkLecturerEmails** | Guest lecturer reminder emails (see above) |
 | **installInvitations** / **createInvitationDrafts** / **draftUpcomingInvitations** | Lecture invitation drafts (see above) |
+| **installApplicantPage** | Once: creates the Applicant Page tab with a starter draft (see above) |
 | **installAutoRefresh** | Only if the automatic 5-minute refresh ever stops (check the clock icon, "Triggers", on the left) |
 
 **If you ever paste new code into Code.gs or Admin.html:** click **Deploy ▸ Manage deployments**. For **each** of the two deployments, click the pencil, set Version to **New version**, and click **Deploy**. Without this, the site keeps running the old code. The links stay the same.

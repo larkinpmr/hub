@@ -1,0 +1,279 @@
+{
+ "ok": true,
+ "show": false,
+ "savedCopy": true,
+ "rows": [
+  {
+   "section": "Headline",
+   "title": "Train across all of *South Florida.*",
+   "text": "Text between *asterisks* gets the gradient color.",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Subtitle",
+   "title": "Larkin Community Hospital South Miami. Inpatient rehab, VA, pediatrics, EMG and interventional spine, from Miami to West Palm Beach.",
+   "text": "",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Stat",
+   "title": "14",
+   "text": "rotation sites",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Stat",
+   "title": "4",
+   "text": "inpatient rehab hospitals",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Stat",
+   "title": "3",
+   "text": "counties + Columbus, OH",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Stat",
+   "title": "Weekly",
+   "text": "protected didactics",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Highlight",
+   "title": "🏥 Four inpatient rehab hospitals",
+   "text": "St. Catherine's West, West Gables, Encompass Sunrise and St. Anthony's: a wide range of stroke, brain injury, spinal cord and amputee patients.",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Highlight",
+   "title": "🇺🇸 VA experience",
+   "text": "Senior rotation at the West Palm Beach VA Medical Center.",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Highlight",
+   "title": "🧒 Peds at Nationwide Children's",
+   "text": "Pediatric PM&R in Columbus, OH, plus local prosthetics & orthotics clinics.",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Highlight",
+   "title": "⚡ Dedicated EMG/EDX",
+   "text": "A full electrodiagnostics rotation across three sites.",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Highlight",
+   "title": "💉 Interventional spine",
+   "text": "Fluoroscopic and ultrasound-guided procedures with private-practice pain physicians.",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Highlight",
+   "title": "📚 Protected didactics",
+   "text": "Monday afternoon lectures with guest faculty, plus Journal Club and hands-on workshops.",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Rotation",
+   "title": "St. Catherine's West",
+   "text": "Core inpatient rehab: stroke, brain injury, spinal cord injury and orthopedic rehab.",
+   "where": "West Miami area",
+   "pgy": "PGY-2",
+   "group": "Inpatient Rehab"
+  },
+  {
+   "section": "Rotation",
+   "title": "West Gables Rehabilitation Hospital",
+   "text": "Acute inpatient rehab close to home base, with graduated responsibility.",
+   "where": "Miami",
+   "pgy": "PGY-2, PGY-3",
+   "group": "Inpatient Rehab"
+  },
+  {
+   "section": "Rotation",
+   "title": "Encompass Health – Sunrise",
+   "text": "A large freestanding rehab hospital in Broward County.",
+   "where": "Sunrise",
+   "pgy": "PGY-2",
+   "group": "Inpatient Rehab"
+  },
+  {
+   "section": "Rotation",
+   "title": "St. Anthony's Rehabilitation Hospital",
+   "text": "Senior inpatient rotation with more independence.",
+   "where": "Lauderdale Lakes",
+   "pgy": "PGY-3, PGY-4",
+   "group": "Inpatient Rehab"
+  },
+  {
+   "section": "Rotation",
+   "title": "Larkin South Consults / Waterford SNF",
+   "text": "Our home hospital: PM&R consults on the acute floors plus the skilled nursing unit.",
+   "where": "South Miami",
+   "pgy": "PGY-2",
+   "group": "Consults"
+  },
+  {
+   "section": "Rotation",
+   "title": "West Palm Beach VA",
+   "text": "Veterans Affairs experience: amputee, polytrauma and outpatient musculoskeletal care.",
+   "where": "West Palm Beach",
+   "pgy": "PGY-4",
+   "group": "Consults"
+  },
+  {
+   "section": "Rotation",
+   "title": "ISS – Integrative Spine & Sports",
+   "text": "Spine and sports medicine clinic with ultrasound and procedures.",
+   "where": "South Florida",
+   "pgy": "PGY-3, PGY-4",
+   "group": "Outpatient"
+  },
+  {
+   "section": "Rotation",
+   "title": "Electrodiagnostics (EMG/EDX)",
+   "text": "Dedicated EMG and nerve-conduction training across three sites.",
+   "where": "ISS · South FL Spine · WPB VA",
+   "pgy": "PGY-3",
+   "group": "EMG / EDX"
+  },
+  {
+   "section": "Rotation",
+   "title": "Design Neuroscience Center",
+   "text": "Outpatient brain-injury and neurologic rehab.",
+   "where": "South Florida",
+   "pgy": "PGY-2",
+   "group": "Neurorehab"
+  },
+  {
+   "section": "Rotation",
+   "title": "Pediatric PM&R",
+   "text": "A month at Nationwide Children's Hospital, one of the largest children's hospitals in the country.",
+   "where": "Columbus, OH",
+   "pgy": "PGY-3, PGY-4",
+   "group": "Pediatrics"
+  },
+  {
+   "section": "Rotation",
+   "title": "Peds II / Prosthetics & Orthotics",
+   "text": "Pediatric follow-up plus hands-on prosthetic and orthotic clinics.",
+   "where": "Design · KRMC · Hanger Clinic",
+   "pgy": "PGY-3, PGY-4",
+   "group": "Pediatrics"
+  },
+  {
+   "section": "Rotation",
+   "title": "Interventional Pain",
+   "text": "Spine and joint procedures with two private practices.",
+   "where": "South Miami · Tamarac · Plantation",
+   "pgy": "PGY-3, PGY-4",
+   "group": "Interventional"
+  },
+  {
+   "section": "Rotation",
+   "title": "Electives",
+   "text": "Rheumatology, wound care, hospice & palliative, sports/orthopedics, and more.",
+   "where": "Many sites",
+   "pgy": "PGY-3, PGY-4",
+   "group": "Electives"
+  },
+  {
+   "section": "Week",
+   "title": "MON",
+   "text": "Clinic in the morning · *Didactics 2–6 PM*: guest lectures & board review",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Week",
+   "title": "TUE",
+   "text": "Clinic & procedures",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Week",
+   "title": "WED",
+   "text": "Clinic & procedures",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Week",
+   "title": "THU",
+   "text": "Clinic · *Journal Club* or workshop",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Week",
+   "title": "FRI",
+   "text": "Clinic",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Interview",
+   "title": "8:30 AM",
+   "text": "Welcome from the Program Director (example: replace)",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Interview",
+   "title": "9:00 AM",
+   "text": "Interviews (example: replace)",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Interview",
+   "title": "11:30 AM",
+   "text": "Lunch with residents (example: replace)",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  },
+  {
+   "section": "Contact email",
+   "title": "larkinpmrchief@gmail.com",
+   "text": "Questions? The chief residents are happy to talk.",
+   "where": "",
+   "pgy": "",
+   "group": ""
+  }
+ ]
+}

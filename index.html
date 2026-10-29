@@ -327,6 +327,11 @@ body.gated > :not(.gate) { visibility: hidden; }
 .linklist { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
 .linklist a { font-weight: 600; }
 .linklist small { display: block; color: var(--muted); }
+.assign { border: 2px solid var(--accent); background: var(--accent-soft); border-radius: var(--r); padding: 14px 18px; margin-bottom: 20px; display: grid; gap: 8px; }
+.assign-h { display: flex; align-items: center; gap: 8px; font-size: 17px; } .assign-ic { font-size: 20px; }
+.assign ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.assign li a { font-weight: 700; color: var(--ink); } .assign li span { display: block; font-size: 14px; color: var(--muted); }
+.assign .btn { justify-self: start; }
 .announce { border-left: 3px solid var(--sun); background: var(--sun-soft); border-radius: 0 var(--r) var(--r) 0; padding: 12px 16px; margin-bottom: 20px; }
 .announce b { display: block; }
 
@@ -1744,7 +1749,33 @@ function directoryList() {
 
 /* ----------------------------------------------------------- personal view */
 let ME = store.get("hub.me") || "";
-function meResident() { return ME ? S.residents.find(p => p.name === ME) : null; }
+function meResident() {
+  if (!ME && store.get("hub.me") === null && S && S.residents.length) {   // never picked: use the name from email sign-in
+    let a = null; try { a = JSON.parse(localStorage.getItem(AUTH_KEY) || "null"); } catch {}
+    const n = a && a.name ? a.name.toLowerCase().replace(/^dr\.?\s+/, "").replace(/[^a-z ]/g, "").trim() : "";
+    const key = x => x.toLowerCase().replace(/[^a-z ]/g, "").trim();
+    let hit = n && S.residents.find(p => key(p.name) === n);
+    if (!hit && n.includes(" ")) { const [f, l] = [n.split(" ")[0], n.split(" ").pop()]; const c = S.residents.filter(p => { const k = key(p.name).split(" "); return k.pop() === l && k[0] && k[0][0] === f[0]; }); if (c.length === 1) hit = c[0]; }
+    if (hit) { ME = hit.name; store.set("hub.me", ME); }
+  }
+  return ME ? S.residents.find(p => p.name === ME) : null;
+}
+/** Home heads-up when your name appears on an upcoming didactics row you haven't acknowledged (new or moved). Stays until "Got it". */
+const SEEN_KEY = "hub.seen.talks";
+function talkKey(t) { return t.date + "|" + (t.topic || "").trim().toLowerCase(); }
+function myNewTalks() {
+  const p = meResident(); if (!p) return [];
+  let seen = []; try { seen = JSON.parse(store.get(SEEN_KEY) || "[]"); } catch {}
+  return S.didactics.filter(t => t.date >= todayISO && presentsTalk(t.speaker, p.name) && !seen.includes(talkKey(t)));
+}
+function assignAlert() {
+  const list = myNewTalks(); if (!list.length) return "";
+  const first = store.get(SEEN_KEY) === null, n = list.length;
+  const head = first ? (n === 1 ? "You're presenting at didactics" : `You're presenting at didactics ${n} times this year`) : (n === 1 ? "You've been added to the didactic schedule" : `You've been added to the didactic schedule ${n} times`);
+  return `<section class="assign" role="status"><div class="assign-h"><span class="assign-ic" aria-hidden="true">📣</span><b>${head}</b></div>
+    <ul>${list.slice(0, 3).map(t => `<li><a href="#didactics">${esc(t.topic)}</a><span>${fmtDate(t.date)}${t.time ? " · " + esc(t.time) : ""}${t.location ? " · " + esc(t.location) : ""}${t.speaker && t.speaker.split(/[,&/]| and /).length > 1 ? " · with " + esc(t.speaker) : ""}</span></li>`).join("")}${n > 3 ? `<li><a href="#didactics" class="muted">+ ${n - 3} more on the Didactics tab</a></li>` : ""}</ul>
+    <button type="button" class="btn" id="assign-ok">Got it</button></section>`;
+}
 function presentsTalk(speaker, name) {
   if (!speaker || !name) return false;
   const toks = name.split(/\s+/).slice(1).filter(t => t.length >= 3);
@@ -1816,6 +1847,7 @@ function viewHome() {
     </div>
     <div class="today"><span class="eyebrow">Today</span><b>${d.toLocaleDateString("en-US", { weekday: "long" })}, ${d.toLocaleDateString("en-US", { month: "long" })} <em>${d.getDate()}</em></b><span class="muted">Block month: ${MONTH_FULL[mi]}</span>${(h => h ? `<span class="hol">${esc(h.greet)}</span>` : "")(holidayNow())}</div>
   </section>
+  ${assignAlert()}
   ${meCard()}
   ${ann}
   <div class="homegrid">
@@ -2302,6 +2334,11 @@ function bindView() {
   const mcb = $("#mycal"); if (mcb) mcb.onclick = openMyCal;
   const dq2 = $("#dirq"); if (dq2) dq2.oninput = () => { dirQ = dq2.value; $("#dirlist").innerHTML = directoryList(); };
   const ms = $("#mesel"); if (ms) ms.onchange = () => { ME = ms.value; store.set("hub.me", ME); route(true); };
+  const ok = $("#assign-ok"); if (ok) ok.onclick = () => {
+    let seen = []; try { seen = JSON.parse(store.get(SEEN_KEY) || "[]"); } catch {}
+    const keep = new Set(seen.filter(k => k.slice(0, 10) >= todayISO)); myNewTalks().forEach(t => keep.add(talkKey(t)));
+    store.set(SEEN_KEY, JSON.stringify([...keep])); ok.closest(".assign").remove();
+  };
   const mc = $("#mechange"); if (mc) mc.onclick = () => { ME = ""; store.set("hub.me", ""); route(true); };
   const ot = $("#onbtoggle"); if (ot) ot.onclick = () => { store.set("hub.onb.all", store.get("hub.onb.all") === "1" ? "0" : "1"); route(true); };
   if (/^#rot-/.test(location.hash)) setTimeout(guideTop, 0);   // after addresses are made tappable

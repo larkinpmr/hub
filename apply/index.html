@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PM&amp;R Residency · Larkin South Miami</title>
+<meta name="description" content="Physical Medicine & Rehabilitation residency at Larkin Community Hospital South Miami: rotations, highlights and interview day.">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Source+Sans+3:wght@400;600;700&family=Kaushan+Script&display=swap" rel="stylesheet">
+<style>
+/* Public applicant page. Content comes only from the Control Panel's "Applicant Page" tab (Apps Script ?part=apply);
+   data/apply.json is the saved copy used if Google is unreachable. No resident data is ever loaded here. */
+:root { --bg: #FBF6FB; --surface: #FFFFFF; --ink: #22103F; --muted: #6A5880; --line: #EADCEB; --accent: #C41F6E; --soft: #FCE2EF; --sun: #0A8C96;
+  --d: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif; --b: "Source Sans 3", "Segoe UI", system-ui, sans-serif; --m: ui-monospace, "SF Mono", Menlo, monospace; --l: 55%; --cl: 94%; --ct: 30%; }
+@media (prefers-color-scheme: dark) { :root { --bg: #140A2B; --surface: #1D1039; --ink: #F5EDFF; --muted: #B6A4D4; --line: #34225A; --accent: #FF6BB5; --soft: #3D1645; --sun: #3BE0E3; --l: 65%; --cl: 24%; --ct: 86%; color-scheme: dark; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.55 var(--b); }
+.w { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+a { color: var(--accent); }
+.hero { background: linear-gradient(160deg, #22103F 0%, #4B1A6E 45%, #C41F6E 85%, #F2711C 120%); color: #fff; position: relative; overflow: hidden; }
+.hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: linear-gradient(90deg, #FF6BB5, #B48CFF 50%, #3BE0E3); }
+.hero .w { padding-top: 26px; padding-bottom: 64px; }
+.nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 56px; }
+.brand { font: 400 26px/1 "Kaushan Script", cursive; color: #FFC7E4; text-shadow: 0 0 12px rgba(255, 79, 163, .6); text-decoration: none; }
+.nav nav a { color: #fff; text-decoration: none; font-weight: 600; font-size: 15px; opacity: .9; margin-left: 18px; }
+.nav nav a:hover { opacity: 1; text-decoration: underline; }
+.eyebrow { font: 600 13px/1.3 var(--m); letter-spacing: .14em; text-transform: uppercase; color: #3BE0E3; }
+h1 { font: 800 clamp(38px, 6.4vw, 68px)/1.02 var(--d); letter-spacing: -.03em; margin: 14px 0 18px; max-width: 15ch; }
+h1 em { font-style: normal; background: linear-gradient(90deg, #FFB3D9, #FF8A4C); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lead { font-size: 20px; max-width: 48ch; opacity: .92; margin: 0 0 28px; }
+.cta { display: inline-block; background: #fff; color: #22103F; font-weight: 700; padding: 12px 22px; border-radius: 999px; text-decoration: none; margin: 0 10px 10px 0; }
+.cta.ghost { background: transparent; color: #fff; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .6); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: -34px; position: relative; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; box-shadow: 0 10px 30px rgba(34, 16, 63, .08); }
+.stat b { display: block; font: 800 30px/1 var(--d); color: var(--accent); } .stat span { font-size: 14px; color: var(--muted); }
+section { padding: 56px 0 8px; scroll-margin-top: 10px; }
+h2 { font: 800 32px/1.1 var(--d); letter-spacing: -.02em; margin: 0 0 8px; } .sub { color: var(--muted); margin: 0 0 24px; }
+.hl { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.hl div { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+.hl i { font-style: normal; font-size: 26px; display: block; } .hl h3 { font: 700 18px/1.25 var(--d); margin: 8px 0 4px; } .hl p { margin: 0; color: var(--muted); font-size: 15px; }
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.filters button { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font: 600 14px/1.2 var(--b); color: var(--muted); cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--soft); color: var(--accent); border-color: transparent; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+.rc { --h: 330; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; border-top: 4px solid hsl(var(--h) 70% var(--l)); }
+.rc[hidden] { display: none; }
+.rc .cat { font: 600 11px/1 var(--m); letter-spacing: .1em; text-transform: uppercase; color: hsl(var(--h) 60% var(--l)); }
+.rc h3 { font: 700 19px/1.2 var(--d); margin: 8px 0 6px; }
+.rc .where { display: flex; gap: 6px; align-items: flex-start; font-size: 14px; color: var(--muted); } .rc svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; flex: none; margin-top: 3px; }
+.rc p { font-size: 15px; margin: 10px 0 12px; }
+.pgy { display: inline-block; font: 600 12px/1 var(--m); background: hsl(var(--h) 60% var(--cl)); color: hsl(var(--h) 55% var(--ct)); padding: 5px 8px; border-radius: 6px; margin-right: 4px; }
+.week { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.day { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.day b { font: 700 13px/1 var(--m); color: var(--muted); } .day p { margin: 8px 0 0; font-size: 15px; }
+.day.hot { border-color: var(--accent); box-shadow: inset 0 3px 0 var(--accent); } .day em { font-style: normal; font-weight: 700; }
+.tl { list-style: none; margin: 0; padding: 0; border-left: 3px solid var(--line); }
+.tl li { position: relative; padding: 0 0 16px 22px; } .tl li::before { content: ""; position: absolute; left: -8px; top: 6px; width: 13px; height: 13px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--bg); }
+.tl b { font: 700 14px/1.2 var(--m); color: var(--accent); display: block; }
+.grads { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.grads div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; } .grads b { font: 700 13px/1 var(--m); color: var(--sun); display: block; margin-bottom: 4px; }
+.contact { margin: 56px 0 0; background: linear-gradient(120deg, #22103F, #4B1A6E); color: #fff; border-radius: 18px; padding: 28px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.contact h2 { color: #fff; margin: 0 0 4px; } .contact a { color: #3BE0E3; font-weight: 700; word-break: break-all; }
+footer { color: var(--muted); font-size: 13px; padding: 30px 0 40px; text-align: center; }
+.banner { background: #FFE9A8; color: #3B2A00; text-align: center; font: 600 14px/1.3 var(--b); padding: 8px 12px; }
+.soon { min-height: 70vh; display: grid; place-items: center; text-align: center; padding: 40px 20px; }
+.soon h1 { color: var(--ink); max-width: none; font-size: clamp(32px, 6vw, 52px); } .soon p { color: var(--muted); }
+.loading { padding: 80px 20px; text-align: center; color: var(--muted); }
+@media (max-width: 760px) { .nav nav { display: none; } h1 { max-width: none; } .hero .w { padding-bottom: 56px; } .nav { margin-bottom: 36px; } .stats { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Loading…</div></div>
+<script>
+"use strict";
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const stars = (s, tag = "em") => esc(s).split("*").map((t, i) => i % 2 ? `<${tag}>${t}</${tag}>` : t).join("");
+const PREVIEW = /[?&]preview\b/.test(location.search);
+const PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+const EMOJI = /^((?:\p{Regional_Indicator}{2}|\p{Extended_Pictographic})(?:️|‍\p{Extended_Pictographic})*)\s*/u;
+function hue(s) { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) % 360; return [330, 280, 190, 45, 160, 20, 210, 100, 250, 0][h % 10]; }
+
+async function getJSON(url, ms) {
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
+  try { const r = await fetch(url, { signal: ctl.signal, cache: "no-store" }); if (!r.ok) throw new Error(r.status); return await r.json(); } finally { clearTimeout(t); }
+}
+async function load() {
+  try {
+    const cfg = await getJSON("../data/config.json", 5000);
+    if (cfg.liveDataUrl) { const j = await getJSON(cfg.liveDataUrl + (cfg.liveDataUrl.includes("?") ? "&" : "?") + "part=apply", 12000); if (j && j.ok && Array.isArray(j.rows) && j.rows.length) return j; }
+  } catch (e) { /* fall back to the saved copy */ }
+  return getJSON("../data/apply.json", 8000);
+}
+
+function render(d) {
+  const rows = d.rows || [], of = sec => rows.filter(r => r.section.toLowerCase() === sec);
+  const one = sec => of(sec)[0] || null;
+  const contact = one("contact email");
+  const app = document.getElementById("app");
+  if (!d.show && !PREVIEW) {
+    app.innerHTML = `<div class="soon"><div><div class="eyebrow" style="color:var(--sun)">Larkin South Miami · PM&amp;R Residency</div><h1>Our applicant page is coming soon.</h1>
+      ${contact ? `<p>Questions? Email the chief residents at <a href="mailto:${esc(contact.title)}">${esc(contact.title)}</a>.</p>` : ""}</div></div>`;
+    return;
+  }
+  const head = one("headline"), subt = one("subtitle");
+  const stats = of("stat"), hls = of("highlight"), rots = of("rotation"), week = of("week"), iv = of("interview"), grads = of("graduate");
+  const pgys = [...new Set(rots.flatMap(r => (r.pgy.match(/PGY\s*-?\s*\d/gi) || []).map(x => "PGY-" + x.replace(/\D/g, ""))))].sort();
+  const navs = [rots.length && ["rot", "Rotations"], week.length && ["life", "A week here"], iv.length && ["interview", "Interview day"]].filter(Boolean);
+  app.innerHTML = `${!d.show ? `<div class="banner">Preview: applicants can't see this page until "Show page" is on in the Applicant Page tab.</div>` : ""}
+  <header class="hero"><div class="w">
+    <div class="nav"><a class="brand" href="#">Larkin South Miami · PM&amp;R</a><nav>${navs.map(([id, t]) => `<a href="#${id}">${t}</a>`).join("")}</nav></div>
+    <div class="eyebrow">Physical Medicine &amp; Rehabilitation Residency</div>
+    <h1>${stars(head ? head.title : "Larkin South Miami *PM&R*")}</h1>
+    ${subt ? `<p class="lead">${esc(subt.title || subt.text)}</p>` : ""}
+    ${iv.length ? `<a class="cta" href="#interview">Interview day</a>` : ""}${rots.length ? `<a class="cta ghost" href="#rot">See our rotations</a>` : ""}
+  </div></header>
+  <main class="w">
+    ${stats.length ? `<div class="stats">${stats.map(s => `<div class="stat"><b>${esc(s.title)}</b><span>${esc(s.text)}</span></div>`).join("")}</div>` : ""}
+    ${hls.length ? `<section><h2>Why Larkin PM&amp;R</h2><div class="hl">${hls.map(h => { const m = h.title.match(EMOJI); return `<div>${m ? `<i aria-hidden="true">${m[1]}</i>` : ""}<h3>${esc(m ? h.title.slice(m[0].length) : h.title)}</h3><p>${esc(h.text)}</p></div>`; }).join("")}</div></section>` : ""}
+    ${rots.length ? `<section id="rot"><h2>Rotations</h2><p class="sub">Where you'll train, and when.</p>
+      ${pgys.length > 1 ? `<div class="filters" role="group" aria-label="Filter by year"><button type="button" data-f="" aria-pressed="true">All</button>${pgys.map(p => `<button type="button" data-f="${p}" aria-pressed="false">${p}</button>`).join("")}</div>` : ""}
+      <div class="grid">${rots.map(r => { const ps = (r.pgy.match(/PGY\s*-?\s*\d/gi) || []).map(x => "PGY-" + x.replace(/\D/g, ""));
+        return `<article class="rc" style="--h:${hue(r.group || r.title)}" data-pgy="${ps.join(" ")}">${r.group ? `<div class="cat">${esc(r.group)}</div>` : ""}<h3>${esc(r.title)}</h3>
+        ${r.where ? `<div class="where">${PIN}<span>${esc(r.where)}</span></div>` : ""}${r.text ? `<p>${esc(r.text)}</p>` : ""}${ps.map(p => `<span class="pgy">${p}</span>`).join("")}</article>`; }).join("")}</div></section>` : ""}
+    ${week.length ? `<section id="life"><h2>A week here</h2><p class="sub">A typical outpatient week.</p><div class="week">${week.map(w => `<div class="day${w.text.includes("*") ? " hot" : ""}"><b>${esc(w.title)}</b><p>${stars(w.text)}</p></div>`).join("")}</div></section>` : ""}
+    ${iv.length ? `<section id="interview"><h2>Interview day</h2><ul class="tl">${iv.map(i => `<li><b>${esc(i.title)}</b>${esc(i.text)}</li>`).join("")}</ul></section>` : ""}
+    ${grads.length ? `<section><h2>Where our graduates go</h2><div class="grads">${grads.map(g => `<div>${g.title ? `<b>${esc(g.title)}</b>` : ""}${esc(g.text)}</div>`).join("")}</div></section>` : ""}
+    ${contact ? `<div class="contact"><div><h2>Questions?</h2><div>${esc(contact.text || "The chief residents are happy to talk.")}</div></div><a href="mailto:${esc(contact.title)}">${esc(contact.title)}</a></div>` : ""}
+  </main>
+  <footer class="w">Larkin Community Hospital South Miami · Physical Medicine &amp; Rehabilitation</footer>`;
+  app.querySelectorAll(".filters button").forEach(b => b.onclick = () => {
+    app.querySelectorAll(".filters button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    app.querySelectorAll(".rc").forEach(c => { c.hidden = !!b.dataset.f && !c.dataset.pgy.split(" ").includes(b.dataset.f); });
+  });
+}
+load().then(render).catch(() => { document.getElementById("app").innerHTML = `<div class="soon"><div><h1>Larkin South Miami PM&amp;R Residency</h1><p>This page couldn't load. Please try again in a moment.</p></div></div>`; });
+</script>
+</body>
+</html>

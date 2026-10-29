@@ -26,6 +26,7 @@ function doGet(e) {
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   }
   if (e && e.parameter && e.parameter.auth) return json_(authRequest_(e.parameter));
+  if (e && e.parameter && e.parameter.part === 'apply') return json_(applicantPage_(e.parameter.refresh));   // public applicant page: only the "Applicant Page" tab
   const fresh = e && e.parameter && e.parameter.refresh;
   const cache = CacheService.getScriptCache();
   if (e && e.parameter && e.parameter.calendar === 'me') {
@@ -592,7 +593,7 @@ function guard_() {
 }
 
 function clearCache_() {
-  const keys = ['core_n', 'hb_n', 'hb_at', 'hub_ics']; for (let i = 0; i < 100; i++) keys.push('core_' + i, 'hb_' + i);
+  const keys = ['core_n', 'hb_n', 'hb_at', 'hub_ics', 'apply']; for (let i = 0; i < 100; i++) keys.push('core_' + i, 'hb_' + i);
   CacheService.getScriptCache().removeAll(keys);
 }
 
@@ -906,6 +907,74 @@ function checkHandbookLinks() {
   Logger.log(list.length + ' links checked: ' + count('OK') + ' OK · ' + count('Broken') + ' broken · ' + count('Private') + ' private · ' + count('Check') + ' to check by hand. See the "Link Check" tab.');
 }
 
+/* ------------------------------------------------------------------ applicant page (larkinpmr.github.io/apply)
+ * A public, lean page for interview season. It shows ONLY the "Applicant Page" tab of this Control Panel:
+ * no resident names, schedules, contacts or Handbook. Run installApplicantPage once to create the tab with a
+ * starter draft; edit the rows; set "Show page" to on when it is ready (until then the page says "coming soon";
+ * add ?preview to the address to see the draft). */
+const APPLY_HEAD = ['Section', 'Title', 'Text', 'Where (rotations)', 'PGY (rotations)', 'Group (rotations)'];
+const APPLY_DRAFT = [
+  ['Show page', 'off', 'on = applicants can see the page · off = it says "coming soon" (add ?preview to the address to check the draft)', '', '', ''],
+  ['Headline', 'Train across all of *South Florida.*', 'Text between *asterisks* gets the gradient color.', '', '', ''],
+  ['Subtitle', 'Larkin Community Hospital South Miami. Inpatient rehab, VA, pediatrics, EMG and interventional spine, from Miami to West Palm Beach.', '', '', '', ''],
+  ['Stat', '14', 'rotation sites', '', '', ''],
+  ['Stat', '4', 'inpatient rehab hospitals', '', '', ''],
+  ['Stat', '3', 'counties + Columbus, OH', '', '', ''],
+  ['Stat', 'Weekly', 'protected didactics', '', '', ''],
+  ['Highlight', '🏥 Four inpatient rehab hospitals', "St. Catherine's West, West Gables, Encompass Sunrise and St. Anthony's: a wide range of stroke, brain injury, spinal cord and amputee patients.", '', '', ''],
+  ['Highlight', '🇺🇸 VA experience', 'Senior rotation at the West Palm Beach VA Medical Center.', '', '', ''],
+  ['Highlight', "🧒 Peds at Nationwide Children's", 'Pediatric PM&R in Columbus, OH, plus local prosthetics & orthotics clinics.', '', '', ''],
+  ['Highlight', '⚡ Dedicated EMG/EDX', 'A full electrodiagnostics rotation across three sites.', '', '', ''],
+  ['Highlight', '💉 Interventional spine', 'Fluoroscopic and ultrasound-guided procedures with private-practice pain physicians.', '', '', ''],
+  ['Highlight', '📚 Protected didactics', 'Monday afternoon lectures with guest faculty, plus Journal Club and hands-on workshops.', '', '', ''],
+  ['Rotation', "St. Catherine's West", 'Core inpatient rehab: stroke, brain injury, spinal cord injury and orthopedic rehab.', 'West Miami area', 'PGY-2', 'Inpatient Rehab'],
+  ['Rotation', 'West Gables Rehabilitation Hospital', 'Acute inpatient rehab close to home base, with graduated responsibility.', 'Miami', 'PGY-2, PGY-3', 'Inpatient Rehab'],
+  ['Rotation', 'Encompass Health – Sunrise', 'A large freestanding rehab hospital in Broward County.', 'Sunrise', 'PGY-2', 'Inpatient Rehab'],
+  ['Rotation', "St. Anthony's Rehabilitation Hospital", 'Senior inpatient rotation with more independence.', 'Lauderdale Lakes', 'PGY-3, PGY-4', 'Inpatient Rehab'],
+  ['Rotation', 'Larkin South Consults / Waterford SNF', 'Our home hospital: PM&R consults on the acute floors plus the skilled nursing unit.', 'South Miami', 'PGY-2', 'Consults'],
+  ['Rotation', 'West Palm Beach VA', 'Veterans Affairs experience: amputee, polytrauma and outpatient musculoskeletal care.', 'West Palm Beach', 'PGY-4', 'Consults'],
+  ['Rotation', 'ISS – Integrative Spine & Sports', 'Spine and sports medicine clinic with ultrasound and procedures.', 'South Florida', 'PGY-3, PGY-4', 'Outpatient'],
+  ['Rotation', 'Electrodiagnostics (EMG/EDX)', 'Dedicated EMG and nerve-conduction training across three sites.', 'ISS · South FL Spine · WPB VA', 'PGY-3', 'EMG / EDX'],
+  ['Rotation', 'Design Neuroscience Center', 'Outpatient brain-injury and neurologic rehab.', 'South Florida', 'PGY-2', 'Neurorehab'],
+  ['Rotation', 'Pediatric PM&R', "A month at Nationwide Children's Hospital, one of the largest children's hospitals in the country.", 'Columbus, OH', 'PGY-3, PGY-4', 'Pediatrics'],
+  ['Rotation', 'Peds II / Prosthetics & Orthotics', 'Pediatric follow-up plus hands-on prosthetic and orthotic clinics.', 'Design · KRMC · Hanger Clinic', 'PGY-3, PGY-4', 'Pediatrics'],
+  ['Rotation', 'Interventional Pain', 'Spine and joint procedures with two private practices.', 'South Miami · Tamarac · Plantation', 'PGY-3, PGY-4', 'Interventional'],
+  ['Rotation', 'Electives', 'Rheumatology, wound care, hospice & palliative, sports/orthopedics, and more.', 'Many sites', 'PGY-3, PGY-4', 'Electives'],
+  ['Week', 'MON', 'Clinic in the morning · *Didactics 2–6 PM*: guest lectures & board review', '', '', ''],
+  ['Week', 'TUE', 'Clinic & procedures', '', '', ''],
+  ['Week', 'WED', 'Clinic & procedures', '', '', ''],
+  ['Week', 'THU', 'Clinic · *Journal Club* or workshop', '', '', ''],
+  ['Week', 'FRI', 'Clinic', '', '', ''],
+  ['Interview', '8:30 AM', 'Welcome from the Program Director (example: replace)', '', '', ''],
+  ['Interview', '9:00 AM', 'Interviews (example: replace)', '', '', ''],
+  ['Interview', '11:30 AM', 'Lunch with residents (example: replace)', '', '', ''],
+  ['Graduate', '', '', '', '', ''],
+  ['Contact email', 'larkinpmrchief@gmail.com', 'Questions? The chief residents are happy to talk.', '', '', ''],
+];
+
+function installApplicantPage() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss.getSheetByName('Applicant Page')) { Logger.log('The "Applicant Page" tab already exists: edit it there.'); return; }
+  const sh = panelSheet_('Applicant Page', APPLY_HEAD);
+  sh.getRange(2, 1, APPLY_DRAFT.length, APPLY_HEAD.length).setValues(APPLY_DRAFT);
+  [130, 330, 520, 230, 120, 150].forEach((w, i) => sh.setColumnWidth(i + 1, w));
+  sh.getRange(2, 1, APPLY_DRAFT.length, APPLY_HEAD.length).setWrap(true).setVerticalAlignment('top');
+  Logger.log('Created the "Applicant Page" tab with a starter draft. Check every row (the stats, highlights and blurbs are a draft), ' +
+    'fill in Interview and Graduate rows, then set "Show page" to on. Preview any time at larkinpmr.github.io/apply/?preview');
+}
+
+function applicantPage_(fresh) {
+  const cache = CacheService.getScriptCache();
+  const hit = fresh ? null : cache.get('apply');
+  if (hit) return JSON.parse(hit);
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Applicant Page');
+  const rows = sh ? values_(sh).slice(1).map(r => r.map(c => String(c == null ? '' : c).trim())).filter(r => r[0] && (r[1] || r[2])) : [];
+  const show = rows.some(r => /^show page$/i.test(r[0]) && /^(on|yes|true)$/i.test(r[1]));
+  const out = { ok: true, show: show, rows: rows.filter(r => !/^show page$/i.test(r[0])).map(r => ({ section: r[0], title: r[1], text: r[2], where: r[3] || '', pgy: r[4] || '', group: r[5] || '' })) };
+  try { cache.put('apply', JSON.stringify(out), CACHE_SECONDS); } catch (err) { /* uncached */ }
+  return out;
+}
+
 /* ------------------------------------------------------------------ guest lecturer reminder emails
  * Once a day (8 AM) the script reads the Didactic Schedule and emails each lecturer on the Control Panel's private
  * "Lecturers" tab before their lecture (7 days ahead by default). Every email is written to the private
@@ -920,7 +989,7 @@ function checkHandbookLinks() {
  * Lecture reminder test email · Lecture reminder days ("7" or "7, 1") · Didactics start time (blank = 2:00 PM) ·
  * Guest lecture length (hours) (blank = 2) · Virtual lecture link · Lecture reminder signature.
  * "Lecture reminder…" rows are kept off the public website. */
-const PRIVATE_TABS = ['Lecturers', 'Lecture Reminders', 'Lecture Locations', 'Invitations', 'Approved Emails', 'Sign-ins'];
+const PRIVATE_TABS = ['Lecturers', 'Lecture Reminders', 'Lecture Locations', 'Invitations', 'Approved Emails', 'Sign-ins', 'Applicant Page'];
 const LOCATION_HEAD = ['Location (as written in the Didactic Schedule)', 'What the email says', 'Address (optional: becomes a directions link)'];
 const LECTURER_HEAD = ['Name (as written in the Didactic Schedule)', 'Email', 'Also written as (separate with ;)', 'Send reminders (yes/no)', 'Notes'];
 const REMINDER_HEAD = ['Sent', 'Lecture date', 'Topic', 'Speaker', 'Email', 'Days before', 'Status'];
@@ -1469,6 +1538,7 @@ const HOWTO_LINES = [
   ['Settings "Email sign-in" = on → the first time someone opens the hub on a phone or computer, they enter their email and get a 6-digit code from the chief Gmail. After that, that device stays signed in. No passcode is used.'],
   ['Approved Emails tab → one row per person: their email(s) (several are fine, separated by commas), name, role, and Active (yes/no). Only these emails can get a code. To remove someone, set Active to no or delete the row: they are signed out on their next visit. This tab is never shown on the website.'],
   ['Sign-ins tab → every verified device, when it was last used, and its Status. Type revoked in Status to sign that one device out (for example a lost phone). Do not edit the Key column.'],
+  ['A signed-in resident sees their own rotation and lectures on Home without picking their name (the name on the Approved Emails tab must match the Resident Schedule). When their name is added to a didactics row (or a talk of theirs moves), Home shows a "You\'ve been added" box until they tap Got it. No email is sent.'],
   ['When the Academic Year in Settings changes, every device verifies its email once more. Calendar subscription links keep working without sign-in. To turn sign-in off, set "Email sign-in" to off.'],
   [''],
   ['GUEST LECTURERS (automatic emails from the chief Gmail)'],
@@ -1479,6 +1549,10 @@ const HOWTO_LINES = [
   ['Settings "Lecture reminders" → test (everything goes to the "Lecture reminder test email"), on (to the lecturers) or off. Optional: Invitation lead (weeks), Lecture reminder days, Automatic invitations (off).'],
   ['The chief Gmail is emailed about guests with no email on file (Mondays), emails that failed, reminded lectures that disappear or are canceled, and guest lectures still blank a week out. Every email sent is logged on the Lecture Reminders tab.'],
   ['Lecture Locations tab → what in-person locations are called in emails (for example ISS → full name) and an optional address that becomes a directions link.'],
+  [''],
+  ['APPLICANT PAGE (larkinpmr.github.io/apply)'],
+  ['A public page for interview season. It shows only the Applicant Page tab: no resident names, schedules or contacts. One row per item; Section says what it is: Headline, Subtitle, Stat (number + label), Highlight (title + text), Rotation (name, one-line blurb, Where, PGY, Group), Week (day + text), Interview (time + what), Graduate (class year + where they went), Contact email.'],
+  ['"Show page" row → on = applicants can see it; off = it says "coming soon". Add ?preview to the address to check your edits first (larkinpmr.github.io/apply/?preview). Edits appear within about 5 minutes.'],
   [''],
   ['NEW ACADEMIC YEAR (each July)'],
   ['1. Make the new Didactic and Resident Schedule sheets (File ▸ Make a copy of last year\'s), paste their links into Settings, and update Academic Year (the website and the email signature show the new year).'],
