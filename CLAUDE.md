@@ -11,3 +11,5 @@ Static site served by GitHub Pages at https://larkinpmr.github.io (repo `larkinp
 Live content comes from Google: Didactic Schedule sheet, Resident Schedule sheet, the Handbooks Drive folder (one Google Doc per rotation/policy page; folder = category, Policies folder = Resources, doc name matches the Rotations-tab name; older setup: one Handbook doc split by Heading 1), and Control Panel tabs (Settings, Contacts, Quick Links, Announcements, Rotations, Page Edits). Never hard-code schedule or contact data into index.html.
 
 Before pushing a change: keep both light and dark themes and phone width (~390px) working, and test with a headless browser.
+
+Whenever a change alters how the chiefs run or edit the hub (new feature, new tab, new Settings row, new Apps Script function), also update `HOWTO_LINES` in `apps-script/Code.gs` (the Control Panel's "How to update" tab rewrites itself from it within ~5 minutes of the new code being pasted) and `HANDOFF.md`. Never tell the chiefs to type in the "How to update" tab.

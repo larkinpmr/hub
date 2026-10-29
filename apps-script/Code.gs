@@ -72,6 +72,7 @@ function autoRefresh() {
     cache.put('hb_at', String(Date.now()), 3600);
   }
   try { cache.put('hub_ics', buildCalendar_(), 900); } catch (err) { /* served uncached */ }
+  try { syncHowToTab_(); } catch (err) { /* the tab is only instructions */ }
 }
 
 /** Run from the editor to preview the calendar feed in the log. */
@@ -1446,7 +1447,10 @@ function signHtml_(sign) {
 }
 
 /* ------------------------------------------------------------------ "How to update" tab
- * Run writeHowToTab to (re)write the Control Panel's "How to update" tab with current instructions. */
+ * The Control Panel's "How to update" tab is written from HOWTO_LINES. The 5-minute autoRefresh rewrites it by
+ * itself whenever these lines change (after new code is pasted in), so whoever changes how the hub works must
+ * update HOWTO_LINES too. writeHowToTab rewrites it right away. */
+const HOWTO_WARNING = '⚠  DO NOT TYPE IN OR EDIT THIS TAB.  It is rewritten automatically whenever the hub\'s instructions change, and anything typed here will be erased. To change these instructions, update HOWTO_LINES in the Apps Script code (ask Claude) — not this tab.';
 const HOWTO_LINES = [
   ['HOW TO KEEP THE HUB UP TO DATE'],
   ['You never edit the website. Edit the Google files below and the site follows within about 5 minutes (refresh the page). The full Chief Handoff Guide has more detail.'],
@@ -1488,11 +1492,31 @@ const HOWTO_LINES = [
 function writeHowToTab() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sh = ss.getSheetByName('How to update') || ss.insertSheet('How to update', 0);
+  sh.getProtections(SpreadsheetApp.ProtectionType.SHEET).forEach(p => p.remove());
   sh.clear();
-  sh.getRange(1, 1, HOWTO_LINES.length, 1).setValues(HOWTO_LINES).setWrap(true).setVerticalAlignment('top').setFontSize(11);
+  const lines = [[HOWTO_WARNING], ['']].concat(HOWTO_LINES);
+  sh.getRange(1, 1, lines.length, 1).setValues(lines).setWrap(true).setVerticalAlignment('top').setFontSize(11).setFontColor('#1f2937').setBackground(null);
   sh.setColumnWidth(1, 900);
+  sh.getRange(1, 1).setFontSize(16).setFontWeight('bold').setFontColor('#B91C1C').setBackground('#FDE2E1').setVerticalAlignment('middle');
+  sh.setRowHeight(1, 84);
   const isHead = t => /^[A-Z]/.test(t) && t.length < 140 && !/[a-z]/.test(t.split('(')[0]);   // ALL-CAPS lines are section headings
-  HOWTO_LINES.forEach((r, i) => { if (r[0] && isHead(r[0])) sh.getRange(i + 1, 1).setFontWeight('bold').setFontSize(i ? 12 : 14); });
+  HOWTO_LINES.forEach((r, i) => { if (r[0] && isHead(r[0])) sh.getRange(i + 3, 1).setFontWeight('bold').setFontSize(i ? 12 : 14); });
   sh.setFrozenRows(1);
+  // A typing attempt shows Google's "this range is protected" warning; the script can still rewrite it.
+  sh.protect().setDescription('Written automatically by the hub script. Do not edit.').setWarningOnly(true);
+  PropertiesService.getScriptProperties().setProperty('howto_hash', howToHash_());
   Logger.log('The "How to update" tab is up to date (' + HOWTO_LINES.length + ' lines).');
+}
+
+function howToHash_() {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, JSON.stringify([HOWTO_WARNING, HOWTO_LINES]))
+    .map(b => ('0' + (b & 255).toString(16)).slice(-2)).join('');
+}
+
+/** Called by autoRefresh: rewrites the tab only when the instructions in the code have changed (or the tab is gone). */
+function syncHowToTab_() {
+  const props = PropertiesService.getScriptProperties();
+  const tab = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('How to update');
+  if (tab && props.getProperty('howto_hash') === howToHash_()) return;
+  writeHowToTab();
 }

@@ -117,7 +117,7 @@ Open the **Hub Control Panel** sheet ▸ **Extensions ▸ Apps Script**. Choose 
 | **refreshHandbookNow** | After editing a Handbooks doc, if you want the site updated immediately (it otherwise updates within about 30 minutes). The log lists every doc it found |
 | **checkHandbookLinks** | Each quarter: tests every link in every Handbooks doc and writes a **Link Check** tab in the Control Panel, problems first |
 | **setupHandbooksFolder** | Already done (October 2026): it split the old single Handbook into the Handbooks folder. Don't run it again unless you rebuild from scratch |
-| **writeHowToTab** | Rewrites the Control Panel's "How to update" tab with the current short instructions |
+| **writeHowToTab** | Rewrites the Control Panel's "How to update" tab now. It also updates by itself within about 5 minutes whenever new code with changed instructions is pasted in. Don't type in that tab: it gets overwritten |
 | **testHub** | If the site says "Saved copy" or something looks missing: lists errors and sizes |
 | **testCalendar** / **testMyCalendar** | To preview the didactics calendar or one resident's personal calendar |
 | **installLectureReminders** / **previewLectureReminders** / **sendTestReminder** / **checkLecturerEmails** | Guest lecturer reminder emails (see above) |
