@@ -137,7 +137,7 @@ Open the **Hub Control Panel** sheet ▸ **Extensions ▸ Apps Script**. Choose 
 
 | Function | When to run it |
 |---|---|
-| **refreshHandbookNow** | After editing a Handbooks doc, if you want the site updated immediately (it otherwise updates within about 30 minutes). The log lists every doc it found |
+| **refreshHandbookNow** | After editing a Handbooks doc, if you want the site updated immediately (otherwise the site notices the edit and updates within about 5 minutes). The log lists every doc it found |
 | **checkHandbookLinks** | Each quarter: tests every link in every Handbooks doc and writes a **Link Check** tab in the Control Panel, problems first |
 | **setupHandbooksFolder** | Already done (October 2026): it split the old single Handbook into the Handbooks folder. Don't run it again unless you rebuild from scratch |
 | **writeHowToTab** | Rewrites the Control Panel's "How to update" tab now. It also updates by itself within about 5 minutes whenever new code with changed instructions is pasted in. Don't type in that tab: it gets overwritten |
@@ -155,7 +155,7 @@ Open the **Hub Control Panel** sheet ▸ **Extensions ▸ Apps Script**. Choose 
 | What you see | What to do |
 |---|---|
 | Site footer says **"Saved copy"** | Google could not be reached. Run **testHub** and read the "Errors" line. Most often a file link in Settings is wrong, or the file is not in the chief Drive. |
-| A Handbook change isn't on the site | Run **refreshHandbookNow**, then reload the site (⌘+Shift+R or Ctrl+Shift+R). |
+| A Handbook change isn't on the site after 10 minutes | Run **refreshHandbookNow**, then reload the site (⌘+Shift+R or Ctrl+Shift+R). |
 | A guide is missing, shows up twice, or has no schedule code | The doc name and the Rotations-tab name must match exactly (spaces and dashes are forgiven). Check the doc is a Google Doc (not a Word file) inside a folder in Handbooks. |
 | A picture is missing | Run **refreshHandbookNow** and read the "Picture problem" line, if any. Make sure the **Hub pictures** folder still exists. |
 | Chief editor says "Sorry, unable to open the file" | You are signed into more than one Google account. Use a private window signed in only as the chief Gmail. |

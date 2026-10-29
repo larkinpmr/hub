@@ -71,9 +71,11 @@ function autoRefresh() {
   const cache = CacheService.getScriptCache();
   writeCache_(cache, 'core_', JSON.stringify(build_()), 900);
   const hbAge = Date.now() - Number(cache.get('hb_at') || 0);
-  if (hbAge > 25 * 60 * 1000 || !cache.get('hb_n')) {
+  const sig = handbookSig_();   // cheap: lists the Handbooks docs and their "last edited" times, without exporting them
+  if ((sig && sig !== cache.get('hb_sig')) || hbAge > 25 * 60 * 1000 || !cache.get('hb_n')) {
     writeCache_(cache, 'hb_', JSON.stringify(buildHandbook_()), 3600);
     cache.put('hb_at', String(Date.now()), 3600);
+    if (sig) cache.put('hb_sig', sig, 21600);
   }
   try { cache.put('hub_ics', buildCalendar_(), 900); } catch (err) { /* served uncached */ }
   try { syncHowToTab_(); } catch (err) { /* the tab is only instructions */ }
@@ -224,7 +226,19 @@ function pictureUrl_(dataUri) {
 
 /** Run from the editor after changing the Handbook or this code: rebuilds the Handbook data right away
  *  (the website picks it up on its next load) and reports what happened to the pictures. */
+/** A fingerprint of the Handbooks folder (doc names, groups and last-edited times). When a doc is edited, it changes,
+ * and the 5-minute autoRefresh rebuilds the Handbook right away instead of waiting for the 25-minute rebuild. */
+function handbookSig_() {
+  try {
+    const folderId = folderIdFromLink_(panelSettings_()['Handbooks Folder']);
+    if (!folderId) return '';
+    const list = handbookDocs_(folderId).map(d => d.id + '|' + d.name + '|' + d.folder + '|' + d.updated).sort().join('\n');
+    return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, list));
+  } catch (err) { return ''; }
+}
+
 function refreshHandbookNow() {
+  const sig = handbookSig_(); if (sig) CacheService.getScriptCache().put('hb_sig', sig, 21600);
   const hb = buildHandbook_();
   const payload = JSON.stringify(hb);
   writeCache_(CacheService.getScriptCache(), 'hb_', payload, 3600);
@@ -1530,7 +1544,7 @@ const HOWTO_LINES = [
   ['WHAT TO EDIT'],
   ['Didactic schedule → the Didactic Schedule sheet. Each session needs a Date (or sits under a dated row) and a Lecture Topic; add Time, Location and Speaker. Write "Virtual" in Location for Zoom sessions. Put "Journal Club" in the topic for Journal Club. Calendar subscribers follow the sheet automatically.'],
   ['Resident schedule → the Resident Schedule sheet, using the codes in the Rotations tab (SCW, WGRH, EMG…). To split a month in half, give that month two columns (merge the month header or leave the new header blank): the first column is the 1st–15th, the second starts on the 16th.'],
-  ['Rotation guides & policies → the Handbooks folder in Drive: one Google Doc per page. The doc name is the page title, the folder is its group, and the Policies folder appears under Resources. To add a rotation, copy a doc in the right folder and rename it; add a Rotations-tab row with exactly the same name to give it a schedule code. Run refreshHandbookNow to update the site right away. Each guide\'s "First day" card (address and phone numbers) and its "Jump to" menu are built from the doc itself: put the address and main phone near the top, and write section titles as short bold lines (e.g. "Responsibilities:") so they appear in the menu.'],
+  ['Rotation guides & policies → the Handbooks folder in Drive: one Google Doc per page. The doc name is the page title, the folder is its group, and the Policies folder appears under Resources. To add a rotation, copy a doc in the right folder and rename it; add a Rotations-tab row with exactly the same name to give it a schedule code. The site picks up doc edits within about 5 minutes (refresh the page); run refreshHandbookNow to make it immediate. Each guide\'s "First day" card (address and phone numbers) and its "Jump to" menu are built from the doc itself: put the address and main phone near the top, and write section titles as short bold lines (e.g. "Responsibilities:") so they appear in the menu.'],
   ['Contacts, announcements, quick links → the tabs in this Control Panel. Contacts rows whose role contains "Chief" also become the signature on every lecture email.'],
   ['Settings tab → Academic Year, Home headline and subtitle, Email sign-in (on/off), Virtual lecture link (the usual Zoom link), Holiday themes (off to turn off), and the Lecture reminder settings.'],
   [''],
@@ -1564,7 +1578,7 @@ const HOWTO_LINES = [
   [''],
   ['IF SOMETHING LOOKS WRONG (Extensions ▸ Apps Script, pick the function, press Run, read the log)'],
   ['Site footer says "Saved copy" → run testHub; the "Errors" line names the source that failed (usually a link in Settings or a file\'s sharing).'],
-  ['A Handbook change is not on the site → run refreshHandbookNow, then reload the site.'],
+  ['A Handbook change is not on the site after 10 minutes → run refreshHandbookNow, then reload the site.'],
   ['Check the lecture emails without sending anything → run previewLectureReminders. Run sendTestReminder for two sample reminders at the test address.'],
   ['After pasting new code into Code.gs → Deploy ▸ Manage deployments: for BOTH deployments click the pencil, choose New version, and Deploy.'],
   [''],
