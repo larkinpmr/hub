@@ -229,6 +229,12 @@ main { padding-block: 28px 64px; }
 .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
 .status.live i { background: #2E9E6A; box-shadow: 0 0 0 3px color-mix(in srgb, #2E9E6A 25%, transparent); }
 .status.saved i { background: var(--sun); }
+.status { flex-wrap: wrap; } .status .st { display: inline-flex; align-items: baseline; gap: 8px; } .status .st i { transform: translateY(-1px); }
+.status .refresh { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line); background: var(--surface); color: var(--accent); border-radius: 999px; padding: 4px 10px 4px 8px; font: 600 12px/1 var(--body); cursor: pointer; }
+.status .refresh:hover { border-color: var(--accent); background: var(--accent-soft); }
+.status .refresh svg { width: 14px; height: 14px; }
+.status .refresh.spin { border: 0; background: none; padding: 0; } .status .refresh.spin svg { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* segmented control */
 .seg { display: inline-flex; background: var(--raised); border-radius: 999px; padding: 3px; gap: 2px; flex-wrap: wrap; }
@@ -794,6 +800,8 @@ const store = { get(k) { try { return localStorage.getItem(k); } catch { return 
 let S = null;           // current data
 let CFG = {};
 let source = { mode: "loading", when: "" };
+let lastLive = 0, liveBusy = false, refreshLive = null;   // background refresh (see staleCheck)
+const STALE_MS = 5 * 60000;
 const today = new Date(); today.setHours(0,0,0,0);
 const todayISO = isoOf(today);
 
@@ -1199,9 +1207,13 @@ async function loadLive(url, snap) {
     }
     finally { clearTimeout(t); }
   };
+  let shownSig = "";
   const show = (live, mode) => {
-    S = prepare(mergeLive(snap, live));
+    const sig = JSON.stringify(Object.assign({}, live, { updated: 0 }));
     source = { mode, when: live.updated, errors: live.errors || [] };
+    if (sig === shownSig && S) { setStatus(); return; }   // nothing changed: just update the footer, don't redraw the page
+    shownSig = sig;
+    S = prepare(mergeLive(snap, live));
     route(true);
     gateCheck(true);
     if (!document.querySelector(".gate")) maybeStartTour();
@@ -1211,10 +1223,13 @@ async function loadLive(url, snap) {
   if (cached && cached.core) show(Object.assign({}, cached.core, cached.hb || {}), "cached"); else setStatus("connecting");
   // 2. Fetch fresh data, retrying quietly.
   const sep = url.includes("?") ? "&" : "?";
+  let retry = null;
   const attempt = async (n) => {
+    clearTimeout(retry); liveBusy = true; setStatus();
     const hbPromise = get(url + sep + "part=handbook", 90000).catch(() => null);
     try {
       const core = await get(url, 45000);
+      lastLive = Date.now();
       cached = { core, hb: cached && cached.hb };
       show(Object.assign({}, core, cached.hb || {}), "live");
       writeLiveCache(cached);
@@ -1225,30 +1240,45 @@ async function loadLive(url, snap) {
         show(Object.assign({}, core, cached.hb, { errors: (core.errors || []).concat(hb.errors || []) }), "live");
       }
     } catch (e) {
+      liveBusy = false;
       if (e && e.auth) { showSignIn(e.auth); return; }   // email sign-in is on and this device isn't verified (any more)
-      if (n < 3) { setTimeout(() => attempt(n + 1), [3000, 10000, 30000][n]); if (!cached) setStatus("connecting"); return; }
+      if (n < 3) { retry = setTimeout(() => attempt(n + 1), [3000, 10000, 30000][n]); if (!cached) setStatus("connecting"); return; }
       if (!cached) { source = { mode: "saved", when: snap.builtAt, failed: true }; setStatus(); }
       else { source.mode = "cached"; setStatus(); }
-      setTimeout(() => attempt(0), 120000);   // keep trying every couple of minutes
+      retry = setTimeout(() => attempt(0), 120000);   // keep trying every couple of minutes
+      return;
     }
+    liveBusy = false; setStatus();
   };
+  refreshLive = () => { if (!liveBusy) attempt(0); };
   attempt(0);
 }
+/* An installed app (or a tab left open) can sit in the background for hours without reloading. Check Google again when it
+ * comes back to the front after 5+ minutes, every 10 minutes while open, and whenever the footer's refresh button is tapped. */
+const staleCheck = () => { if (refreshLive && document.visibilityState === "visible" && Date.now() - lastLive > STALE_MS) refreshLive(); };
+document.addEventListener("visibilitychange", staleCheck);
+window.addEventListener("pageshow", staleCheck);
+window.addEventListener("focus", staleCheck);
+setInterval(() => { if (document.visibilityState === "visible" && refreshLive && Date.now() - lastLive > 2 * STALE_MS) refreshLive(); else if (lastLive) setStatus(); }, 60000);
+document.addEventListener("click", e => { if (e.target.closest("#refresh-now") && refreshLive) refreshLive(); });
 
+const REFRESH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
 function setStatus(state) {
   const el = $("#foot-status");
   if (state === "connecting") { el.className = "status"; el.innerHTML = "<i></i>Getting the latest from Google Drive…"; return; }
+  if (liveBusy && lastLive) { el.className = "status live"; el.innerHTML = `<span class="st"><i></i><span>Checking Google Drive for changes…</span></span><span class="refresh spin" aria-hidden="true">${REFRESH_SVG}</span>`; return; }
+  const btn = refreshLive && (Date.now() - lastLive > STALE_MS || source.mode !== "live") ? ` <button type="button" class="refresh" id="refresh-now" aria-label="Refresh now" title="Refresh now">${REFRESH_SVG}<span>Refresh</span></button>` : "";
   const t = source.when ? new Date(source.when) : null;
   const when = t && !isNaN(t) ? (t.toDateString() === new Date().toDateString() ? t.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : t.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) : "";
   if (source.mode === "live") {
     el.className = "status live";
-    el.innerHTML = `<i></i>Live from Google Drive · updated ${when}` + (source.errors?.length ? ` · ${source.errors.length} source(s) unavailable` : "");
+    el.innerHTML = `<span class="st"><i></i><span>Live from Google Drive · updated ${when}${source.errors?.length ? ` · ${source.errors.length} source(s) unavailable` : ""}</span></span>` + btn;
   } else if (source.mode === "cached") {
     el.className = "status live";
-    el.innerHTML = `<i></i>From Google Drive · updated ${when} · checking for changes`;
+    el.innerHTML = `<span class="st"><i></i><span>From Google Drive · updated ${when}</span></span>` + btn;
   } else {
     el.className = "status saved";
-    el.innerHTML = `<i></i>Saved copy from ${esc(source.when)}` + (source.failed ? " · reconnecting to Google Drive" : "");
+    el.innerHTML = `<span class="st"><i></i><span>Saved copy from ${esc(source.when)}${source.failed ? " · reconnecting to Google Drive" : ""}</span></span>` + btn;
   }
 }
 function prepare(d) {
