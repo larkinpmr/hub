@@ -118,9 +118,9 @@
 .prefs .edit a { font-weight: 600; }
 header.top .wrap { position: relative; }
 .strip { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
-.run { --h: 200; flex: var(--n) 1 0; min-width: 112px; border-radius: 6px; padding: 6px 8px; background: hsl(var(--h) var(--chip-s) var(--chip-l)); color: hsl(var(--h) 45% var(--chip-fg-l)); min-width: 0; display: grid; gap: 2px; align-content: start; }
+.run { --h: 200; flex: var(--n) 1 0; min-width: 98px; border-radius: 6px; padding: 6px 8px; background: hsl(var(--h) var(--chip-s) var(--chip-l)); color: hsl(var(--h) 45% var(--chip-fg-l)); display: grid; gap: 2px; align-content: start; }
 .run small { font: 600 11px/1.2 var(--mono); letter-spacing: .04em; text-transform: uppercase; opacity: .85; }
-.run span { font-size: 13px; line-height: 1.35; font-weight: 600; }
+.run span { font-size: 13px; line-height: 1.35; font-weight: 600; overflow-wrap: anywhere; } .run small { overflow-wrap: anywhere; }
 .run.past { background: var(--raised); color: var(--muted); opacity: .7; }
 .run.past span { font-weight: 400; }
 .run.now { box-shadow: inset 0 0 0 2px var(--sun); }
