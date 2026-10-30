@@ -138,6 +138,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 a { color: var(--accent); text-underline-offset: 2px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.15; margin: 0; }
+@media (min-width: 1500px) { .wrap { max-width: 1240px !important; } }
 .wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .eyebrow { font: 600 12px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .muted { color: var(--muted); }
@@ -369,7 +370,11 @@ body.gated > :not(.gate) { visibility: hidden; }
 :root[data-theme="dark"] .ql-ic.sheet { color: #6DD58C; } :root[data-theme="dark"] .ql-ic.doc { color: #8AB4F8; } :root[data-theme="dark"] .ql-ic.drive { color: #FDD663; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ql-ic.sheet { color: #6DD58C; } :root:not([data-theme="light"]) .ql-ic.doc { color: #8AB4F8; } :root:not([data-theme="light"]) .ql-ic.drive { color: #FDD663; } }
 .ql-t { min-width: 0; display: grid; }
-.ql-t b { font-weight: 600; font-size: 15px; line-height: 1.3; }
+.ql-t b { font-weight: 600; font-size: 15px; line-height: 1.3; overflow-wrap: break-word; }
+.ql-t small { overflow-wrap: anywhere; }
+@media (min-width: 481px) and (max-width: 899px) { .ql-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { :root[data-fs="1.12"] .ql-grid, :root[data-fs="1.25"] .ql-grid { grid-template-columns: 1fr; } }
+@media (min-width: 900px) { .ql-grid:has(> :nth-child(4):last-child) { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .ql-t small { color: var(--muted); font-size: 12.5px; line-height: 1.35; margin-top: 2px; }
 @media (max-width: 480px) { .ql-grid { grid-template-columns: 1fr 1fr; gap: 8px; } .ql { padding: 10px; gap: 9px; } .ql-ic { width: 30px; height: 30px; border-radius: 8px; } .ql-ic svg { width: 17px; height: 17px; } .ql-t b { font-size: 13.5px; } .ql-t small { font-size: 12px; } }
 .linklist { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
@@ -479,6 +484,7 @@ details.ready > summary { list-style: none; cursor: pointer; display: flex; alig
 details.ready > summary::-webkit-details-marker { display: none; }
 details.ready > summary b { display: block; font-size: 16.5px; color: var(--ink); }
 details.ready > summary small { display: block; color: var(--muted); font-size: 13.5px; margin-top: 1px; }
+@media (max-width: 400px) { .ready summary { gap: 10px !important; padding-inline: 12px !important; } }
 .ready-ic { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--warn-line, #E2A274); color: #fff; font: 800 17px/1 var(--display); }
 .ready-chev { margin-left: auto; font: 700 24px/1 var(--display); color: var(--muted); transition: transform .2s; }
 details.ready[open] .ready-chev { transform: rotate(90deg); }
@@ -592,13 +598,14 @@ a.file { display: inline-flex; align-items: center; gap: 8px; }
 .dir-list .dl { display: block; font-size: 14px; color: var(--muted); font-weight: 400; }
 .dir-list .dp { font: 500 13px var(--mono); color: var(--muted); }
 .dir-list .ar { color: var(--muted); }
-@media (min-width: 900px) {   /* two columns of guides: no wide empty gap between the name and the PGY years */
+@media (min-width: 641px) {   /* two columns of guides (tablets and computers): no wide empty gap between the name and the PGY years */
   .dir-list { display: grid; grid-template-columns: 1fr 1fr; }
   .dir-list li + li { border-top: 0; } .dir-list li { border-top: 1px solid var(--line); } .dir-list li:nth-child(-n+2) { border-top: 0; }
   .dir-list li:nth-child(odd) { border-right: 1px solid var(--line); }
-  .dir-list a { grid-template-columns: 96px minmax(0, 1fr) auto 14px; height: 100%; }
+  .dir-list a { height: 100%; }
   .dir-list li:only-child { grid-column: 1 / -1; border-right: 0; }
 }
+@media (min-width: 900px) { .dir-list a { grid-template-columns: 96px minmax(0, 1fr) auto 14px; } }
 .cal { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 18px; margin-bottom: 18px; }
 .cal .ct { flex: 1 1 260px; min-width: 0; }
 .cal .ct b { display: block; }
@@ -1025,6 +1032,7 @@ function applyPrefs() {
   if (PREF.ff === "default") root.removeAttribute("data-font"); else { root.setAttribute("data-font", PREF.ff); loadFont(PREF.ff); }
   document.querySelectorAll("[data-ff]").forEach(b => b.setAttribute("aria-pressed", b.dataset.ff === PREF.ff));
   document.body.style.zoom = PREF.fs === "1" ? "" : PREF.fs;
+  root.dataset.fs = PREF.fs;   // lets narrow phones switch some grids to one column at the larger text sizes
   document.querySelectorAll("[data-fs]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fs === PREF.fs));
   document.querySelectorAll("[data-th]").forEach(b => b.setAttribute("aria-pressed", b.dataset.th === PREF.th));
   document.querySelectorAll("[data-ac]").forEach(b => b.setAttribute("aria-pressed", b.dataset.ac === PREF.ac));
@@ -1051,7 +1059,7 @@ prefsBox.addEventListener("click", e => {
   if (b.dataset.th) { PREF.th = b.dataset.th; store.set("hub.th", PREF.th); }
   if (b.dataset.ac) { PREF.ac = b.dataset.ac; store.set("hub.ac", PREF.ac); }
   if (b.dataset.ff) { PREF.ff = b.dataset.ff; store.set("hub.ff", PREF.ff); }
-  applyPrefs();
+  applyPrefs(); qShort();
 });
 applyPrefs();
 $("#tour-btn").onclick = e => { e.stopPropagation(); startTour(); };
@@ -1936,6 +1944,8 @@ function openFinder() {
   back.onclick = close;
   draw(); inp.focus();
 }
+const qShort = () => { const q = $("#q"); if (q) q.placeholder = window.innerWidth < 420 || (window.innerWidth < 520 && PREF.fs > 1) ? "Search the hub" : "Search guides, lectures, residents"; };
+qShort(); window.addEventListener("resize", qShort);
 if (!/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) { const k = document.querySelector(".qk-hint"); if (k) k.textContent = "Ctrl K"; }
 document.addEventListener("keydown", e => {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openFinder(); return; }
