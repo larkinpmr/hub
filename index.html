@@ -936,6 +936,18 @@ function applyPrefs() {
   document.querySelectorAll("[data-fs]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fs === PREF.fs));
   document.querySelectorAll("[data-th]").forEach(b => b.setAttribute("aria-pressed", b.dataset.th === PREF.th));
   document.querySelectorAll("[data-ac]").forEach(b => b.setAttribute("aria-pressed", b.dataset.ac === PREF.ac));
+  themeFavicon();
+}
+/** Browser tab icon follows the chosen theme (same colors as the slim-header logo); Miami Vice uses the original file.
+ *  The installed app's home-screen icon is fixed at install time and stays the original. */
+function themeFavicon() {
+  const link = document.querySelector('link[rel="icon"]'), logo = document.querySelector("header.top .logo"); if (!link || !logo) return;
+  if (PREF.ac === "vice") { link.type = "image/svg+xml"; link.href = "assets/logo.svg"; return; }
+  const cs = getComputedStyle(document.documentElement);
+  const svg = new XMLSerializer().serializeToString(logo)
+    .replace(/var\((--lg-[a-z0-9-]+),\s*(#[0-9A-Fa-f]{3,8})\)/g, (m, v, d) => cs.getPropertyValue(v).trim() || d)
+    .replace(/class="logo"/, 'width="64" height="64"').replace(/ aria-hidden="true"/, "");
+  link.type = "image/svg+xml"; link.href = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 }
 const prefsBtn = $("#prefs-btn"), prefsBox = $("#prefs");
 prefsBtn.onclick = e => { e.stopPropagation(); prefsBox.hidden = !prefsBox.hidden; prefsBtn.setAttribute("aria-expanded", !prefsBox.hidden); };
