@@ -815,17 +815,20 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 .finder-list button.on, .finder-list button:hover { background: var(--accent-soft); } .finder-list small { color: var(--muted); font-size: 12px; }
 .finder-k { display: flex; gap: 14px; padding: 8px 14px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); } kbd { font: 600 11px/1 var(--mono); border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px; margin-right: 3px; background: var(--raised); }
 .finder-back { z-index: 59; }
-/* 5. hover card */
-.hovercard { position: fixed; z-index: 55; width: 270px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 14px 34px rgba(20, 10, 40, .22); padding: 12px 14px; display: grid; gap: 5px; font-size: 14px; }
-.hovercard b { font-size: 15px; } .hovercard .hk { font: 600 10.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin-right: 4px; } .hovercard a { font-weight: 600; text-decoration: none; margin-top: 2px; }
 /* 7. schedule crosshair */
 @media (hover: hover) and (pointer: fine) { table.sched tr.xh > *, table.sched td.xh { background-color: color-mix(in srgb, var(--accent-soft) 70%, transparent); } table.sched tr.xh > th.name { color: var(--accent); } }
 /* 9. print: just the page content */
 @media print {
-  header.top, .bottomnav, footer, .side, .gtoc, .fab, .printbtn, .pn, .crumb, #gtop, .ready, .gtabs, .toast, .hovercard, .tour-pop { display: none !important; }
+  header.top, .bottomnav, footer, .side, .gtoc, .fab, .printbtn, .pn, .crumb, #gtop, .ready, .gtabs, .toast, .tour-pop { display: none !important; }
   body { background: #fff; color: #000; } .guide-layout { display: block; } main.wrap { padding: 0; max-width: none; }
   .prose a { color: #000; } .view { animation: none !important; } .firstday { break-inside: avoid; }
 }
+/* header logo (slim header) follows the chosen theme; Miami Vice keeps the original. The installed app icon never changes. */
+:root[data-accent="coral"] { --lg-bg1: #4A1A14; --lg-bg2: #1D0C0A; --lg-sun1: #FFE08A; --lg-sun2: #FF7D5C; --lg-g1: #FF5E9F; --lg-g2: #FFC14F; --lg-wave: #FFC14F; --lg-ray: #FFE08A; }
+:root[data-accent="ocean"] { --lg-bg1: #12345F; --lg-bg2: #06132A; --lg-sun1: #C9F6FF; --lg-sun2: #5DB2FF; --lg-g1: #9C8CFF; --lg-g2: #3EE3D0; --lg-wave: #3EE3D0; --lg-ray: #C9F6FF; }
+:root[data-accent="teal"] { --lg-bg1: #164A43; --lg-bg2: #0B1B1A; --lg-sun1: #FFD98A; --lg-sun2: #FFAB8B; --lg-g1: #FFAB8B; --lg-g2: #6FE2CC; --lg-wave: #6FE2CC; --lg-ray: #FFD98A; }
+:root[data-accent="forest"] { --lg-bg1: #12432F; --lg-bg2: #07140E; --lg-sun1: #F7DC6A; --lg-sun2: #B5EB5A; --lg-g1: #5DE59A; --lg-g2: #F3D04A; --lg-wave: #5DE59A; --lg-ray: #F3D04A; }
+:root[data-accent="plum"] { --lg-bg1: #2E2514; --lg-bg2: #0B0A08; --lg-sun1: #FFF0C2; --lg-sun2: #F2C14E; --lg-g1: #F2C14E; --lg-g2: #FFF0C2; --lg-wave: #E0AE3E; --lg-ray: #FFF0C2; }
 </style>
 
 
@@ -834,22 +837,22 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 <header class="top">
   <div class="wrap">
     <div class="top-row">
-      <a class="brand" href="#home"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="hln" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="64"><stop offset="0" stop-color="#2A1158"/><stop offset="1" stop-color="#10061F"/></linearGradient>
-<linearGradient id="hls" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE38A"/><stop offset="1" stop-color="#FF5FA8"/></linearGradient>
-<linearGradient id="hlg" gradientUnits="userSpaceOnUse" x1="10" y1="8" x2="54" y2="56"><stop offset="0" stop-color="#FF4FA3"/><stop offset="1" stop-color="#3BE0E3"/></linearGradient>
+      <a class="brand" href="#home"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="hln" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="64"><stop offset="0" style="stop-color:var(--lg-bg1,#2A1158)"/><stop offset="1" style="stop-color:var(--lg-bg2,#10061F)"/></linearGradient>
+<linearGradient id="hls" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--lg-sun1,#FFE38A)"/><stop offset="1" style="stop-color:var(--lg-sun2,#FF5FA8)"/></linearGradient>
+<linearGradient id="hlg" gradientUnits="userSpaceOnUse" x1="10" y1="8" x2="54" y2="56"><stop offset="0" style="stop-color:var(--lg-g1,#FF4FA3)"/><stop offset="1" style="stop-color:var(--lg-g2,#3BE0E3)"/></linearGradient>
 <clipPath id="hlc"><rect width="64" height="64" rx="14"/></clipPath>
 <filter id="hlf" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.8"/></filter></defs><g clip-path="url(#hlc)"><rect width="64" height="64" fill="url(#hln)"/>
 <g fill="#fff"><circle cx="48" cy="9" r=".8" opacity=".7"/><circle cx="57" cy="13" r=".5" opacity=".6"/><circle cx="38" cy="7" r=".6" opacity=".5"/><circle cx="54" cy="31" r=".5" opacity=".5"/></g>
 <g transform="translate(0 0) scale(1)">
-<path d="M12 53q3.5-2.4 7 0t7 0t7 0t7 0t7 0t7 0" fill="none" stroke="#3BE0E3" stroke-width="1.8" stroke-linecap="round"/>
-<path d="M16 58.5q3.5-2 7 0t7 0t7 0t7 0t7 0" fill="none" stroke="#3BE0E3" stroke-opacity=".5" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M12 53q3.5-2.4 7 0t7 0t7 0t7 0t7 0t7 0" fill="none" style="stroke:var(--lg-wave,#3BE0E3)" stroke-width="1.8" stroke-linecap="round"/>
+<path d="M16 58.5q3.5-2 7 0t7 0t7 0t7 0t7 0" fill="none" style="stroke:var(--lg-wave,#3BE0E3)" stroke-opacity=".5" stroke-width="1.5" stroke-linecap="round"/>
 <circle cx="47" cy="18" r="7" fill="url(#hls)"/><rect x="39" y="18.6" width="16" height="1.1" fill="url(#hln)"/><rect x="39" y="21.3" width="16" height="1.5" fill="url(#hln)"/>
-<path d="M19 27A18 18 0 0 1 37 45" fill="none" stroke="#FFE38A" stroke-opacity=".95" stroke-width="1.3"/>
-<path d="M23.79 27.13L23.14 29.55M28.25 28.98L27 31.14M32.08 31.92L29.61 34.39M35.02 35.75L32.86 37M36.87 40.21L34.45 40.86" stroke="#FFE38A" stroke-opacity=".95" stroke-width="1"/>
+<path d="M19 27A18 18 0 0 1 37 45" fill="none" style="stroke:var(--lg-ray,#FFE38A)" stroke-opacity=".95" stroke-width="1.3"/>
+<path d="M23.79 27.13L23.14 29.55M28.25 28.98L27 31.14M32.08 31.92L29.61 34.39M35.02 35.75L32.86 37M36.87 40.21L34.45 40.86" style="stroke:var(--lg-ray,#FFE38A)" stroke-opacity=".95" stroke-width="1"/>
 <path d="M19 11V45H49" fill="none" stroke="url(#hlg)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity=".5" filter="url(#hlf)"/>
 <path d="M19 11V45H49" fill="none" stroke="url(#hlg)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M19 11V45H49" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-<circle cx="19" cy="45" r="3.4" fill="#FFE38A"/><circle cx="19" cy="45" r="1.2" fill="#2A1158"/>
+<circle cx="19" cy="45" r="3.4" style="fill:var(--lg-ray,#FFE38A)"/><circle cx="19" cy="45" r="1.2" style="fill:var(--lg-bg1,#2A1158)"/>
 </g></g></svg><b>Larkin South Miami PM&amp;R Hub</b><span id="ayear">2026–2027</span></a>
       <label class="search" for="q">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -1799,38 +1802,30 @@ document.addEventListener("keydown", e => {
   if (e.key === "/" && !e.target.closest("input, textarea, select, [contenteditable]")) { e.preventDefault(); $("#q").focus(); }
 });
 
-/* ---------- hover cards on rotation codes (mouse only) */
 const canHover = () => window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-let hcTimer = null, hcEl = null;
-function hideHover() { clearTimeout(hcTimer); hcEl?.remove(); hcEl = null; }
-document.addEventListener("mouseover", e => {
-  if (!canHover() || !S) return;
-  if (e.target.closest(".hovercard")) { clearTimeout(hcTimer); return; }
-  const c = e.target.closest(".code[data-rot]");
-  if (!c) { if (hcEl) { clearTimeout(hcTimer); hcTimer = setTimeout(hideHover, 200); } return; }
-  if (hcEl && hcEl.dataset.for === c.dataset.rot) { clearTimeout(hcTimer); return; }
-  clearTimeout(hcTimer);
-  hcTimer = setTimeout(() => {
-    const r = S.rotations.find(x => x.id === c.dataset.rot); if (!r) return;
-    hideHover();
-    const now = whoIsAt(r, curMonth);
-    hcEl = document.createElement("div"); hcEl.className = "hovercard"; hcEl.dataset.for = r.id;
-    hcEl.innerHTML = `<b>${esc(r.title)}</b>${r.location ? `<span class="muted">${esc(r.location)}</span>` : ""}${r.pgy ? `<span><span class="hk">PGY</span> ${esc(r.pgy)}</span>` : ""}<span><span class="hk">On now</span> ${now.length ? now.map(p => esc(p.name)).join(", ") : "No one this month"}</span><a href="#rot-${r.id}">Open the guide →</a>`;
-    document.body.appendChild(hcEl);
-    const b = c.getBoundingClientRect(), w = hcEl.offsetWidth, h = hcEl.offsetHeight;
-    const left = Math.min(Math.max(8, b.left), window.innerWidth - w - 8), below = b.bottom + 8 + h < window.innerHeight;
-    hcEl.style.left = left + "px"; hcEl.style.top = (below ? b.bottom + 8 : b.top - h - 8) + "px";
-  }, 350);
-});
-window.addEventListener("scroll", () => { if (hcEl) hideHover(); }, { passive: true });
 
-/* ---------- computers: clicking a phone number copies it (there's no phone to dial); ⌘/Ctrl-click an email to open mail, plain click copies */
+/* ---------- tapping a phone number or email never calls/opens straight away: a small menu offers Call / Copy or Email / Copy */
+function openContact(a) {
+  closeMaps();
+  const mail = a.getAttribute("href").startsWith("mailto:");
+  const digits = a.getAttribute("href").replace(/\D/g, "").slice(-10);
+  const v = mail ? decodeURIComponent(a.getAttribute("href").slice(7).split("?")[0]) : (/\d{3}.*\d{4}/.test(a.textContent) ? a.textContent.trim() : digits.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3"));
+  const back = document.createElement("div"); back.className = "mapback";
+  const sheet = document.createElement("div"); sheet.className = "mapsheet"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-label", mail ? "Email options" : "Phone options");
+  sheet.innerHTML = `<div class="where-to">${mail ? "Email" : "Phone number"}</div><div class="addr-text">${esc(v)}</div>
+    ${mail ? `<a href="mailto:${esc(v)}" data-direct>Send an email</a>` : `<a href="tel:+1${digits}" data-direct>Call</a><a href="sms:+1${digits}" data-direct>Text</a>`}
+    <button type="button" data-copy>${mail ? "Copy email" : "Copy number"}</button><button type="button" class="cancel" data-close>Cancel</button>`;
+  back.onclick = closeMaps;
+  sheet.addEventListener("click", e => {
+    if (e.target.closest("[data-copy]")) { copyText(v); closeMaps(); }
+    else if (e.target.closest("[data-close]") || e.target.closest("a")) closeMaps();
+  });
+  document.body.append(back, sheet); sheet.querySelector("a").focus();
+}
 document.addEventListener("click", e => {
-  const a = e.target.closest('a[href^="tel:"], a[href^="mailto:"]'); if (!a || !canHover()) return;
-  const mail = a.href.startsWith("mailto:"); if (mail && (e.metaKey || e.ctrlKey)) return;
-  e.preventDefault();
-  const v = mail ? decodeURIComponent(a.href.slice(7).split("?")[0]) : a.textContent.trim();
-  try { navigator.clipboard.writeText(v).then(() => toast((mail ? "Email" : "Number") + " copied: " + v), () => fallbackCopy(v)); } catch { fallbackCopy(v); }
+  const a = e.target.closest('a[href^="tel:"], a[href^="mailto:"]');
+  if (!a || a.hasAttribute("data-direct") || a.closest(".mapsheet")) return;
+  e.preventDefault(); openContact(a);
 });
 
 /* ---------- schedule table: hovering a cell highlights its resident row and month column */
