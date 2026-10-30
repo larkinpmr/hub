@@ -839,7 +839,52 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 :root[data-font="lexend"] { --display: "Lexend", "Source Sans 3", system-ui, sans-serif; --body: "Lexend", "Source Sans 3", system-ui, sans-serif; }
 :root[data-font="system"] { --display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif; --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif; }
 .seg.seg-wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-radius: 14px; gap: 2px; } .seg.seg-wrap button { white-space: nowrap; border-radius: 10px; padding: 7px 6px; font-size: 14px; }
+/* resident page */
+a.who-link { color: inherit; text-decoration: none; border-bottom: 1px dotted color-mix(in srgb, currentColor 45%, transparent); }
+a.who-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.resp .panel { margin-bottom: 18px; }
+.tline { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 0; border-left: 2px solid var(--line); margin-left: 6px; }
+.tline li { position: relative; display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 2px 14px; padding: 9px 0 9px 18px; align-items: center; }
+.tline li::before { content: ""; position: absolute; left: -7px; top: 15px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 2px solid var(--line); }
+.tline li.now::before { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.tline li.done { opacity: .6; } .tline li.done::before { background: var(--line); }
+.tl-d { font: 600 12px/1.3 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); } .tline li.now .tl-d { color: var(--accent); }
+.tl-r { display: flex; align-items: center; gap: 8px; font-weight: 600; } .tl-r a { color: var(--ink); text-decoration: none; } .tl-r a:hover { color: var(--accent); }
+.tl-l { grid-column: 2; font-size: 13px; color: var(--muted); }
+.resgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.rlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; } .rlist li { display: grid; gap: 2px; } .rlist span { font-size: 14px; color: var(--muted); }
+@media (max-width: 640px) { .tline li { grid-template-columns: 1fr; } .tl-l { grid-column: 1; } }
+/* didactics month grid (computers only) */
+.dview { display: none; }
+@media (min-width: 900px) {
+  .dview { display: inline-flex; }
+  #dlist.is-month, .filters .mhide { display: none; } .didside.off { display: none; }
+  .didlayout:has(.didside.off) { grid-template-columns: minmax(0, 1fr); }
+  .mgrid-h { display: flex; align-items: center; gap: 10px; margin: 6px 0 10px; } .mgrid-h b { font: 700 20px/1.2 var(--display); min-width: 170px; text-align: center; }
+  .mgrid { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: var(--surface); }
+  .mg-w, .mg-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .mg-w span { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  .mg-c { min-height: 112px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 6px 6px 8px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .mg-row .mg-c:last-child { border-right: 0; } .mg-row:last-child .mg-c { border-bottom: 0; }
+  .mg-c.blank { background: color-mix(in srgb, var(--raised) 45%, transparent); } .mg-c.past { opacity: .6; }
+  .mg-d { font: 600 12px/1 var(--mono); color: var(--muted); padding: 2px 3px 4px; } .mg-c.tdy .mg-d { color: var(--on-accent); background: var(--accent); border-radius: 999px; align-self: flex-start; padding: 4px 7px; }
+  .mg-t { display: block; font-size: 12.5px; line-height: 1.25; padding: 3px 6px; border-radius: 5px; background: var(--accent-soft); color: var(--ink); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 3px solid var(--accent); }
+  .mg-t.jc { background: var(--sun-soft); border-left-color: var(--sun); } .mg-t.off { background: var(--raised); border-left-color: var(--line); color: var(--muted); }
+  .mg-t:hover { filter: brightness(.96); } .mg-more { font-size: 12px; color: var(--accent); text-decoration: none; padding-left: 6px; }
+}
+/* continue reading */
+.resume { position: fixed; z-index: 40; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; box-shadow: 0 10px 30px rgba(20, 10, 40, .22); padding: 6px 6px 6px 16px; font-size: 14px; max-width: calc(100vw - 24px); }
+.resume span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .resume .btn { border-radius: 999px; flex: none; }
+.resume-x { border: 0; background: none; font-size: 20px; line-height: 1; color: var(--muted); cursor: pointer; padding: 4px 8px; flex: none; }
+@media (max-width: 899px) { .resume { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); } }
+/* accessibility */
+.skip { position: absolute; left: 12px; top: -60px; z-index: 100; background: var(--accent); color: var(--on-accent); border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 700; }
+.skip:focus { top: 12px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+main:focus { outline: none; }
 </style>
+
+<button type="button" class="skip" onclick="document.getElementById('main').focus()">Skip to content</button>
 
 
 </head>
@@ -1749,6 +1794,7 @@ function route(keepScroll) {
   else if (h.startsWith("pol-") || h.startsWith("hb-")) { tab = "resources"; html = viewPolicy(h); }
   else if (h.startsWith("tpl-")) { tab = "resources"; html = viewTemplate(h.slice(4)); }
   else if (h === "directory") { tab = "resources"; html = viewDirectory(); }
+  else if (h.startsWith("res-")) { tab = "schedule"; html = viewResident(h.slice(4)); }
   else { if (!VIEWS[h]) tab = "home"; html = VIEWS[tab](); if (tab === "policies" || tab === "templates") tab = "resources"; }
   render(html, tab, keepScroll);
 }
@@ -1761,6 +1807,7 @@ function render(html, tab, keepScroll) {
   if (!keepScroll) { window.scrollTo(0, 0); lastY = 0; document.querySelector("header.top")?.classList.remove("hdr-hide"); }
   bindView();
   const secs = $("#fab-secs"); if (secs) setTimeout(() => { secs.hidden = !document.querySelector("#gtop [data-jump]"); onScroll(); }, 30);
+  if (!keepScroll) setTimeout(offerResume, 120); else if (!readable()) document.querySelector(".resume")?.remove();
 }
 window.addEventListener("hashchange", () => { $("#q").value = ""; route(); });
 /* Phones: the header slides away while scrolling down and comes back on any scroll up. Guide and policy pages get a
@@ -1788,6 +1835,39 @@ function onScroll() {
   }
 }
 window.addEventListener("scroll", onScroll, { passive: true });
+/* Guides and policies remember where you stopped reading; reopening one offers "Continue where you left off". */
+const READ_KEY = "hub.read";
+const readable = () => /^#(rot|sub|pol|hb)-/.test(location.hash) && !$("#q").value;
+let readT = null, readOpened = 0;
+window.addEventListener("scroll", () => {
+  if (!readable()) return; clearTimeout(readT);
+  readT = setTimeout(() => {
+    if (Date.now() - readOpened < 1500) return;   // ignore the jump that happens when a page opens
+    let all = {}; try { all = JSON.parse(store.get(READ_KEY) || "{}"); } catch {}
+    const y = window.scrollY, h = location.hash;
+    if (y < window.innerHeight * 0.8) delete all[h];
+    else {
+      const heads = [...document.querySelectorAll(".jumptarget")].filter(el => el.getBoundingClientRect().top < 160);
+      all[h] = { y, sec: heads.length ? heads[heads.length - 1].id : "", t: Date.now() };
+    }
+    const keys = Object.keys(all).sort((a, b) => all[b].t - all[a].t).slice(0, 40); const keep = {}; keys.forEach(k => keep[k] = all[k]);
+    store.set(READ_KEY, JSON.stringify(keep));
+  }, 400);
+}, { passive: true });
+function offerResume() {
+  document.querySelector(".resume")?.remove(); readOpened = Date.now();
+  if (!readable()) return;
+  let all = {}; try { all = JSON.parse(store.get(READ_KEY) || "{}"); } catch {}
+  const r = all[location.hash]; if (!r || Date.now() - r.t > 60 * 86400000) return;
+  const sec = r.sec && document.getElementById(r.sec), jl = r.sec && document.querySelector(`[data-jump="${r.sec}"]`);
+  const name = jl ? jl.textContent.trim() : sec ? sec.textContent.replace(/\s+/g, " ").trim().replace(/:$/, "").slice(0, 40) : "";
+  const box = document.createElement("div"); box.className = "resume"; box.setAttribute("role", "status");
+  box.innerHTML = `<span>Continue where you left off${name ? ` · <b>${esc(name)}</b>` : ""}?</span><button type="button" class="btn small" data-resume>Continue</button><button type="button" class="resume-x" aria-label="Dismiss">×</button>`;
+  document.body.appendChild(box);
+  box.querySelector("[data-resume]").onclick = () => { box.remove(); if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" }); else window.scrollTo({ top: r.y, behavior: "smooth" }); };
+  box.querySelector(".resume-x").onclick = () => box.remove();
+  setTimeout(() => box.remove(), 12000);
+}
 // header height as a CSS variable, so sticky sidebars and "jump to" targets sit just under it
 const hdrObs = new ResizeObserver(() => { const h = document.querySelector("header.top"); if (h) document.documentElement.style.setProperty("--hdr-h", h.offsetHeight + "px"); });
 hdrObs.observe(document.querySelector("header.top"));
@@ -1798,7 +1878,7 @@ function finderItems() {
   S.rotations.forEach(r => items.push([r.title, "#rot-" + r.id, "Guide", [r.short, ...r.codes].join(" "), r]));
   (S.policies || []).forEach(p => items.push([p.title, "#pol-" + p.id, "Policy"]));
   (S.templates || []).forEach(t => items.push([t.title, "#tpl-" + t.id, "Template"]));
-  S.residents.forEach(p => items.push([p.name, "?" + p.name, p.pgy]));
+  S.residents.forEach(p => items.push([p.name, "#res-" + slug(p.name), p.pgy]));
   return items;
 }
 function openFinder() {
@@ -1916,6 +1996,8 @@ $("#q").addEventListener("keydown", e => { if (e.key === "Escape") { e.target.va
 /* ----------------------------------------------------------- helpers */
 const chip = r => r ? `<a class="code" style="--h:${r.hue}" href="#rot-${r.id}" data-rot="${r.id}">${esc(r.codes[0])}</a>` : "";
 const chipSpan = r => r && r.codes && r.codes[0] ? `<span class="code" style="--h:${r.hue}" data-rot="${r.id}">${esc(r.codes[0])}</span>` : "";
+/** A resident's name as a link to their page (whole year, lectures they present, onboarding). */
+const whoLink = (p, extra) => `<a class="who-link" href="#res-${slug(p.name)}">${esc(p.name)}</a>${extra || ""}`;
 const chipRaw = (raw, r) => r ? `<a class="code" style="--h:${r.hue}" href="#rot-${r.id}" data-rot="${r.id}">${esc(raw)}</a>` : (raw ? `<span class="code" style="--h:0">${esc(raw)}</span>` : `<span class="muted">—</span>`);
 function fmtDate(iso, opts) { return parseISO(iso).toLocaleDateString("en-US", opts || { weekday: "short", month: "short", day: "numeric" }); }
 /** A day's meeting link: a link typed in the didactic sheet, else the Settings Zoom link when the location says Virtual. */
@@ -2014,7 +2096,7 @@ function onboardingPanel() {
     ${!shown.length ? `<p class="onbnone">Nothing due for you right now. ${rows.length} other resident${rows.length === 1 ? " has" : "s have"} onboarding coming up.</p>` : ""}
     ${dates.map(t => { const grp = shown.filter(r => +r.x.start === t), x0 = grp[0].x;
       return `<div class="onbgrp"><div class="onbdate">Starts ${fmtDay(x0.start)} <span>· ${x0.days} days</span></div><ul class="onblist">${grp.map(({ p, x }) =>
-        `<li class="${p.name === ME ? "mine" : ""}"><span class="who">${esc(p.name)}</span>${x.rot ? `<a href="#rot-${x.rot.id}" title="${esc(x.rot.title)}">${chipSpan(x.rot)}</a>` : `<span class="code">${esc(x.raw)}</span>`}</li>`).join("")}</ul></div>`; }).join("")}
+        `<li class="${p.name === ME ? "mine" : ""}"><span class="who">${whoLink(p)}</span>${x.rot ? `<a href="#rot-${x.rot.id}" title="${esc(x.rot.title)}">${chipSpan(x.rot)}</a>` : `<span class="code">${esc(x.raw)}</span>`}</li>`).join("")}</ul></div>`; }).join("")}
     ${toggle}
   </section>`;
 }
@@ -2212,7 +2294,7 @@ function viewHome() {
       <section class="panel wide duo">
         <h2>Where everyone is in ${MONTH_FULL[mi]}</h2>
         <p class="sub">From the resident block schedule. Tap a rotation for its guide.</p>
-        <div class="where">${sites.map((x, i) => `<div class="site${i >= 4 ? " more" : ""}"><a href="#rot-${x.r.id}">${chipSpan(x.r)} <b style="color:var(--ink)">${esc(x.r.short)}</b></a><span class="names">${x.people.map(p => esc(p.name)).join(", ")}</span></div>`).join("")}</div>${sites.length > 4 ? `<button type="button" class="linkbtn wmore">Show all ${sites.length} rotations</button>` : ""}
+        <div class="where">${sites.map((x, i) => `<div class="site${i >= 4 ? " more" : ""}"><a href="#rot-${x.r.id}">${chipSpan(x.r)} <b style="color:var(--ink)">${esc(x.r.short)}</b></a><span class="names">${x.people.map(p => whoLink(p)).join(", ")}</span></div>`).join("")}</div>${sites.length > 4 ? `<button type="button" class="linkbtn wmore">Show all ${sites.length} rotations</button>` : ""}
       </section>
   </div>
   ${quickLinks()}`;
@@ -2234,7 +2316,7 @@ function quickLinks() {
       <span class="ql-t"><b>${esc(l.label)}</b><small>${esc(l.note || lab)}</small></span></a>`; }).join("")}</div></section>`;
 }
 
-let dState = { scope: store.get("hub.d.scope") || "upcoming", month: "all", q: "", more: false };
+let dState = { scope: store.get("hub.d.scope") || "upcoming", month: "all", q: "", more: false, view: store.get("hub.d.view") || "list", cal: todayISO.slice(0, 7) };
 function viewDidactics() {
   const months = [...new Set(S.didactics.map(t => t.date.slice(0, 7)))];
   return `
@@ -2242,15 +2324,31 @@ function viewDidactics() {
   <div class="view-head"><div><div class="eyebrow">Didactic Schedule · ${esc(S.academicYear)}</div><div class="titlerow"><h1>Didactics</h1>${calPanel()}${slidesBtn()}</div>
     <p>Braddom chapter lectures, board review, journal club and workshops. Edits made in the Didactic Schedule sheet appear here.</p></div></div>
     <div class="filters">
-    <div class="seg" role="group" aria-label="Show">
+    <div class="seg dview" role="group" aria-label="Layout"><button data-dview="list" aria-pressed="${dState.view !== "month"}">List</button><button data-dview="month" aria-pressed="${dState.view === "month"}">Month</button></div>
+    <div class="seg${dState.view === "month" ? " mhide" : ""}" role="group" aria-label="Show">
       <button data-scope="upcoming" aria-pressed="${dState.scope === "upcoming"}">Upcoming</button>
       <button data-scope="all" aria-pressed="${dState.scope === "all"}">Full year</button>
     </div>
-    <select id="dmonth" aria-label="Month"><option value="all">All months</option>${months.map(m => `<option value="${m}" ${dState.month === m ? "selected" : ""}>${MON[+m.slice(5) - 1]} ${m.slice(0, 4)}</option>`).join("")}</select>
-    <input id="dq" type="search" placeholder="Filter by topic or presenter" value="${esc(dState.q)}" aria-label="Filter lectures">
+    <select id="dmonth" aria-label="Month"${dState.view === "month" ? ' class="mhide"' : ""}><option value="all">All months</option>${months.map(m => `<option value="${m}" ${dState.month === m ? "selected" : ""}>${MON[+m.slice(5) - 1]} ${m.slice(0, 4)}</option>`).join("")}</select>
+    <input id="dq"${dState.view === "month" ? ' class="mhide"' : ""} type="search" placeholder="Filter by topic or presenter" value="${esc(dState.q)}" aria-label="Filter lectures">
   </div>
-  <div id="dlist">${didacticList()}</div>
-  </div><aside class="didside">${miniCal()}</aside></div>`;
+  <div id="dlist" class="${dState.view === "month" ? "is-month" : ""}">${didacticList()}</div>${dState.view === "month" ? `<div id="dmonthview">${monthGrid()}</div>` : ""}
+  </div><aside class="didside${dState.view === "month" ? " off" : ""}">${miniCal()}</aside></div>`;
+}
+/** Computers: a full month grid (Didactics ▸ Month), each lecture in its day; ‹ › to change month. */
+function monthGrid() {
+  const [y, m] = dState.cal.split("-").map(Number), first = new Date(y, m - 1, 1), days = new Date(y, m, 0).getDate();
+  const byDay = new Map(); S.didactics.forEach(t => { if (t.date.startsWith(dState.cal)) (byDay.get(t.date) || byDay.set(t.date, []).get(t.date)).push(t); });
+  const cells = []; for (let i = 0; i < first.getDay(); i++) cells.push(null); for (let d = 1; d <= days; d++) cells.push(d); while (cells.length % 7) cells.push(null);
+  const title = first.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  return `<div class="mgrid-h"><button type="button" class="iconbtn" data-cal="-1" aria-label="Previous month">‹</button><b>${title}</b><button type="button" class="iconbtn" data-cal="1" aria-label="Next month">›</button>${dState.cal !== todayISO.slice(0, 7) ? `<button type="button" class="linkbtn" data-cal="0">Today</button>` : ""}</div>
+  <div class="mgrid"><div class="mg-w">${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(x => `<span>${x}</span>`).join("")}</div>
+  ${Array.from({ length: cells.length / 7 }, (_, w) => `<div class="mg-row">${cells.slice(w * 7, w * 7 + 7).map(d => {
+    if (!d) return `<div class="mg-c blank"></div>`;
+    const iso = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`, ts = (byDay.get(iso) || []);
+    const off = ts.length && ts.every(t => t.kind === "off");
+    return `<div class="mg-c${iso === todayISO ? " tdy" : ""}${iso < todayISO ? " past" : ""}${off ? " off" : ""}"><span class="mg-d">${d}</span>${ts.slice(0, 4).map(t => `<a href="#didactics" data-mgo="${iso}" class="mg-t ${t.kind || ""}" title="${esc(t.topic)}${t.speaker ? " · " + esc(t.speaker) : ""}">${esc(t.topic)}</a>`).join("")}${ts.length > 4 ? `<a href="#didactics" data-mgo="${iso}" class="mg-more">+${ts.length - 4} more</a>` : ""}</div>`;
+  }).join("")}</div>`).join("")}</div>`;
 }
 /** Small month calendar (desktop only): today circled, this week shaded, a dot on didactic days. */
 function miniCal() {
@@ -2339,15 +2437,15 @@ function viewSchedule() {
     const cards = S.rotations.map(r => ({ r, ppl: whoIsAt(r, mi) })).filter(x => x.ppl.length);
     const unknown = S.residents.filter(p => rawAt(p, mi) && !rotAt(p, mi));
     return head + `<div class="bysite">${cards.map(x => `<div class="panel"><a href="#rot-${x.r.id}" style="text-decoration:none;display:flex;gap:8px;align-items:center">${chipSpan(x.r)}<b style="color:var(--ink)">${esc(x.r.short)}</b></a>
-      <ul>${x.ppl.map(p => `<li>${esc(p.name)}<span class="pg">${esc(p.pgy)}</span></li>`).join("")}</ul></div>`).join("")}
-      ${unknown.length ? `<div class="panel"><b>Other</b><ul>${unknown.map(p => `<li>${esc(p.name)} <span class="pg">${esc(rawAt(p, mi))}</span></li>`).join("")}</ul></div>` : ""}</div>`;
+      <ul>${x.ppl.map(p => `<li>${whoLink(p)}<span class="pg">${esc(p.pgy)}</span></li>`).join("")}</ul></div>`).join("")}
+      ${unknown.length ? `<div class="panel"><b>Other</b><ul>${unknown.map(p => `<li>${whoLink(p)} <span class="pg">${esc(rawAt(p, mi))}</span></li>`).join("")}</ul></div>` : ""}</div>`;
   }
   const groups = sState.pgy === "all" ? pgys : [sState.pgy];
   const cols = sState.span === "3" ? [curMonth, curMonth + 1, curMonth + 2].filter(i => i < 12) : MONTHS.map((_, i) => i);
   const who = sState.who.toLowerCase();
   const rows = groups.map(g => `<tr class="pgy"><th colspan="${cols.length + 1}">${esc(g)}</th></tr>` + S.residents.filter(p => p.pgy === g).map(p => {
     const match = who && p.name.toLowerCase().includes(who);
-    return `<tr class="${who ? (match ? "hl" : "dim") : ""}${p.name === ME ? " me" : ""}"><th class="name" scope="row">${esc(p.name)}</th>${cols.map(i => `<td class="${i === curMonth ? "now" : ""}">${p.months2[i] ? `<span class="split" title="${esc(p.months[i])} ${MON[(i + 6) % 12]} 1–${HALF_DAY - 1}, then ${esc(p.months2[i])} from ${MON[(i + 6) % 12]} ${HALF_DAY}"><span class="${i === curMonth && nowHalf ? "past" : ""}">${chipRaw(p.months[i], p.rots[i])}</span><span class="${i === curMonth && !nowHalf ? "later" : ""}">${chipRaw(p.months2[i], p.rots2[i])}</span></span>` : chipRaw(p.months[i], p.rots[i])}</td>`).join("")}</tr>`;
+    return `<tr class="${who ? (match ? "hl" : "dim") : ""}${p.name === ME ? " me" : ""}"><th class="name" scope="row">${whoLink(p)}</th>${cols.map(i => `<td class="${i === curMonth ? "now" : ""}">${p.months2[i] ? `<span class="split" title="${esc(p.months[i])} ${MON[(i + 6) % 12]} 1–${HALF_DAY - 1}, then ${esc(p.months2[i])} from ${MON[(i + 6) % 12]} ${HALF_DAY}"><span class="${i === curMonth && nowHalf ? "past" : ""}">${chipRaw(p.months[i], p.rots[i])}</span><span class="${i === curMonth && !nowHalf ? "later" : ""}">${chipRaw(p.months2[i], p.rots2[i])}</span></span>` : chipRaw(p.months[i], p.rots[i])}</td>`).join("")}</tr>`;
   }).join("")).join("");
   const used = S.rotations.filter(r => S.residents.some(p => p.rots.includes(r) || p.rots2.includes(r)));
   return head + `<div class="sched-wrap"><table class="sched"><thead><tr><th class="name">Resident</th>${cols.map(i => `<th class="${i === curMonth ? "now" : ""}">${MONTHS[i]}${i === curMonth ? " · now" : ""}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
@@ -2437,7 +2535,7 @@ function viewRotation(id) {
       <div><dt>PGY level</dt><dd>${esc(r.pgy || "—")}</dd></div>
       <div><dt>Location</dt><dd>${esc(r.location || "—")}</dd></div>
       <div><dt>Key attendings</dt><dd>${esc(r.attendings || "—")}</dd></div>
-      <div class="who"><dt>On this rotation in ${MONTH_FULL[curMonth]}</dt><dd>${now.length ? now.map(p => `${esc(p.name)} <span class="muted">(${esc(p.pgy)})</span>`).join(", ") : "No one this month"}</dd>
+      <div class="who"><dt>On this rotation in ${MONTH_FULL[curMonth]}</dt><dd>${now.length ? now.map(p => `${whoLink(p)} <span class="muted">(${esc(p.pgy)})</span>`).join(", ") : "No one this month"}</dd>
         <dd>${yearStrip(year)}</dd></div>
     </dl>` : ""}
     <div id="gtop"></div>
@@ -2455,6 +2553,30 @@ function prevNext(r) {
   const list = guideOrder(), i = list.indexOf(r); if (i < 0) return "";
   const a = list[i - 1], b = list[i + 1];
   return `<nav class="pn" aria-label="Other guides">${a ? `<a class="pn-a" href="#rot-${a.id}"><small>← Previous guide</small><b>${esc(a.title)}</b></a>` : "<span></span>"}${b ? `<a class="pn-b" href="#rot-${b.id}"><small>Next guide →</small><b>${esc(b.title)}</b></a>` : ""}</nav>`;
+}
+/** Resident page: the whole year of rotations, lectures they present, onboarding coming up. */
+function viewResident(id) {
+  const p = S.residents.find(x => slug(x.name) === id);
+  if (!p) return `<div class="empty">That resident wasn't found. <a href="#schedule">See the schedule</a>.</div>`;
+  const runs = runsFrom(p, 0, 24);
+  const talks = S.didactics.filter(t => presentsTalk(t.speaker, p.name));
+  const up = talks.filter(t => t.date >= todayISO), past = talks.filter(t => t.date < todayISO);
+  const onb = onboardingDue(p);
+  const lbl = r => r.rot ? `${chipSpan(r.rot)}<a href="#rot-${r.rot.id}">${esc(r.rot.short || r.rot.title)}</a>` : `<span class="code" style="--h:0">${esc(r.raw || "—")}</span>`;
+  return `<div class="resp">
+    <a class="crumb" href="#schedule">← Resident schedule</a>
+    <div class="eyebrow">${esc(p.pgy)} · ${esc(S.academicYear)}</div>
+    <h1 style="font-size:clamp(28px,4vw,40px);letter-spacing:-.02em;margin:6px 0 16px">${esc(p.name)}${p.name === ME ? ' <span class="you">You</span>' : ""}</h1>
+    <section class="panel"><h2>Rotations this year</h2>
+      <ol class="tline">${runs.map(r => { const now = r.from <= nowSlot && nowSlot <= r.to, done = r.to < nowSlot;
+        return `<li class="${now ? "now" : done ? "done" : ""}"><span class="tl-d">${esc(runLabel(p, r))}${now ? " · now" : ""}</span><span class="tl-r">${lbl(r)}</span>${r.rot && r.rot.location ? `<span class="tl-l">${esc(r.rot.location)}</span>` : ""}</li>`; }).join("")}</ol></section>
+    <div class="resgrid">
+      <section class="panel"><h2>Lectures they present</h2>
+        ${up.length ? `<ul class="rlist">${up.map(t => `<li><b>${esc(t.topic)}</b><span>${fmtDate(t.date)}${t.location ? " · " + esc(t.location) : ""}</span></li>`).join("")}</ul>` : `<p class="muted">Nothing upcoming on the didactic schedule.</p>`}
+        ${past.length ? `<p class="muted" style="margin:10px 0 0">${past.length} earlier this year.</p>` : ""}</section>
+      <section class="panel"><h2>Onboarding coming up</h2>
+        ${onb.length ? `<ul class="rlist">${onb.map(x => `<li><b>${x.rot ? `<a href="#rot-${x.rot.id}">${esc(x.rot.title)}</a>` : esc(x.raw)}</b><span>Starts ${x.start.toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric" })} · ${x.days} days away</span></li>`).join("")}</ul>` : `<p class="muted">Nothing due right now.</p>`}</section>
+    </div></div>`;
 }
 function yearStrip(year) {
   const runs = [];
@@ -2560,7 +2682,7 @@ function viewSearch(q) {
   const quick = people.map(p => {
     const [a, b] = runsFrom(p, nowSlot, 2);
     const one = (r, k) => r ? `<span class="qk">${k}</span>${r.rot ? `<a href="#rot-${r.rot.id}">${chipSpan(r.rot)} ${esc(r.rot.short || r.rot.title)}</a>` : esc(r.raw)} <span class="muted">${esc(runLabel(p, r))}</span>` : "";
-    return `<div class="qcard"><b>${hl(p.name)}</b> <span class="muted">${esc(p.pgy)}</span><div class="qrow">${one(a, "Now")}</div>${b ? `<div class="qrow">${one(b, "Next")}</div>` : ""}</div>`;
+    return `<div class="qcard"><b><a class="who-link" href="#res-${slug(p.name)}">${hl(p.name)}</a></b> <span class="muted">${esc(p.pgy)}</span><div class="qrow">${one(a, "Now")}</div>${b ? `<div class="qrow">${one(b, "Next")}</div>` : ""}</div>`;
   }).concat(rots.map(r => {
     const t = text(r.html || ""); ADDR_RE.lastIndex = 0; const am = ADDR_RE.exec(t);
     const addr = am ? am[0].replace(/\s+/g, " ") + (/\b(FL|OH|Florida|Ohio)\b/.test(am[0]) ? "" : ", Florida") : "";
@@ -2781,6 +2903,16 @@ function bindView() {
     const iso = x.dataset.go; let row = document.getElementById("d-" + iso);
     if (!row) { dState.month = iso.slice(0, 7); const sel = $("#dmonth"); if (sel) sel.value = dState.month; $("#dlist").innerHTML = didacticList(); row = document.getElementById("d-" + iso); }
     if (row) { row.scrollIntoView({ behavior: "smooth", block: "center" }); row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash"); }
+  });
+  document.querySelectorAll("[data-dview]").forEach(b => b.onclick = () => { dState.view = b.dataset.dview; store.set("hub.d.view", dState.view); route(true); });
+  document.querySelectorAll("[data-cal]").forEach(b => b.onclick = () => {
+    const n = +b.dataset.cal; if (!n) dState.cal = todayISO.slice(0, 7); else { const [y, m] = dState.cal.split("-").map(Number), d = new Date(y, m - 1 + n, 1); dState.cal = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; }
+    route(true);
+  });
+  document.querySelectorAll("[data-mgo]").forEach(x => x.onclick = e => {   // a lecture in the month grid opens the list at that day
+    e.preventDefault(); const iso = x.dataset.mgo;
+    dState.view = "list"; store.set("hub.d.view", "list"); dState.month = iso.slice(0, 7); route(true);
+    setTimeout(() => { const row = document.getElementById("d-" + iso); if (row) { row.scrollIntoView({ behavior: "smooth", block: "center" }); row.classList.add("flash"); } }, 60);
   });
   const dq = $("#dq"); if (dq) dq.oninput = () => { dState.q = dq.value; $("#dlist").innerHTML = didacticList(); };
   document.querySelectorAll("[data-sview]").forEach(b => b.onclick = () => { sState.view = b.dataset.sview; route(true); });
