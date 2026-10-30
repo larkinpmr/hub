@@ -380,7 +380,7 @@ body.gated > :not(.gate) { visibility: hidden; }
 .announce b { display: block; }
 
 /* code chips */
-.code { --h: 190; display: inline-flex; align-items: center; justify-content: center; min-width: 3.4em; padding: 3px 7px; border-radius: 5px; font: 600 12px/1.25 var(--mono); letter-spacing: .02em; background: hsl(var(--h) var(--chip-s) var(--chip-l)); color: hsl(var(--h) 55% var(--chip-fg-l)); text-decoration: none; white-space: nowrap; }
+.code { --h: 190; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-width: 3.4em; padding: 3px 7px; border-radius: 5px; font: 600 12px/1.25 var(--mono); letter-spacing: .02em; background: hsl(var(--h) var(--chip-s) var(--chip-l)); color: hsl(var(--h) 55% var(--chip-fg-l)); text-decoration: none; white-space: nowrap; }
 a.code:hover { outline: 1px solid hsl(var(--h) 50% 45%); }
 
 /* schedule */
@@ -398,7 +398,7 @@ table.sched thead th.now { color: var(--sun); background: var(--sun-soft); }
 table.sched tr.hl th.name { color: var(--accent); }
 table.sched tr.dim { opacity: .35; }
 .legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px 20px; margin-top: 18px; }
-.legend a { display: flex; gap: 10px; align-items: center; text-decoration: none; color: var(--ink); font-size: 14px; }
+.legend a { display: grid; grid-template-columns: minmax(96px, auto) minmax(0, 1fr); gap: 10px; align-items: center; text-decoration: none; color: var(--ink); font-size: 14px; } .legend a .code { justify-self: start; }
 .bysite { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
 .bysite .panel { padding: 16px; }
 .bysite ul { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 15px; }
