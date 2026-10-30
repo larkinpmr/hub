@@ -388,6 +388,9 @@ body.gated > :not(.gate) { visibility: hidden; }
 a.code:hover { outline: 1px solid hsl(var(--h) 50% 45%); }
 
 /* schedule */
+@media (min-width: 1240px) { .sched-wrap.wide { width: min(calc(100vw - 48px), 1500px); margin-left: calc(50% - min(calc(100vw - 48px), 1500px) / 2); }
+  .sched-wrap.wide table.sched th, .sched-wrap.wide table.sched td { padding: 5px 3px; } .sched-wrap.wide table.sched th.name { min-width: 0; padding-left: 12px; white-space: nowrap; }
+  .sched-wrap.wide table.sched td .code { font-size: 11px; padding: 2px 5px; min-width: 0; } }
 .sched-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
 table.sched { border-collapse: separate; border-spacing: 0; width: 100%; font-variant-numeric: tabular-nums; }
 table.sched th, table.sched td { padding: 6px 6px; text-align: center; border-bottom: 1px solid var(--line); }
@@ -405,6 +408,7 @@ table.sched tr.dim { opacity: .35; }
 .legend a { display: grid; grid-template-columns: minmax(96px, auto) minmax(0, 1fr); gap: 10px; align-items: center; text-decoration: none; color: var(--ink); font-size: 14px; } .legend a .code { justify-self: start; }
 .bysite { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
 .bysite .panel { padding: 16px; }
+@media (max-width: 640px) { .bysite { gap: 8px; } .bysite .panel { padding: 12px 14px; } .bysite ul { gap: 2px; font-size: 14.5px; } }
 .bysite ul { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 15px; }
 .bysite .pg { font: 500 12px var(--mono); color: var(--muted); margin-left: 6px; }
 
@@ -416,7 +420,8 @@ table.sched tr.dim { opacity: .35; }
 .day { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
 .day.today-row .dlabel b { color: var(--sun); }
 .day.past { opacity: .55; }
-.dlabel small { display: block; font: 600 11px/1.2 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.dlabel small { display: block; font: 600 11px/1.2 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); white-space: nowrap; }
+@media (max-width: 480px) { .dlabel small { font-size: 10px; letter-spacing: .02em; } }
 .dlabel b { font: 700 22px/1.1 var(--display); }
 .dmeta { font: 500 12px/1.4 var(--mono); color: var(--muted); margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .tag { display: inline-block; font: 600 11px/1 var(--mono); padding: 3px 6px; border-radius: 4px; background: var(--raised); color: var(--muted); margin-left: 6px; vertical-align: 2px; white-space: nowrap; }
@@ -529,6 +534,7 @@ details.ready > .prose { padding: 0 18px 14px; margin: 0; max-width: none; }
 .facts dt { font: 600 11px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .facts dd { margin: 2px 0 0; font-size: 15px; }
 .facts .who { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 12px; }
+@media (max-width: 640px) { .facts { grid-template-columns: 1fr 1fr; gap: 10px 16px; padding: 14px 16px; } .facts > div:nth-child(n+3) { grid-column: 1 / -1; } }
 .src { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font: 500 12px/1.4 var(--mono); color: var(--muted); margin: 12px 0 0; }
 
 .prose { max-width: 72ch; overflow-wrap: break-word; }
@@ -551,6 +557,7 @@ details.ready > .prose { padding: 0 18px 14px; margin: 0; max-width: none; }
 .hbnote p { margin: 0; }
 .prose img { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); display: block; margin: 8px 0 14px; }
 .prose code, .prose pre { font-family: var(--mono); font-size: 13px; }
+@media (max-width: 480px) { #tplbody pre { font-size: 12px; padding: 12px; } }
 .prose pre { background: var(--raised); padding: 14px 16px; border-radius: 8px; overflow-x: auto; white-space: pre; line-height: 1.45; tab-size: 4; margin: 0; }
 .prose pre code { font-size: 13px; }
 .codeblock { position: relative; margin: 0 0 16px; }
@@ -585,6 +592,13 @@ a.file { display: inline-flex; align-items: center; gap: 8px; }
 .dir-list .dl { display: block; font-size: 14px; color: var(--muted); font-weight: 400; }
 .dir-list .dp { font: 500 13px var(--mono); color: var(--muted); }
 .dir-list .ar { color: var(--muted); }
+@media (min-width: 900px) {   /* two columns of guides: no wide empty gap between the name and the PGY years */
+  .dir-list { display: grid; grid-template-columns: 1fr 1fr; }
+  .dir-list li + li { border-top: 0; } .dir-list li { border-top: 1px solid var(--line); } .dir-list li:nth-child(-n+2) { border-top: 0; }
+  .dir-list li:nth-child(odd) { border-right: 1px solid var(--line); }
+  .dir-list a { grid-template-columns: 96px minmax(0, 1fr) auto 14px; height: 100%; }
+  .dir-list li:only-child { grid-column: 1 / -1; border-right: 0; }
+}
 .cal { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 18px; margin-bottom: 18px; }
 .cal .ct { flex: 1 1 260px; min-width: 0; }
 .cal .ct b { display: block; }
@@ -647,6 +661,7 @@ a.dead { color: inherit; text-decoration: none; pointer-events: none; }
 .reslist a:hover { background: var(--raised); }
 .reslist .rt { font-weight: 600; }
 .reslist .rs { font-size: 13.5px; color: var(--muted); line-height: 1.4; }
+@media (max-width: 640px) { .reslist .rs { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; } }
 .res-back { display: none; }
 /* personal "my month" strip */
 .mycard { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); margin-bottom: 20px; overflow: hidden; }
@@ -739,7 +754,9 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
   .dirpromo { grid-template-columns: minmax(0, 1fr) auto; } .dirpromo span:not(.ar) { grid-column: 1; }
   .dir-grid { grid-template-columns: 1fr; }
   .res-back { display: inline-block; }
-  .dir-list a { grid-template-columns: 84px minmax(0, 1fr); }
+  .dir-list a { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; padding: 11px 14px; }
+  .dir-list a > .code, .dir-list a > span[aria-hidden] { grid-column: 1; grid-row: 1; } .dir-list a > span[aria-hidden]:empty { display: none; }
+  .dir-list .dn { grid-column: 1 / -1; } .dir-list .dp { grid-column: 2; grid-row: 1; justify-self: end; font-size: 12px; }
   .dir-list .dp, .dir-list .ar { display: none; }
   .search { max-width: none; order: 3; flex-basis: 100%; }
   .brand { flex: 1 1 0; }
@@ -852,7 +869,10 @@ a.who-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
 .tl-d { font: 600 12px/1.3 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); } .tline li.now .tl-d { color: var(--accent); }
 .tl-r { display: flex; align-items: center; gap: 8px; font-weight: 600; } .tl-r a { color: var(--ink); text-decoration: none; } .tl-r a:hover { color: var(--accent); }
 .tl-l { grid-column: 2; font-size: 13px; color: var(--muted); }
-.resgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.resgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; align-items: start; }
+@media (min-width: 900px) { .resp { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); column-gap: 18px; align-items: start; }
+  .resp > .crumb, .resp > .eyebrow, .resp > h1 { grid-column: 1 / -1; } .resp .resgrid { grid-template-columns: 1fr; gap: 0; } }
+#gfirst:not(:empty) { margin-top: 14px; }
 .rlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; } .rlist li { display: grid; gap: 2px; } .rlist span { font-size: 14px; color: var(--muted); }
 @media (max-width: 640px) { .tline li { grid-template-columns: 1fr; } .tl-l { grid-column: 1; } }
 /* didactics month grid (computers only) */
@@ -2092,7 +2112,11 @@ function onboardingPanel() {
   const shown = all ? rows : mine;
   const toggle = ME && rows.length > mine.length ? `<button type="button" class="linkbtn onbtoggle" id="onbtoggle">${all ? "Show only mine" : `Show everyone (${rows.length})`}</button>` : "";
   const dates = [...new Set(shown.map(r => +r.x.start))];
-  if (ME && !mine.length && !all) return `<div class="onbline"><b>Onboarding</b> Nothing due for you · ${rows.length} other${rows.length === 1 ? "" : "s"} <button type="button" class="linkbtn onbtoggle" id="onbtoggle">Show</button></div>`;
+  if (ME && !all) {
+    const others = rows.length - mine.length;
+    if (!others && mine.length) return "";
+    return `<div class="onbline"><b>Onboarding</b> ${mine.length ? "Yours is in your card above" : "Nothing due for you"}${others ? ` · ${others} other${others === 1 ? "" : "s"} coming up <button type="button" class="linkbtn onbtoggle" id="onbtoggle">Show everyone</button>` : ""}</div>`;
+  }
   return `<section class="panel onbpanel"><h2>Onboarding due</h2><p class="sub">Inpatient rehab and WPB VA: 7 weeks ahead. Other rotations: 3 weeks ahead.</p>
     ${!shown.length ? `<p class="onbnone">Nothing due for you right now. ${rows.length} other resident${rows.length === 1 ? " has" : "s have"} onboarding coming up.</p>` : ""}
     ${dates.map(t => { const grp = shown.filter(r => +r.x.start === t), x0 = grp[0].x;
@@ -2159,7 +2183,7 @@ function directoryList() {
   if (!all.length) return `<div class="empty">No one matches “${esc(dirQ)}”.</div>`;
   const groups = [...new Set(all.map(e => e.group))];
   return `<div class="dir-grid">${groups.map(g => {
-    const rows = all.filter(e => e.group === g), gid = rows[0].gid;
+    const seen = new Set(), rows = all.filter(e => e.group === g).filter(e => { const k = (e.name + "|" + e.role + "|" + e.contact).toLowerCase().replace(/\s+/g, " "); if (seen.has(k)) return false; seen.add(k); return true; }), gid = rows[0].gid;
     return `<section class="dirgroup"><h2 class="dir-h">${gid ? `<a href="#rot-${gid}">${esc(g)}</a>` : esc(g)}</h2><ul class="dirlist">${rows.map(e => `<li>
       <div><b>${esc(e.name || e.role)}</b>${e.name && e.role ? `<span class="muted"> · ${esc(e.role)}</span>` : ""}</div>
       <div class="dc">${contactHtml(e.contact || "")}</div></li>`).join("")}</ul></section>`;
@@ -2449,7 +2473,7 @@ function viewSchedule() {
     return `<tr class="${who ? (match ? "hl" : "dim") : ""}${p.name === ME ? " me" : ""}"><th class="name" scope="row">${whoLink(p)}</th>${cols.map(i => `<td class="${i === curMonth ? "now" : ""}">${p.months2[i] ? `<span class="split" title="${esc(p.months[i])} ${MON[(i + 6) % 12]} 1–${HALF_DAY - 1}, then ${esc(p.months2[i])} from ${MON[(i + 6) % 12]} ${HALF_DAY}"><span class="${i === curMonth && nowHalf ? "past" : ""}">${chipRaw(p.months[i], p.rots[i])}</span><span class="${i === curMonth && !nowHalf ? "later" : ""}">${chipRaw(p.months2[i], p.rots2[i])}</span></span>` : chipRaw(p.months[i], p.rots[i])}</td>`).join("")}</tr>`;
   }).join("")).join("");
   const used = S.rotations.filter(r => S.residents.some(p => p.rots.includes(r) || p.rots2.includes(r)));
-  return head + `<div class="sched-wrap"><table class="sched"><thead><tr><th class="name">Resident</th>${cols.map(i => `<th class="${i === curMonth ? "now" : ""}">${MONTHS[i]}${i === curMonth ? " · now" : ""}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
+  return head + `<div class="sched-wrap${cols.length > 6 ? " wide" : ""}"><table class="sched"><thead><tr><th class="name">Resident</th>${cols.map(i => `<th class="${i === curMonth ? "now" : ""}">${MONTHS[i]}${i === curMonth ? " · now" : ""}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
   <div class="legend">${used.map(r => `<a href="#rot-${r.id}">${chipSpan(r)}<span>${esc(r.title)}</span></a>`).join("")}</div>`;
 }
 
@@ -2483,6 +2507,20 @@ function myRotsBox() {
     return r.rot ? `<a class="mr${i === 0 ? " now" : ""}" href="#rot-${r.rot.id}">${inner}<span class="ar" aria-hidden="true">→</span></a>` : `<div class="mr${i === 0 ? " now" : ""}">${inner}</div>`;
   }).join("")}</div></section>`;
 }
+/** Location line for the guides list, without repeating the guide's own name ("West Gables Rehabilitation Hospital, Miami" → "Miami"). */
+function locShort(r) {
+  const loc = String(r.location || "").replace(/\s+/g, " ").trim(), t = String(r.title || "").replace(/\s+/g, " ").replace(/\s+-\s+.*$/, "").trim(), L = loc.toLowerCase();
+  const afterComma = () => loc.includes(",") ? loc.slice(loc.indexOf(",") + 1).trim() : "";
+  if (!loc) return "";
+  if (L.startsWith(t.toLowerCase())) {
+    const rest = loc.slice(t.length);
+    if (/^\s*,/.test(rest)) return rest.replace(/^\s*,\s*/, "");
+    if (/^\s+(of|at|in)\s+/i.test(rest)) return rest.replace(/^\s+(of|at|in)\s+/i, "");
+    return afterComma();
+  }
+  if (L.startsWith(t.toLowerCase().slice(0, 18))) return afterComma() || loc;
+  return loc;
+}
 function viewRotations() {
   const cats = [...new Set(S.rotations.map(r => r.category || "Other"))];
   return `
@@ -2491,7 +2529,7 @@ function viewRotations() {
   ${myRotsBox()}
   ${readyBanner(true)}
   ${cats.map(c => `<section class="dir"><h2 class="dir-h">${esc(c)}</h2><ul class="dir-list">${S.rotations.filter(r => (r.category || "Other") === c).map(r =>
-    `<li><a href="#rot-${r.id}">${chipSpan(r) || `<span aria-hidden="true"></span>`}<span class="dn">${esc(r.title)}<span class="dl">${esc(r.location)}</span></span><span class="dp">${esc(r.pgy)}</span><span class="ar" aria-hidden="true">→</span></a></li>`).join("")}</ul></section>`).join("")}
+    `<li><a href="#rot-${r.id}">${chipSpan(r) || `<span aria-hidden="true"></span>`}<span class="dn">${esc(r.title)}${locShort(r) ? `<span class="dl">${esc(locShort(r))}</span>` : ""}</span><span class="dp">${esc(r.pgy)}</span><span class="ar" aria-hidden="true">→</span></a></li>`).join("")}</ul></section>`).join("")}
 `;
 }
 /** "Starting an inpatient rotation? Read this first" — the readiness note, folded into one obvious line. */
@@ -2526,7 +2564,7 @@ function viewRotation(id) {
   return `<div class="guide-layout">${rotSide(id)}
   <article style="min-width:0">
     <a class="crumb" href="#rotations">← All rotation guides</a>
-    <div class="eyebrow">${esc(r.category)} · ${esc(r.type || "Rotation")}</div>
+    <div class="eyebrow">${esc(r.category)}${norm(r.type || "Rotation") === norm(r.category) || norm(r.category).startsWith(norm(r.type || "Rotation")) ? "" : " · " + esc(r.type || "Rotation")}</div>
     <div class="gtitle"><h1 style="font-size:clamp(28px,4vw,40px);letter-spacing:-.02em;margin-top:6px">${esc(r.title)}</h1>${printBtn()}</div>
     ${lastUpdated(r)}
     ${/inpatient/i.test(r.category || "") ? readyBanner(false) : ""}
@@ -2667,19 +2705,20 @@ function viewTemplate(id) {
   <div class="prose" id="tplbody">${t.html}</div></article></div>`;
 }
 function viewSearch(q) {
-  const ql = q.toLowerCase();
-  const hl = s => esc(s).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), m => `<mark>${m}</mark>`);
+  const ql = q.toLowerCase(), qe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), short = ql.length <= 3;
+  const qre = new RegExp(short ? `(?<![a-z0-9])${qe}(?![a-z])` : qe, "i"), has = t => qre.test(t);
+  const hl = s => esc(s).replace(new RegExp(short ? `(?<![a-z0-9])${qe}(?![a-z])` : qe, "ig"), m => `<mark>${m}</mark>`);
   const text = h => { const d = document.createElement("div"); d.innerHTML = h; return d.textContent.replace(/\s+/g, " "); };
-  const snip = (h) => { const t = text(h); const i = t.toLowerCase().indexOf(ql); return i < 0 ? "" : "…" + t.slice(Math.max(0, i - 60), i + 90) + "…"; };
+  const snip = (h) => { const t = text(h), m = t.match(qre); const i = m ? m.index : -1; return i < 0 ? "" : "…" + t.slice(Math.max(0, i - 60), i + 90) + "…"; };
   const res = [];
-  S.rotations.forEach(r => { const hit = (r.title + " " + r.attendings + " " + r.codes.join(" ")).toLowerCase().includes(ql); const s = snip(r.html); if (hit || s) res.push({ href: "#rot-" + r.id, title: r.title, kind: "Rotation guide", s }); });
-  (S.subpages || []).forEach(p => { const s = snip(p.html); if (p.title.toLowerCase().includes(ql) || s) res.push({ href: "#" + p.id, title: p.title, kind: "Extra guide", s }); });
-  S.policies.concat(S.extraSections || []).forEach(p => { const s = snip(p.html); if (p.title.toLowerCase().includes(ql) || s) res.push({ href: "#" + (p.id.startsWith("hb-") ? p.id : "pol-" + p.id), title: p.title, kind: "Policy", s }); });
-  S.templates.forEach(t => { const s = snip(t.html); if (t.title.toLowerCase().includes(ql) || s) res.push({ href: "#tpl-" + t.id, title: t.title, kind: "Template", s }); });
+  S.rotations.forEach(r => { const hit = has(r.title + " " + r.attendings + " " + r.codes.join(" ")); const s = snip(r.html); if (hit || s) res.push({ href: "#rot-" + r.id, title: r.title, kind: "Rotation guide", s }); });
+  (S.subpages || []).forEach(p => { const s = snip(p.html); if (has(p.title) || s) res.push({ href: "#" + p.id, title: p.title, kind: "Extra guide", s }); });
+  S.policies.concat(S.extraSections || []).forEach(p => { const s = snip(p.html); if (has(p.title) || s) res.push({ href: "#" + (p.id.startsWith("hb-") ? p.id : "pol-" + p.id), title: p.title, kind: "Policy", s }); });
+  S.templates.forEach(t => { const s = snip(t.html); if (has(t.title) || s) res.push({ href: "#tpl-" + t.id, title: t.title, kind: "Template", s }); });
   S.residents.filter(p => p.name.toLowerCase().includes(ql)).forEach(p => res.push({ href: "#schedule", title: p.name, kind: `${p.pgy} · ${MONTH_FULL[curMonth]}: ${rotAt(p, curMonth)?.title || rawAt(p, curMonth) || "—"}`, s: "" , who: p.name}));
   // quick cards: people → where they are now and next; rotations → open, directions, call, who's there
   const people = S.residents.filter(p => p.name.toLowerCase().includes(ql)).slice(0, 4);
-  const rots = S.rotations.filter(r => (r.title + " " + (r.short || "") + " " + r.codes.join(" ")).toLowerCase().includes(ql)).slice(0, 3);
+  const rots = S.rotations.filter(r => has(r.title + " " + (r.short || "") + " " + r.codes.join(" "))).slice(0, 3);
   const quick = people.map(p => {
     const [a, b] = runsFrom(p, nowSlot, 2);
     const one = (r, k) => r ? `<span class="qk">${k}</span>${r.rot ? `<a href="#rot-${r.rot.id}">${chipSpan(r.rot)} ${esc(r.rot.short || r.rot.title)}</a>` : esc(r.raw)} <span class="muted">${esc(runLabel(p, r))}</span>` : "";
@@ -2694,7 +2733,7 @@ function viewSearch(q) {
   }));
   const hide = new Set(people.map(p => p.name).concat(rots.map(r => "#rot-" + r.id)));
   for (let i = res.length - 1; i >= 0; i--) if (hide.has(res[i].who) || hide.has(res[i].href)) res.splice(i, 1);
-  const talks = S.didactics.filter(t => (t.topic + " " + t.speaker).toLowerCase().includes(ql)).slice(0, 20);
+  const talks = S.didactics.filter(t => has(t.topic + " " + t.speaker)).slice(0, 20);
   talks.forEach(t => res.push({ href: "#didactics", title: t.topic, kind: `Didactics · ${fmtDate(t.date)}${t.speaker ? " · " + t.speaker : ""}`, s: "" }));
   const total = res.length + quick.length;
   return `<div class="view-head"><div><div class="eyebrow">Search</div><h1>Results for “${esc(q)}”</h1><p>${total} match${total === 1 ? "" : "es"}. Press Esc to clear.</p></div></div>
