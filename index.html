@@ -118,15 +118,18 @@
 .prefs .edit a { font-weight: 600; }
 header.top .wrap { position: relative; }
 .strip { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
-.run { --h: 200; flex: var(--n) 1 0; min-width: 98px; border-radius: 6px; padding: 6px 8px; background: hsl(var(--h) var(--chip-s) var(--chip-l)); color: hsl(var(--h) 45% var(--chip-fg-l)); display: grid; gap: 2px; align-content: start; }
+.run { --h: 200; flex: var(--n) 1 0; min-width: 68px; border-radius: 6px; padding: 5px 7px; background: hsl(var(--h) var(--chip-s) var(--chip-l)); color: hsl(var(--h) 45% var(--chip-fg-l)); display: grid; gap: 2px; align-content: start; }
 .run small { font: 600 11px/1.2 var(--mono); letter-spacing: .04em; text-transform: uppercase; opacity: .85; }
-.run span { font-size: 13px; line-height: 1.35; font-weight: 600; overflow-wrap: anywhere; } .run small { overflow-wrap: anywhere; }
+.run span { font-size: 12.5px; line-height: 1.35; font-weight: 600; overflow-wrap: anywhere; } .run small { overflow-wrap: anywhere; }
 .run.past { background: var(--raised); color: var(--muted); opacity: .7; }
 .run.past span { font-weight: 400; }
 .run.now { box-shadow: inset 0 0 0 2px var(--sun); }
 .run.none { background: transparent; border: 1px dashed var(--line); color: var(--muted); }
 .run.none span { font-weight: 400; }
 .strip-more { display: none; }
+/* computers: past months fold away (one compact row from this month to June); "Show all months" brings them back */
+@media (min-width: 641px) { .strip:not(.all) .run.later6 { display: none; }
+  .strip-more.has-past { display: inline-block; margin-top: 6px; padding: 2px 0; background: none; border: 0; color: var(--accent); font: 600 13px/1.2 var(--body); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; } }
 @media (max-width: 640px) { .strip { flex-direction: column; } .run { flex: none; grid-template-columns: 74px 1fr; align-items: baseline; }
   .strip:not(.all) .run.later { display: none; }
   .strip-more { display: inline-block; margin-top: 6px; padding: 4px 0; background: none; border: 0; color: var(--accent); font: 600 13px/1.2 var(--body); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; } }
@@ -2461,17 +2464,18 @@ function yearStrip(year) {
     if (last && last.key === key) last.to = y.i; else runs.push({ key, from: y.i, to: y.i, ppl: y.ppl });
   });
   const hues = [200, 32, 150, 280, 350, 95, 230, 12];
-  let k = 0, hidden = 0;
+  let k = 0, hidden = 0, pastN = 0;
   const html = `<div class="strip" aria-label="Who is on this rotation each month">${runs.map(r => {
     const past = r.to < curMonth, now = r.from <= curMonth && curMonth <= r.to, none = !r.ppl.length;
     const label = r.from === r.to ? MONTHS[r.from] : `${MONTHS[r.from]}–${MONTHS[r.to]}`;
     const hide = past || r.from > curMonth + 2;   // phones show this month + the next two; the rest sits behind "Show all months"
-    if (hide) hidden++;
-    const cls = ["run", past ? "past" : "", now ? "now" : "", none ? "none" : "", hide ? "later" : ""].join(" ");
+    const hideWide = past || r.from > curMonth + 5;   // computers: this month + the next five on one compact row
+    if (hide || hideWide) hidden++; if (hideWide) pastN++;
+    const cls = ["run", past ? "past" : "", now ? "now" : "", none ? "none" : "", hide ? "later" : "", hideWide ? "later6" : ""].join(" ");
     const hue = !past && !none ? hues[k++ % hues.length] : 0;
     return `<div class="${cls}" style="--n:${r.to - r.from + 1}; --h:${hue}"><small>${label}${now ? " · now" : ""}</small><span>${none ? "—" : r.ppl.map(p => esc(p.name.split(" ")[0])).join("<br>")}</span></div>`;
   }).join("")}</div>`;
-  return html + (hidden ? `<button type="button" class="strip-more" aria-expanded="false">Show all months</button>` : "");
+  return html + (hidden ? `<button type="button" class="strip-more${pastN ? " has-past" : ""}" aria-expanded="false">Show all months</button>` : "");
 }
 document.addEventListener("click", e => {
   const b = e.target.closest(".strip-more"); if (!b) return;
