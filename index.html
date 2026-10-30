@@ -751,7 +751,17 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 @media (prefers-reduced-motion: no-preference) {
   .view.anim { animation: rise .28s cubic-bezier(.2, .7, .3, 1); }
   @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .view.anim-left { animation: fromright .26s cubic-bezier(.2, .7, .3, 1); } .view.anim-right { animation: fromleft .26s cubic-bezier(.2, .7, .3, 1); }
+  @keyframes fromright { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+  @keyframes fromleft { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
 }
+.hero-date { display: none; } .you { font: 700 11px/1 var(--body); color: var(--on-accent); background: var(--accent); padding: 3px 7px; border-radius: 999px; margin-left: 6px; vertical-align: 2px; }
+.onbline { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); font-size: 14px; color: var(--muted); } .onbline b { color: var(--ink); }
+.where:not(.all) .site.more { display: none; } .wmore { margin-top: 10px; border: 0; background: none; padding: 0; color: var(--accent); font: 600 14px/1.3 var(--body); cursor: pointer; }
+.onbline .onbtoggle { margin-top: 0; } .homegrid > .onbline { grid-column: 1 / -1; }
+@media (max-width: 640px) { .hero p, .hero .today { display: none; } .hero-date { display: inline; } .hero { margin-bottom: 14px; } }
+.srow { display: flex; gap: 8px; } .srow select { padding: 7px 22px 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: 600 15px/1.2 var(--body); }
+@media (max-width: 640px) { .srow { flex: 1 1 100%; } .srow select { flex: 1; min-width: 0; } .filters #swho { flex: 1 1 100%; max-width: none; } }
 </style>
 
 
@@ -1642,11 +1652,11 @@ function route(keepScroll) {
   else { if (!VIEWS[h]) tab = "home"; html = VIEWS[tab](); if (tab === "policies" || tab === "templates") tab = "resources"; }
   render(html, tab, keepScroll);
 }
-let lastPage = "";
+let lastPage = "", swipeDir = "";
 function render(html, tab, keepScroll) {
   const main = $("#main");
   const pageKey = tab === "search" ? "search" : (location.hash || "#home");   // animate only when the page changes, not on refresh or each search keystroke
-  main.innerHTML = `<div class="view${pageKey !== lastPage ? " anim" : ""}">${html}</div>`; lastPage = pageKey;
+  main.innerHTML = `<div class="view${pageKey !== lastPage ? (swipeDir ? " anim-" + swipeDir : " anim") : ""}">${html}</div>`; lastPage = pageKey; swipeDir = "";
   document.querySelectorAll("nav.tabs a, .bottomnav a").forEach(a => { if (a.dataset.tab === tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
   if (!keepScroll) { window.scrollTo(0, 0); lastY = 0; document.querySelector("header.top")?.classList.remove("hdr-hide"); }
   bindView();
@@ -1674,6 +1684,35 @@ function onScroll() {
   }
 }
 window.addEventListener("scroll", onScroll, { passive: true });
+/* Phones: swipe left/right on a main tab (Home, Lectures, Schedule, Guides, Resources) to go to the next/previous tab.
+ * Deliberately strict so it doesn't fire by accident: only on those five pages (never inside a guide), a long, fast,
+ * clearly sideways swipe, not starting at the screen edge (iPhone's back gesture), on a text box, or on anything
+ * that scrolls sideways itself (the schedule table, tables in guides, the jump menu). */
+const TAB_ORDER = ["home", "didactics", "schedule", "rotations", "resources"];
+let sw = null;
+function scrollsSideways(el) {
+  for (let n = el; n && n !== document.body; n = n.parentElement) {
+    if (n.matches("input, select, textarea, button, .seg, .mapsheet, .hsheet, .fab, .tour-pop, .sched-wrap, .tbl, table, pre, .jump, .strip, .minical")) return true;
+    if (n.scrollWidth > n.clientWidth + 2 && /(auto|scroll)/.test(getComputedStyle(n).overflowX)) return true;
+  }
+  return false;
+}
+document.addEventListener("touchstart", e => {
+  sw = null;
+  if (!phone() || e.touches.length !== 1 || $("#q").value) return;
+  const h = (location.hash || "#home").slice(1), i = TAB_ORDER.indexOf(h === "" ? "home" : h);
+  const t = e.touches[0];
+  if (i < 0 || t.clientX < 30 || t.clientX > window.innerWidth - 30 || !e.target.closest("#main") || scrollsSideways(e.target)) return;
+  sw = { x: t.clientX, y: t.clientY, t: Date.now(), i };
+}, { passive: true });
+document.addEventListener("touchmove", e => { if (sw && e.touches.length > 1) sw = null; }, { passive: true });
+document.addEventListener("touchend", e => {
+  if (!sw) return; const s0 = sw; sw = null;
+  const t = e.changedTouches[0], dx = t.clientX - s0.x, dy = t.clientY - s0.y;
+  if (Date.now() - s0.t > 600 || Math.abs(dx) < 90 || Math.abs(dx) < 2.5 * Math.abs(dy) || String(window.getSelection() || "")) return;
+  const j = s0.i + (dx < 0 ? 1 : -1); if (j < 0 || j >= TAB_ORDER.length) return;
+  swipeDir = dx < 0 ? "left" : "right"; location.hash = "#" + TAB_ORDER[j];
+}, { passive: true });
 document.addEventListener("click", e => {
   if (e.target.closest("#fab-top")) { $("#fab-menu").hidden = true; window.scrollTo({ top: 0, behavior: "smooth" }); return; }
   if (e.target.closest("#fab-secs")) {
@@ -1784,6 +1823,7 @@ function onboardingPanel() {
   const shown = all ? rows : mine;
   const toggle = ME && rows.length > mine.length ? `<button type="button" class="linkbtn onbtoggle" id="onbtoggle">${all ? "Show only mine" : `Show everyone (${rows.length})`}</button>` : "";
   const dates = [...new Set(shown.map(r => +r.x.start))];
+  if (ME && !mine.length && !all) return `<div class="onbline"><b>Onboarding</b> Nothing due for you · ${rows.length} other${rows.length === 1 ? "" : "s"} <button type="button" class="linkbtn onbtoggle" id="onbtoggle">Show</button></div>`;
   return `<section class="panel onbpanel"><h2>Onboarding due</h2><p class="sub">Inpatient rehab and WPB VA: 7 weeks ahead. Other rotations: 3 weeks ahead.</p>
     ${!shown.length ? `<p class="onbnone">Nothing due for you right now. ${rows.length} other resident${rows.length === 1 ? " has" : "s have"} onboarding coming up.</p>` : ""}
     ${dates.map(t => { const grp = shown.filter(r => +r.x.start === t), x0 = grp[0].x;
@@ -1906,14 +1946,15 @@ function meCard() {
   const endMonth = (j - 1) >> 1, endsMid = j < 24 && j % 2 === 1;   // the run ends on the 15th when the next rotation starts mid-month
   const until = endsMid ? ` · through ${MON[(endMonth + 6) % 12]} ${HALF_DAY - 1}` : endMonth > mi ? ` · through ${MON[(endMonth + 6) % 12]}` : "";
   const nextR = j < 24 ? slotRot(p, j) : null, nextRaw = j < 24 ? slotRaw(p, j) : "";
-  const lec = S.didactics.find(t => t.date >= todayISO && presentsTalk(t.speaker, p.name));
+  const lec0 = S.didactics.find(t => t.date >= todayISO && presentsTalk(t.speaker, p.name));
+  const nd0 = (nextSessions()[0] || [])[0], lec = lec0 && lec0.date === nd0 ? null : lec0;   // already shown (tagged "You") under Next didactics
   const onb = onboardingDue(p);
   const rotLink = (r, raw) => r ? `${chipSpan(r)}<a href="#rot-${r.id}">${esc(r.short)}</a>` : (raw ? esc(raw) : "—");
   return `<section class="mycard">
     <div class="hi"><b>Hi, ${esc(p.name.split(" ")[0])}</b><span class="n">${esc(p.pgy)}</span><button type="button" id="mechange">Not you?</button>${CFG.liveDataUrl && store.get("hub.cal.me") === "1" ? calButton("mycal", true, "", "Your calendar is added (tap for options)") : ""}</div>
     <div><span class="k">This month</span><span class="v">${rotLink(r0, raw0)}</span><span class="n">${MONTH_FULL[mi]}${until}</span></div>
     <div><span class="k">Next</span><span class="v">${j < 24 ? rotLink(nextR, nextRaw) : "End of year"}</span><span class="n">${j < 24 ? "Starts " + (j % 2 ? `${MONTH_FULL[j >> 1]} ${HALF_DAY}` : MONTH_FULL[j >> 1]) : ""}</span></div>
-    <div class="lec"><span class="k">Your next lecture</span>${lec ? `<span class="v"><a href="#didactics">${esc(lec.topic)}</a></span><span class="n">${fmtDate(lec.date)}${lec.location ? " · " + esc(lec.location) : ""}</span>` : `<span class="n">None on the calendar</span>`}</div>
+    ${!lec && lec0 ? "" : `<div class="lec"><span class="k">Your next lecture</span>`}${!lec && lec0 ? "" : lec ? `<span class="v"><a href="#didactics">${esc(lec.topic)}</a></span><span class="n">${fmtDate(lec.date)}${lec.location ? " · " + esc(lec.location) : ""}</span>` : `<span class="n">None on the calendar</span>`}${!lec && lec0 ? "" : "</div>"}
     ${onb.map(x => {
       const steps = onboardingSteps(x.rot);
       return `<div class="onb"><span class="k">Onboarding · start now</span><span class="v">${x.rot ? `${chipSpan(x.rot)}<a href="#rot-${x.rot.id}">${esc(x.rot.title)}</a>` : esc(x.raw)}</span>
@@ -1954,7 +1995,7 @@ function viewHome() {
   return `
   <section class="hero">
     <div>
-      <div class="eyebrow">PM&amp;R Residency · ${esc(S.academicYear)}</div>
+      <div class="eyebrow">PM&amp;R Residency · ${esc(S.academicYear)}<span class="hero-date"> · ${d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span></div>
       <h1>${heroHeadline()}</h1>
       ${S.heroSub !== "" ? `<p>${esc(S.heroSub || "Rotation guides, the didactic calendar, block schedules, policies and note templates for Larkin Community Hospital South Miami residents.")}</p>` : ""}
     </div>
@@ -1964,28 +2005,28 @@ function viewHome() {
   ${meCard()}
   ${ann}
   <div class="homegrid">
-      <section class="panel didpanel ${onb ? "" : "wide"}">
+      <section class="panel didpanel ${onb && !onb.startsWith('<div class="onbline"') ? "" : "wide"}">
         <h2>Next didactics</h2>
         <p class="sub">Lectures are Mondays; Journal Club and workshops are Thursdays.</p>
         ${nd ? `<div class="next-date ${talks.some(t => t.kind === "jc") ? "jc-day" : ""}">
             <div class="datebox"><small>${DOW[parseISO(nd).getDay()]}</small><b>${parseISO(nd).getDate()}</b><small>${MON[parseISO(nd).getMonth()]}</small></div>
             <div style="min-width:0">
               <div class="dmeta"><span>${esc(talks[0].location || "Location TBA")}</span>${talks[0].time ? `<span>${esc(talks[0].time)}</span>` : ""}${joinBtn(talks)}</div>
-              <ul class="talks">${talks.map(t => `<li><span class="t">${esc(t.topic)}${kindTag(t)}</span>${t.speaker ? `<span class="s">${esc(t.speaker)}</span>` : ""}</li>`).join("")}</ul>
+              <ul class="talks">${talks.map(t => `<li><span class="t">${esc(t.topic)}${kindTag(t)}${meResident() && presentsTalk(t.speaker, meResident().name) ? ' <span class="you">You</span>' : ""}</span>${t.speaker ? `<span class="s">${esc(t.speaker)}</span>` : ""}</li>`).join("")}</ul>
             </div></div>
             <p style="margin:16px 0 0"><a href="#didactics">Full didactic calendar →</a></p>`
           : `<div class="empty">No upcoming sessions on the calendar.</div>`}
       </section>
       ${onb}
       <section class="panel wide">
-        <h2>Where everyone is in ${MONTH_FULL[mi]}</h2>
-        <p class="sub">From the resident block schedule. Tap a rotation for its guide.</p>
-        <div class="where">${sites.map(x => `<div class="site"><a href="#rot-${x.r.id}">${chipSpan(x.r)} <b style="color:var(--ink)">${esc(x.r.short)}</b></a><span class="names">${x.people.map(p => esc(p.name)).join(", ")}</span></div>`).join("")}</div>
-      </section>
-      <section class="panel wide">
         <h2>Key contacts</h2>
         <p class="sub">Program leadership and chiefs · <a href="#directory">Full directory →</a></p>
         ${keyContacts()}
+      </section>
+      <section class="panel wide">
+        <h2>Where everyone is in ${MONTH_FULL[mi]}</h2>
+        <p class="sub">From the resident block schedule. Tap a rotation for its guide.</p>
+        <div class="where">${sites.map((x, i) => `<div class="site${i >= 4 ? " more" : ""}"><a href="#rot-${x.r.id}">${chipSpan(x.r)} <b style="color:var(--ink)">${esc(x.r.short)}</b></a><span class="names">${x.people.map(p => esc(p.name)).join(", ")}</span></div>`).join("")}</div>${sites.length > 4 ? `<button type="button" class="linkbtn wmore">Show all ${sites.length} rotations</button>` : ""}
       </section>
   </div>
   ${quickLinks()}`;
@@ -2102,8 +2143,8 @@ function viewSchedule() {
       <button data-sview="grid" aria-pressed="${sState.view === "grid"}">By resident</button>
       <button data-sview="site" aria-pressed="${sState.view === "site"}">By site</button>
     </div>
-    ${sState.view === "grid" ? `<div class="seg" role="group" aria-label="Months shown"><button data-span="3" aria-pressed="${sState.span === "3"}">Next 3 months</button><button data-span="12" aria-pressed="${sState.span === "12"}">Full year</button></div>
-      <div class="seg" role="group" aria-label="PGY">${["all", ...pgys].map(p => `<button data-pgy="${p}" aria-pressed="${sState.pgy === p}">${p === "all" ? "All years" : esc(p)}</button>`).join("")}</div>
+    ${sState.view === "grid" ? `<div class="srow"><select id="sspan" aria-label="Months shown"><option value="3" ${sState.span === "3" ? "selected" : ""}>Next 3 months</option><option value="12" ${sState.span === "12" ? "selected" : ""}>Full year</option></select>
+      <select id="spgy" aria-label="PGY year">${["all", ...pgys].map(p => `<option value="${esc(p)}" ${sState.pgy === p ? "selected" : ""}>${p === "all" ? "All years" : esc(p)}</option>`).join("")}</select></div>
       <input id="swho" type="search" placeholder="Find a resident" value="${esc(sState.who)}" aria-label="Find a resident">`
     : `<select id="smonth" aria-label="Month">${MONTH_FULL.map((m, i) => `<option value="${i}" ${sState.month === i ? "selected" : ""}>${m}${i === curMonth ? " (now)" : ""}</option>`).join("")}</select>`}
   </div>`;
@@ -2501,6 +2542,7 @@ function bindView() {
   const mcb = $("#mycal"); if (mcb) mcb.onclick = openMyCal;
   const dq2 = $("#dirq"); if (dq2) dq2.oninput = () => { dirQ = dq2.value; $("#dirlist").innerHTML = directoryList(); };
   const ms = $("#mesel"); if (ms) ms.onchange = () => { ME = ms.value; store.set("hub.me", ME); route(true); };
+  const wm = $(".wmore"); if (wm) wm.onclick = () => { wm.previousElementSibling.classList.add("all"); wm.remove(); };
   const ok = $("#assign-ok"); if (ok) ok.onclick = () => {
     let seen = []; try { seen = JSON.parse(store.get(SEEN_KEY) || "[]"); } catch {}
     const keep = new Set(seen.filter(k => k.slice(0, 10) >= todayISO)); myNewTalks().forEach(t => keep.add(talkKey(t)));
@@ -2528,8 +2570,8 @@ function bindView() {
   });
   const dq = $("#dq"); if (dq) dq.oninput = () => { dState.q = dq.value; $("#dlist").innerHTML = didacticList(); };
   document.querySelectorAll("[data-sview]").forEach(b => b.onclick = () => { sState.view = b.dataset.sview; route(true); });
-  document.querySelectorAll("[data-span]").forEach(b => b.onclick = () => { sState.span = b.dataset.span; route(true); });
-  document.querySelectorAll("[data-pgy]").forEach(b => b.onclick = () => { sState.pgy = b.dataset.pgy; store.set("hub.s.pgy", sState.pgy); route(true); });
+  const sp = $("#sspan"); if (sp) sp.onchange = () => { sState.span = sp.value; route(true); };
+  const sg = $("#spgy"); if (sg) sg.onchange = () => { sState.pgy = sg.value; store.set("hub.s.pgy", sState.pgy); route(true); };
   const sw = $("#swho"); if (sw) sw.oninput = () => { sState.who = sw.value; const pos = sw.selectionStart; route(true); const n = $("#swho"); n.focus(); n.setSelectionRange(pos, pos); };
   const sm = $("#smonth"); if (sm) sm.onchange = () => { sState.month = +sm.value; route(true); };
   document.querySelectorAll(".prose pre").forEach(pre => {
