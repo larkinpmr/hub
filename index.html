@@ -141,7 +141,36 @@ h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.15;
 button { font: inherit; color: inherit; }
 
 /* header */
-header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); }
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); transition: transform .28s ease; }
+@media (max-width: 899px) { header.top.hdr-hide { transform: translateY(calc(-100% - 4px - env(safe-area-inset-top, 0px))); } }
+/* floating Top / Sections on long guide pages */
+.fab { position: fixed; right: 16px; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 11; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.fab > button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 9px 14px; font: 600 14px/1 var(--body); box-shadow: 0 6px 18px rgba(20, 10, 40, .18); cursor: pointer; }
+.fab > button svg { width: 17px; height: 17px; color: var(--accent); }
+.fab-menu { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 10px 30px rgba(20, 10, 40, .22); padding: 8px; max-height: 55vh; overflow: auto; width: min(300px, calc(100vw - 32px)); display: grid; }
+.fab-menu b { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; }
+.fab-menu a { padding: 10px; border-radius: 8px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 15px; } .fab-menu a:hover { background: var(--accent-soft); color: var(--accent); }
+@media (max-width: 899px) { .fab { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); } }
+/* Your rotations (Rotation Guides) */
+.myrots { margin-bottom: 22px; }
+.myrots-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.mr { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; padding: 10px 34px 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); color: var(--ink); text-decoration: none; }
+a.mr:hover { border-color: var(--accent); } .mr.now { border-color: var(--accent); background: var(--accent-soft); }
+.mr-k { font: 600 11px/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); } .mr.now .mr-k { color: var(--accent); }
+.mr-x { display: grid; gap: 2px; min-width: 0; } .mr-x b { font-size: 16px; line-height: 1.25; }
+@media (max-width: 640px) { .myrots-g { gap: 6px; } }
+.mr .ar { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+/* search quick cards */
+.qcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.qcard { background: var(--surface); border: 1px solid var(--accent); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 6px; }
+.qcard > b { font-size: 16px; line-height: 1.35; } .qcard > b .code { margin-right: 6px; vertical-align: 1px; } .qcard mark { background: var(--sun-soft); color: inherit; border-radius: 3px; }
+.qrow { font-size: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; } .qrow a { color: var(--ink); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.qk { font: 600 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); min-width: 3.4em; }
+.qact { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; } .qact .btn { text-decoration: none; }
+/* loading shimmer */
+.skel { display: grid; gap: 14px; padding-top: 6px; } .skel i { display: block; border-radius: 10px; background: linear-gradient(90deg, var(--raised) 25%, color-mix(in srgb, var(--raised) 40%, var(--surface)) 50%, var(--raised) 75%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skel i { animation: none; } header.top { transition: none; } }
 header.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 3px; background: var(--stripe); }
 .top-row { display: flex; align-items: center; gap: 16px; padding-block: 12px 0; flex-wrap: wrap; }
 .brand { position: relative; display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); margin-right: auto; min-width: 0; flex: 1 1 auto; }
@@ -667,6 +696,7 @@ table.sched tr.me td { background: color-mix(in srgb, var(--accent-soft) 55%, tr
   .cal .ct span { display: none; }
   table.sched th.name { min-width: 0; width: 34%; white-space: normal; font-size: 13.5px; padding-left: 10px; }
   table.sched th, table.sched td { padding: 6px 3px; }
+  table.sched td .code { min-height: 34px; min-width: 3.8em; padding: 6px 8px; font-size: 12.5px; }
   table.sched .code { font-size: 10.5px; padding: 2px 4px; min-width: 0; }
   main { padding-block: 18px 32px; }
 }
@@ -719,8 +749,8 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
   .wm { font-size: 11px; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .view { animation: rise .25s ease-out; }
-  @keyframes rise { from { transform: translateY(4px); } to { transform: none; } }
+  .view.anim { animation: rise .28s cubic-bezier(.2, .7, .3, 1); }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 }
 </style>
 
@@ -783,7 +813,8 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 </header>
 
 <nav class="bottomnav" aria-label="Sections"><a href="#home" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/></svg>Home</a><a href="#didactics" data-tab="didactics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>Lectures</a><a href="#schedule" data-tab="schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 9h17M9 9v11M15 9v11"/></svg>Schedule</a><a href="#rotations" data-tab="rotations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3.5H7A1.5 1.5 0 0 0 5.5 5v14A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M14 3.5V8h4.5M8.5 12.5h7M8.5 16h5"/></svg>Guides</a><a href="#resources" data-tab="resources"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5A1.5 1.5 0 0 1 5.5 5H10l2 2.5h6.5A1.5 1.5 0 0 1 20 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z"/><path d="M8.5 13.5h7M8.5 16.5h4.5"/></svg>Resources</a></nav>
-<main class="wrap" id="main" tabindex="-1"><p class="muted">Loading the hub…</p></main>
+<main class="wrap" id="main" tabindex="-1"><div class="skel" aria-label="Loading the hub"><i style="width:30%;height:12px"></i><i style="width:70%;height:34px"></i><i style="width:55%;height:14px"></i><i style="height:120px"></i><i style="height:180px"></i><i style="height:140px"></i></div></main>
+<div id="fab" class="fab" hidden><div id="fab-menu" class="fab-menu" hidden></div><button type="button" id="fab-secs" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>Sections</button><button type="button" id="fab-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg>Top</button></div>
 
 <footer>
   <div class="wrap">
@@ -1611,14 +1642,49 @@ function route(keepScroll) {
   else { if (!VIEWS[h]) tab = "home"; html = VIEWS[tab](); if (tab === "policies" || tab === "templates") tab = "resources"; }
   render(html, tab, keepScroll);
 }
+let lastPage = "";
 function render(html, tab, keepScroll) {
   const main = $("#main");
-  main.innerHTML = `<div class="view">${html}</div>`;
+  const pageKey = tab === "search" ? "search" : (location.hash || "#home");   // animate only when the page changes, not on refresh or each search keystroke
+  main.innerHTML = `<div class="view${pageKey !== lastPage ? " anim" : ""}">${html}</div>`; lastPage = pageKey;
   document.querySelectorAll("nav.tabs a, .bottomnav a").forEach(a => { if (a.dataset.tab === tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
-  if (!keepScroll) window.scrollTo(0, 0);
+  if (!keepScroll) { window.scrollTo(0, 0); lastY = 0; document.querySelector("header.top")?.classList.remove("hdr-hide"); }
   bindView();
+  const secs = $("#fab-secs"); if (secs) setTimeout(() => { secs.hidden = !document.querySelector("#gtop [data-jump]"); onScroll(); }, 30);
 }
 window.addEventListener("hashchange", () => { $("#q").value = ""; route(); });
+/* Phones: the header slides away while scrolling down and comes back on any scroll up. Guide and policy pages get a
+ * floating "Top" button (and "Sections" when the guide has a jump menu) once you are past the first screen. */
+let lastY = 0;
+const phone = () => window.matchMedia("(max-width: 899px)").matches;
+function onScroll() {
+  const y = Math.max(0, window.scrollY), hdr = document.querySelector("header.top"), dy = y - lastY;
+  const busy = document.activeElement === $("#q") || $("#q").value || document.querySelector(".mapsheet, .hsheet, .fab-menu:not([hidden])");
+  if (hdr) {
+    if (!phone() || busy || y < hdr.offsetHeight + 20) hdr.classList.remove("hdr-hide");
+    else if (dy > 6) hdr.classList.add("hdr-hide");
+    else if (dy < -6) hdr.classList.remove("hdr-hide");
+  }
+  if (Math.abs(dy) > 6 || y < 10) lastY = y;
+  const fab = $("#fab"), h = (location.hash || "").slice(1);
+  if (fab) {
+    const long = /^(rot|sub|pol|hb)-/.test(h) && !$("#q").value && document.documentElement.scrollHeight > window.innerHeight * 2.2;
+    fab.hidden = !(long && y > window.innerHeight * 0.9);
+    if (fab.hidden) { $("#fab-menu").hidden = true; }
+  }
+}
+window.addEventListener("scroll", onScroll, { passive: true });
+document.addEventListener("click", e => {
+  if (e.target.closest("#fab-top")) { $("#fab-menu").hidden = true; window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+  if (e.target.closest("#fab-secs")) {
+    const m = $("#fab-menu"), links = [...document.querySelectorAll("#gtop [data-jump]")];
+    m.innerHTML = `<b>Sections</b>${links.map(a => `<a href="#${a.dataset.jump}" data-go="${a.dataset.jump}">${esc(a.textContent)}</a>`).join("")}`;
+    m.hidden = !m.hidden; return;
+  }
+  const go = e.target.closest("[data-go]");
+  if (go) { e.preventDefault(); $("#fab-menu").hidden = true; document.getElementById(go.dataset.go)?.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  if (!e.target.closest("#fab")) { const m = $("#fab-menu"); if (m) m.hidden = true; }
+});
 let qt; $("#q").addEventListener("input", () => { clearTimeout(qt); qt = setTimeout(() => route(), 120); });
 $("#q").addEventListener("keydown", e => { if (e.key === "Escape") { e.target.value = ""; route(); } });
 
@@ -2065,11 +2131,38 @@ function rotSide(active) {
   const cats = [...new Set(S.rotations.map(r => r.category || "Other"))];
   return `<nav class="side" aria-label="Rotation guides">${cats.map(c => `<div class="grp">${esc(c)}</div>` + S.rotations.filter(r => (r.category || "Other") === c).map(r => `<a href="#rot-${r.id}" ${r.id === active ? 'aria-current="page"' : ""}>${esc(r.title)}</a>`).join("")).join("")}</nav>`;
 }
+/** A resident's assignments from half-month slot k on, merged into runs: [{rot, raw, from, to}] (slots, inclusive). */
+function runsFrom(p, k, n) {
+  const out = [];
+  for (let j = k; j < 24 && out.length <= n; j++) {
+    const key = slotKey(p, j), last = out[out.length - 1];
+    if (last && last.key === key) last.to = j; else out.push({ key, rot: slotRot(p, j), raw: slotRaw(p, j), from: j, to: j });
+  }
+  if (out[0]) while (out[0].from > 0 && slotKey(p, out[0].from - 1) === out[0].key) out[0].from--;   // "Now" shows when it really started
+  return out.slice(0, n).filter(r => r.rot || r.raw);
+}
+function runLabel(p, r) {
+  const mon = j => MON[((j >> 1) + 6) % 12];
+  const a = r.from % 2 ? `${mon(r.from)} ${HALF_DAY}` : mon(r.from);
+  const b = r.to % 2 === 0 && p.months2[r.to >> 1] ? `${mon(r.to)} ${HALF_DAY - 1}` : mon(r.to);
+  return a === b ? a : `${a} – ${b}`;
+}
+/** Rotation Guides: your current and next rotations first, so you don't scroll through every guide to find yours. */
+function myRotsBox() {
+  const p = meResident(); if (!p) return "";
+  const runs = runsFrom(p, nowSlot, 3); if (!runs.length) return "";
+  const lbl = ["Now", "Next", "After that"];
+  return `<section class="myrots" aria-label="Your rotations"><h2 class="dir-h">Your rotations</h2><div class="myrots-g">${runs.map((r, i) => {
+    const inner = `${r.rot ? chipSpan(r.rot) : `<span class="code">${esc(r.raw)}</span>`}<span class="mr-x"><b>${esc(r.rot ? (r.rot.short || r.rot.title) : r.raw)}</b><span class="mr-k">${lbl[i]} · ${esc(runLabel(p, r))}</span></span>`;
+    return r.rot ? `<a class="mr${i === 0 ? " now" : ""}" href="#rot-${r.rot.id}">${inner}<span class="ar" aria-hidden="true">→</span></a>` : `<div class="mr${i === 0 ? " now" : ""}">${inner}</div>`;
+  }).join("")}</div></section>`;
+}
 function viewRotations() {
   const cats = [...new Set(S.rotations.map(r => r.category || "Other"))];
   return `
   <div class="view-head"><div><div class="eyebrow">Rotation Guides</div><h1>Rotation guides</h1>
     <p>Pick your rotation for site expectations, contacts, schedules, attachments and tips.</p></div></div>
+  ${myRotsBox()}
   ${readyBanner(true)}
   ${cats.map(c => `<section class="dir"><h2 class="dir-h">${esc(c)}</h2><ul class="dir-list">${S.rotations.filter(r => (r.category || "Other") === c).map(r =>
     `<li><a href="#rot-${r.id}">${chipSpan(r) || `<span aria-hidden="true"></span>`}<span class="dn">${esc(r.title)}<span class="dl">${esc(r.location)}</span></span><span class="dp">${esc(r.pgy)}</span><span class="ar" aria-hidden="true">→</span></a></li>`).join("")}</ul></section>`).join("")}
@@ -2223,10 +2316,29 @@ function viewSearch(q) {
   S.policies.concat(S.extraSections || []).forEach(p => { const s = snip(p.html); if (p.title.toLowerCase().includes(ql) || s) res.push({ href: "#" + (p.id.startsWith("hb-") ? p.id : "pol-" + p.id), title: p.title, kind: "Policy", s }); });
   S.templates.forEach(t => { const s = snip(t.html); if (t.title.toLowerCase().includes(ql) || s) res.push({ href: "#tpl-" + t.id, title: t.title, kind: "Template", s }); });
   S.residents.filter(p => p.name.toLowerCase().includes(ql)).forEach(p => res.push({ href: "#schedule", title: p.name, kind: `${p.pgy} · ${MONTH_FULL[curMonth]}: ${rotAt(p, curMonth)?.title || rawAt(p, curMonth) || "—"}`, s: "" , who: p.name}));
+  // quick cards: people → where they are now and next; rotations → open, directions, call, who's there
+  const people = S.residents.filter(p => p.name.toLowerCase().includes(ql)).slice(0, 4);
+  const rots = S.rotations.filter(r => (r.title + " " + (r.short || "") + " " + r.codes.join(" ")).toLowerCase().includes(ql)).slice(0, 3);
+  const quick = people.map(p => {
+    const [a, b] = runsFrom(p, nowSlot, 2);
+    const one = (r, k) => r ? `<span class="qk">${k}</span>${r.rot ? `<a href="#rot-${r.rot.id}">${chipSpan(r.rot)} ${esc(r.rot.short || r.rot.title)}</a>` : esc(r.raw)} <span class="muted">${esc(runLabel(p, r))}</span>` : "";
+    return `<div class="qcard"><b>${hl(p.name)}</b> <span class="muted">${esc(p.pgy)}</span><div class="qrow">${one(a, "Now")}</div>${b ? `<div class="qrow">${one(b, "Next")}</div>` : ""}</div>`;
+  }).concat(rots.map(r => {
+    const t = text(r.html || ""); ADDR_RE.lastIndex = 0; const am = ADDR_RE.exec(t);
+    const addr = am ? am[0].replace(/\s+/g, " ") + (/\b(FL|OH|Florida|Ohio)\b/.test(am[0]) ? "" : ", Florida") : "";
+    const ph = (t.match(/\(?\b\d{3}\)?[-.\s]?\d{3}[-.\s]\d{4}\b/) || [""])[0];
+    const now = whoIsAt(r, curMonth);
+    return `<div class="qcard"><b>${chipSpan(r)} ${hl(r.title)}</b>${r.location ? `<div class="muted">${esc(r.location)}</div>` : ""}${now.length ? `<div class="qrow"><span class="qk">On now</span>${now.map(p => esc(p.name)).join(", ")}</div>` : ""}
+      <div class="qact"><a class="btn small" href="#rot-${r.id}">Open guide</a>${addr ? `<button type="button" class="btn small ghost addr-btn" data-addr="${esc(addr)}">Directions</button>` : ""}${ph ? `<a class="btn small ghost" href="tel:+1${ph.replace(/\D/g, "").slice(-10)}">Call</a>` : ""}</div></div>`;
+  }));
+  const hide = new Set(people.map(p => p.name).concat(rots.map(r => "#rot-" + r.id)));
+  for (let i = res.length - 1; i >= 0; i--) if (hide.has(res[i].who) || hide.has(res[i].href)) res.splice(i, 1);
   const talks = S.didactics.filter(t => (t.topic + " " + t.speaker).toLowerCase().includes(ql)).slice(0, 20);
   talks.forEach(t => res.push({ href: "#didactics", title: t.topic, kind: `Didactics · ${fmtDate(t.date)}${t.speaker ? " · " + t.speaker : ""}`, s: "" }));
-  return `<div class="view-head"><div><div class="eyebrow">Search</div><h1>Results for “${esc(q)}”</h1><p>${res.length} match${res.length === 1 ? "" : "es"}. Press Esc to clear.</p></div></div>
-  ${res.length ? `<div class="results">${res.map(r => `<a class="result" href="${r.href}" ${r.who ? `data-who="${esc(r.who)}"` : ""}><b>${hl(r.title)}</b><small>${esc(r.kind)}</small>${r.s ? `<small>${hl(r.s)}</small>` : ""}</a>`).join("")}</div>` : `<div class="empty">Nothing matched. Try a site name, attending, lecture topic or resident.</div>`}`;
+  const total = res.length + quick.length;
+  return `<div class="view-head"><div><div class="eyebrow">Search</div><h1>Results for “${esc(q)}”</h1><p>${total} match${total === 1 ? "" : "es"}. Press Esc to clear.</p></div></div>
+  ${quick.length ? `<div class="qcards">${quick.join("")}</div>` : ""}
+  ${res.length ? `<div class="results">${res.map(r => `<a class="result" href="${r.href}" ${r.who ? `data-who="${esc(r.who)}"` : ""}><b>${hl(r.title)}</b><small>${esc(r.kind)}</small>${r.s ? `<small>${hl(r.s)}</small>` : ""}</a>`).join("")}</div>` : (quick.length ? "" : `<div class="empty">Nothing matched. Try a site name, attending, lecture topic or resident.</div>`)}`;
 }
 
 /* ----------------------------------------------------------- tappable addresses */
@@ -2339,7 +2451,7 @@ function closeMaps() {
   if (mapsReturn) { mapsReturn.focus(); mapsReturn = null; }
 }
 document.addEventListener("keydown", e => { if (e.key === "Escape" && document.querySelector(".mapsheet")) closeMaps(); });
-document.addEventListener("click", e => { const b = e.target.closest("button.addr"); if (b) { e.preventDefault(); openMaps(b); } });
+document.addEventListener("click", e => { const b = e.target.closest("button.addr, .addr-btn"); if (b) { e.preventDefault(); openMaps(b); } });
 
 /* ----------------------------------------------------------- guide page: "First day" card + "Jump to" menu
  * Built from the guide on screen each time, so they follow every Handbooks edit. */
