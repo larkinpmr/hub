@@ -829,6 +829,12 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 :root[data-accent="teal"] { --lg-bg1: #164A43; --lg-bg2: #0B1B1A; --lg-sun1: #FFD98A; --lg-sun2: #FFAB8B; --lg-g1: #FFAB8B; --lg-g2: #6FE2CC; --lg-wave: #6FE2CC; --lg-ray: #FFD98A; }
 :root[data-accent="forest"] { --lg-bg1: #12432F; --lg-bg2: #07140E; --lg-sun1: #F7DC6A; --lg-sun2: #B5EB5A; --lg-g1: #5DE59A; --lg-g2: #F3D04A; --lg-wave: #5DE59A; --lg-ray: #F3D04A; }
 :root[data-accent="plum"] { --lg-bg1: #2E2514; --lg-bg2: #0B0A08; --lg-sun1: #FFF0C2; --lg-sun2: #F2C14E; --lg-g1: #F2C14E; --lg-g2: #FFF0C2; --lg-wave: #E0AE3E; --lg-ray: #FFF0C2; }
+/* font choices (headings + text; labels, codes and the header logo keep their own fonts) */
+:root[data-font="easy"] { --display: "Atkinson Hyperlegible", "Source Sans 3", system-ui, sans-serif; --body: "Atkinson Hyperlegible", "Source Sans 3", system-ui, sans-serif; }
+:root[data-font="classic"] { --display: "Lora", Georgia, "Times New Roman", serif; --body: "Source Serif 4", Georgia, "Times New Roman", serif; }
+:root[data-font="rounded"] { --display: "Nunito", "Source Sans 3", system-ui, sans-serif; --body: "Nunito", "Source Sans 3", system-ui, sans-serif; }
+:root[data-font="system"] { --display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif; --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif; }
+.seg.seg-wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-radius: 14px; gap: 2px; } .seg.seg-wrap button { white-space: nowrap; border-radius: 10px; padding: 7px 6px; font-size: 14px; }
 </style>
 
 
@@ -865,6 +871,8 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
     <div class="prefs" id="prefs" hidden role="dialog" aria-label="Display settings">
       <div><h3>Text size</h3><div class="seg" role="group" aria-label="Text size">
         <button type="button" data-fs="0.9">Small</button><button type="button" data-fs="1">Normal</button><button type="button" data-fs="1.12">Large</button><button type="button" data-fs="1.25">Larger</button></div></div>
+      <div><h3>Font</h3><div class="seg seg-wrap" role="group" aria-label="Font">
+        <button type="button" data-ff="default">Default</button><button type="button" data-ff="easy" style="font-family:'Atkinson Hyperlegible',var(--body)">Easy reading</button><button type="button" data-ff="classic" style="font-family:'Source Serif 4',Georgia,serif">Classic</button><button type="button" data-ff="rounded" style="font-family:Nunito,var(--body)">Rounded</button><button type="button" data-ff="system" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif">System</button></div></div>
       <div><h3>Appearance</h3><div class="seg" role="group" aria-label="Appearance">
         <button type="button" data-th="auto">Auto</button><button type="button" data-th="light">Light</button><button type="button" data-th="dark">Dark</button></div></div>
       <div><h3>Color scheme</h3><div class="swatches" role="group" aria-label="Color scheme">
@@ -927,11 +935,19 @@ function monthIndexOf(d) { return (d.getMonth() - 6 + 12) % 12; } // Jul=0
 const curMonth = monthIndexOf(today);
 
 /* ----------------------------------------------------------- display settings */
-const PREF = { fs: store.get("hub.fs") || "1", th: store.get("hub.th") || "auto", ac: store.get("hub.ac") || "vice" };
+const PREF = { fs: store.get("hub.fs") || "1", th: store.get("hub.th") || "auto", ac: store.get("hub.ac") || "vice", ff: store.get("hub.ff") || "default" };
+/* Font choice (gear menu). Each font's file is loaded only when someone picks it. */
+const FONT_CSS = { easy: "family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400", classic: "family=Lora:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400", rounded: "family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400" };
+function loadFont(id) {
+  if (!FONT_CSS[id] || document.getElementById("font-" + id)) return;
+  const l = document.createElement("link"); l.id = "font-" + id; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?" + FONT_CSS[id] + "&display=swap"; document.head.appendChild(l);
+}
 function applyPrefs() {
   const root = document.documentElement;
   if (PREF.th === "auto") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", PREF.th);
   if (PREF.ac === "vice") root.removeAttribute("data-accent"); else root.setAttribute("data-accent", PREF.ac);
+  if (PREF.ff === "default") root.removeAttribute("data-font"); else { root.setAttribute("data-font", PREF.ff); loadFont(PREF.ff); }
+  document.querySelectorAll("[data-ff]").forEach(b => b.setAttribute("aria-pressed", b.dataset.ff === PREF.ff));
   document.body.style.zoom = PREF.fs === "1" ? "" : PREF.fs;
   document.querySelectorAll("[data-fs]").forEach(b => b.setAttribute("aria-pressed", b.dataset.fs === PREF.fs));
   document.querySelectorAll("[data-th]").forEach(b => b.setAttribute("aria-pressed", b.dataset.th === PREF.th));
@@ -958,6 +974,7 @@ prefsBox.addEventListener("click", e => {
   if (b.dataset.fs) { PREF.fs = b.dataset.fs; store.set("hub.fs", PREF.fs); }
   if (b.dataset.th) { PREF.th = b.dataset.th; store.set("hub.th", PREF.th); }
   if (b.dataset.ac) { PREF.ac = b.dataset.ac; store.set("hub.ac", PREF.ac); }
+  if (b.dataset.ff) { PREF.ff = b.dataset.ff; store.set("hub.ff", PREF.ff); }
   applyPrefs();
 });
 applyPrefs();
