@@ -939,6 +939,17 @@ main:focus { outline: none; }
 .holbar.hol-doctors { background: linear-gradient(100deg, #0E2A52 0%, #1D5FA6 45%, #2BB3A3 75%, #C81E3A 100%); }
 .holbar.hol-match { background: linear-gradient(100deg, #1E3A8A 0%, #2563EB 35%, #EC4899 70%, #EAB308 100%); }
 .holbar.hol-welcome { background: var(--hero-grad); }
+.holbar .bd-also { display: block; font: 600 13px/1.3 var(--body); opacity: .92; }
+.holbar.bday { background: linear-gradient(100deg, #DB2777 0%, #F59E0B 50%, #8B5CF6 100%); }
+.cdowns { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: -6px 0 16px; }
+.cdown { display: inline-flex; align-items: baseline; gap: 4px; padding: 5px 11px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
+.cdown b { font: 800 15px/1 var(--display); color: var(--accent); }
+@media (max-width: 640px) { .cdowns { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: -4px 0 14px; padding-bottom: 2px; } .cdowns::-webkit-scrollbar { display: none; }
+  .cdown { flex: none; padding: 4px 10px; font-size: 12.5px; } .cdown b { font-size: 14px; } }
+.fbcard { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px 14px; padding: 12px 16px; margin-bottom: 18px; border: 1px solid var(--line); border-left: 4px solid var(--sun); border-radius: var(--r); background: var(--surface); }
+.fbcard b { display: block; font-size: 16px; } .fbcard span { font-size: 14px; color: var(--muted); } .fb-ic { font-size: 22px; }
+.fb-act { display: flex; align-items: center; gap: 12px; } .fb-act .btn { text-decoration: none; } .fb-act .linkbtn { border: 0; background: none; color: var(--muted); font: 600 14px/1 var(--body); cursor: pointer; }
+@media (max-width: 640px) { .fbcard { grid-template-columns: auto minmax(0, 1fr); } .fb-act { grid-column: 1 / -1; } }
 .holbar.hol-presidents, .holbar.hol-election { background: linear-gradient(100deg, #172554 0%, #1E3A8A 50%, #B91C1C 100%); }
 .holbar.hol-memorial { background: linear-gradient(100deg, #0F172A 0%, #1E3A8A 70%, #475569 100%); box-shadow: none; }
 .holbar.hol-veterans { background: linear-gradient(100deg, #1A2E05 0%, #3F6212 40%, #1E3A8A 80%, #B91C1C 100%); }
@@ -1640,6 +1651,10 @@ function mergeLive(snap, live) {
   d.passcode = settings["site passcode"] || "";   // blank = no passcode screen
   d.zoomLink = /^https?:\/\//i.test(settings["virtual lecture link"] || "") ? settings["virtual lecture link"] : "";
   d.slidesLink = /^https?:\/\//i.test(settings["lecture slides folder"] || "") ? settings["lecture slides folder"] : "";   // Drive folder where residents upload their slides   // the usual Zoom for "Virtual" sessions
+  // Home extras: countdowns ("Label = date; Label = date"), rotation feedback form, birthdays (name + month-day only)
+  d.countdowns = String(settings["countdowns"] || "").split(/[;\n]+/).map(x => { const m = x.match(/^\s*(.+?)\s*[=:–—]\s*(\S.*?)\s*$/); return m ? { label: m[1], date: parseLooseDate(m[2]) } : null; }).filter(x => x && x.date);
+  d.feedbackForm = /^https?:\/\//i.test(settings["rotation feedback form"] || "") ? settings["rotation feedback form"] : "";
+  d.birthdays = Array.isArray(live.birthdays) ? live.birthdays : (d.birthdays || []);
   const contacts = rowsOf(tab("contacts"));
   if (contacts.length) d.contacts = contacts.map(r => ({ role: r.role || "", name: r.name || "", phone: r.phone || "", email: r.email || "" }));
   const links = rowsOf(tab("quick links") || tab("links"));
@@ -2381,6 +2396,42 @@ function fitWhere() {
 window.addEventListener("resize", () => { clearTimeout(window.__fw); window.__fw = setTimeout(fitWhere, 150); });
 const HOL_EMOJI = { presidents: "🇺🇸", memorial: "🇺🇸", labor: "🛠️", columbus: "🧭", election: "🗳️", veterans: "🎖️", eidfitr: "🌙", eidadha: "🌙", hanukkah: "🕎", newyear: "🎆", valentines: "💘", stpatricks: "☘️", doctors: "🩺", match: "🎉", graduation: "🎓", welcome: "👋", july4: "🎇", halloween: "🎃", thanksgiving: "🦃", christmas: "🎄" };
 const HOL_DECO = { presidents: "⭐ ⭐ ⭐", memorial: "", labor: "🌭 ☀️", columbus: "🌎 🍂", election: "🇺🇸", veterans: "🇺🇸 ⭐", eidfitr: "✨ 🏮 ✨", eidadha: "✨ 🏮 ✨", hanukkah: "✡️ ✨ 🕎", halloween: "🦇 🕸️ 👻 🦇", christmas: "❄️ ✨ ❄️", newyear: "✨ 🥂 ✨", july4: "🇺🇸 ✨", valentines: "💕", stpatricks: "🍀 🌈", match: "🎊 🥳", graduation: "🎉 👩‍⚕️ 👨‍⚕️", thanksgiving: "🍂 🥧", doctors: "💙", welcome: "🌴" };
+/** "Happy birthday" banner (names from the Approved Emails tab's Birthday column; only month-day is ever sent). */
+function bdayBar() {
+  const md = todayISO.slice(5), names = (S.birthdays || []).filter(b => b.md === md).map(b => b.name.replace(/,?\s+(DO|MD|D\.O\.|M\.D\.)$/i, ""));
+  if (!names.length) return "";
+  const first = n => n.split(/\s+/)[0], me = meResident(), mine = me && names.some(n => norm(n) === norm(me.name) || (first(n) === first(me.name) && n.split(/\s+/).pop() === me.name.split(/\s+/).pop()));
+  const list = names.map(first); const who = list.length > 1 ? list.slice(0, -1).join(", ") + " and " + list[list.length - 1] : list[0];
+  return `<div class="holbar bday" role="note"><span class="hb-e" aria-hidden="true">🎂</span><b>${mine ? `Happy birthday, ${esc(first(me.name))}!${list.length > 1 ? ` <span class="bd-also">Also celebrating: ${esc(list.filter(n => n !== first(me.name)).join(", "))}</span>` : ""}` : `Happy birthday, ${esc(who)}!`}</b><span class="hb-d" aria-hidden="true">🎉 🎈 🎁</span></div>`;
+}
+/** Countdown chips under the headline (Settings "Countdowns"); a date drops off once it has passed. */
+function countdowns() {
+  const list = (S.countdowns || []).map(c => ({ ...c, days: Math.round((parseISO(c.date) - today) / 86400000) })).filter(c => c.days >= 0).sort((a, b) => a.days - b.days).slice(0, 4);
+  if (!list.length) return "";
+  return `<div class="cdowns">${list.map(c => `<span class="cdown"><b>${c.days === 0 ? "Today" : c.days}</b>${c.days === 0 ? "" : ` day${c.days === 1 ? "" : "s"} to`} ${esc(c.label)}</span>`).join("")}</div>`;
+}
+/** Rotation feedback: in the last week of your rotation and the week after, a short card links to the chiefs' Google Form. */
+function feedbackCard() {
+  const p = meResident(); if (!p || !S.feedbackForm) return "";
+  let done = {}; try { done = JSON.parse(store.get("hub.fb") || "{}"); } catch {}
+  const runs = runsFrom(p, 0, 24);
+  for (const r of runs) {
+    if (!r.rot && !r.raw) continue;
+    const end = r.to + 1 < 24 ? new Date(slotStart(r.to + 1).getTime() - 86400000) : new Date(monthStart(11).getFullYear(), monthStart(11).getMonth() + 1, 0);
+    const days = Math.round((today - end) / 86400000), key = (r.rot ? r.rot.id : norm(r.raw)) + "|" + isoOf(end);
+    if (days < -6 || days > 7 || done[key]) continue;
+    const name = r.rot ? (r.rot.short || r.rot.title) : r.raw;
+    const url = S.feedbackForm.replace(/\{rotation\}/gi, encodeURIComponent(name)).replace(/\{name\}/gi, encodeURIComponent(p.name));
+    return `<section class="fbcard" data-fb="${esc(key)}"><span class="fb-ic" aria-hidden="true">💬</span><div><b>How was ${esc(name)}?</b><span>${days <= 0 ? `Your rotation ends ${end.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}.` : "Your rotation just ended."} 2-minute feedback helps the chiefs keep this guide accurate.</span></div>
+      <div class="fb-act"><a class="btn small" href="${esc(url)}" target="_blank" rel="noopener" data-fbdone>Give feedback</a><button type="button" class="linkbtn" data-fbdone>Not now</button></div></section>`;
+  }
+  return "";
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-fbdone]"); if (!b) return;
+  const card = b.closest(".fbcard"); let done = {}; try { done = JSON.parse(store.get("hub.fb") || "{}"); } catch {}
+  done[card.dataset.fb] = 1; store.set("hub.fb", JSON.stringify(done)); setTimeout(() => card.remove(), 50);
+});
 function holBar() { const h = holidayNow(); if (!h) return "";
   const also = new URLSearchParams(location.search).get("holiday") ? [] : HOLIDAYS.filter(x => x !== h && x.when(new Date()));
   const greet = [h.greet, ...also.map(x => x.greet)].join(" & "); return `<div class="holbar hol-${h.id}${greet.length > 20 && window.innerWidth < 480 ? " long" : ""}" role="note"><span class="hb-e" aria-hidden="true">${HOL_EMOJI[h.id] || "🎉"}</span><b>${esc(greet)}</b><span class="hb-d" aria-hidden="true">${HOL_DECO[h.id] || ""}</span></div>`; }
@@ -2401,8 +2452,11 @@ function viewHome() {
     </div>
     <div class="today"><span class="eyebrow">Today</span><b>${d.toLocaleDateString("en-US", { weekday: "long" })}, ${d.toLocaleDateString("en-US", { month: "long" })} <em>${d.getDate()}</em></b><span class="muted">Block month: ${MONTH_FULL[mi]}</span>${(h => h ? `<span class="hol">${esc(h.greet)}</span>` : "")(holidayNow())}</div>
   </section>
+  ${countdowns()}
+  ${bdayBar()}
   ${holBar()}
   ${assignAlert()}
+  ${feedbackCard()}
   ${meCard()}
   ${ann}
   <div class="homegrid">

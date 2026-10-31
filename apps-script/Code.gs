@@ -122,6 +122,27 @@ function build_() {
 
   try { out.didactics = dropEmailColumns_(readSheet_(idOf('Didactic Schedule Sheet'), settings['Didactic Schedule tab'])); } catch (err) { out.errors.push('Didactic Schedule: ' + err.message); }
   try { out.residents = readSheet_(idOf('Resident Schedule Sheet'), settings['Resident Schedule tab']); } catch (err) { out.errors.push('Resident Schedule: ' + err.message); }
+  try { out.birthdays = birthdays_(); } catch (err) { out.errors.push('Birthdays: ' + err.message); }
+  return out;
+}
+
+/** Birthdays for the Home banner: the optional "Birthday" column of the private Approved Emails tab.
+ *  Only the name and month-day leave the sheet (never the year or the email). */
+function birthdays_() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Approved Emails'); if (!sh) return [];
+  const v = values_(sh); if (v.length < 2) return [];
+  const bi = v[0].findIndex(h => /birth/i.test(String(h))); if (bi < 0) return [];
+  const MON = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const out = [];
+  v.slice(1).forEach(r => {
+    if (/^(no|n|off|false|0|inactive|removed)$/i.test(String(r[3] || '').trim())) return;
+    const raw = String(r[bi] || '').trim(), name = String(r[1] || '').trim(); if (!raw || !name) return;
+    let m = 0, d = 0, x;
+    if ((x = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) { m = +x[2]; d = +x[3]; }
+    else if ((x = raw.match(/^(\d{1,2})[\/.-](\d{1,2})/))) { m = +x[1]; d = +x[2]; }
+    else if ((x = raw.toLowerCase().match(/([a-z]{3})[a-z]*\.?\s+(\d{1,2})/))) { m = MON.indexOf(x[1]) + 1; d = +x[2]; }
+    if (m >= 1 && m <= 12 && d >= 1 && d <= 31) out.push({ name: name, md: ('0' + m).slice(-2) + '-' + ('0' + d).slice(-2) });
+  });
   return out;
 }
 
@@ -1548,6 +1569,11 @@ const HOWTO_LINES = [
   ['Contacts, announcements, quick links → the tabs in this Control Panel. Contacts rows whose role contains "Chief" also become the signature on every lecture email.'],
   ['Settings tab → Academic Year, Home headline and subtitle, Email sign-in (on/off), Virtual lecture link (the usual Zoom link), Lecture slides folder (link to the shared Drive folder where residents upload slides: adds an "Upload slides" button on Didactics; residents need edit access to that folder), Holiday themes (off to turn off), and the Lecture reminder settings.'],
   [''],
+  ['HOME PAGE EXTRAS'],
+  ['Birthdays → add a "Birthday" column to the Approved Emails tab (any format, e.g. 3/15 or March 15; the year is never shown). On the day, Home says "Happy birthday" to everyone.'],
+  ['Countdowns → Settings row "Countdowns": one per line or separated by ;, written Label = date (for example: In-training exam = 2/27/2027; Graduation = 6/30/2027). Home shows "41 days to In-training exam" until the date passes.'],
+  ['Rotation feedback → Settings row "Rotation feedback form": the link to a Google Form. In the last week of a rotation and the week after, that resident\'s Home shows "How was SA? 2-minute feedback". Optional: put {rotation} and {name} in the link (a prefilled-form link) and they are filled in.'],
+  [''],
   ['WHO CAN USE THE HUB (email sign-in)'],
   ['Settings "Email sign-in" = on → the first time someone opens the hub on a phone or computer, they enter their email and get a 6-digit code from the chief Gmail. After that, that device stays signed in. No passcode is used.'],
   ['Approved Emails tab → one row per person: their email(s) (several are fine, separated by commas), name, role, and Active (yes/no). Only these emails can get a code. To remove someone, set Active to no or delete the row: they are signed out on their next visit. This tab is never shown on the website.'],
@@ -1625,7 +1651,7 @@ function syncHowToTab_() {
  * signed in until its person is removed from Approved Emails (or set to "no"), its row on the "Sign-ins" tab is set to
  * "revoked", or the Academic Year in Settings changes (everyone verifies once each July). Calendar feeds stay open.
  *   installSignIn   run once: creates the Approved Emails and Sign-ins tabs */
-const APPROVED_HEAD = ['Email(s) (several are fine, separated by commas)', 'Name', 'Role (resident / faculty / staff)', 'Active (yes/no)', 'Notes'];
+const APPROVED_HEAD = ['Email(s) (several are fine, separated by commas)', 'Name', 'Role (resident / faculty / staff)', 'Active (yes/no)', 'Notes', 'Birthday (optional, month and day)'];
 const SIGNIN_HEAD = ['Signed in', 'Email', 'Name', 'Device', 'Academic year', 'Last seen', 'Status (type revoked to sign this device out)', 'Key (do not edit)'];
 
 function installSignIn() {

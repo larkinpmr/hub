@@ -41,6 +41,12 @@ The hub website (**https://larkinpmr.github.io**) is built from Google Drive. No
 
 **Chief editor:** open the gear menu on the site and choose "Chief editor". It only works when you are signed in as the chief Gmail, and it edits the Control Panel tabs without opening the sheet.
 
+# Home page extras
+
+- **Birthdays:** add a column headed **Birthday** to the private **Approved Emails** tab and type each person's birthday (any format: 3/15, 3/15/1994, March 15). On the day, Home shows "🎂 Happy birthday, …!" to everyone; the person sees their own name. Only the name and month-day ever reach the website, never the year or email.
+- **Countdowns:** Settings row **Countdowns**, written `Label = date` and separated by `;` (e.g. `In-training exam = 2/27/2027; Graduation = 6/30/2027`). Home shows "41 days to In-training exam" chips; each disappears after its date.
+- **Rotation feedback:** Settings row **Rotation feedback form** = the link to a Google Form. In the last week of a resident's rotation and the week after, their Home shows "How was SA? 2-minute feedback" (Give feedback / Not now). To have the form filled in automatically, use a prefilled-form link with `{rotation}` and `{name}` where the answers go.
+
 # Email sign-in (who can use the hub)
 
 With the Settings row **Email sign-in** set to `on`, the hub has no passcode. The first time someone opens it on a phone or computer, they enter their email and receive a 6-digit code from the chief Gmail; after that, that device stays signed in. Google only sends schedules, contacts and the Handbook to verified devices, so the data is protected at the source, not just hidden. (The saved copy in the public GitHub repo and the calendar links stay open, as decided.)
