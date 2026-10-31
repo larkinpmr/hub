@@ -939,6 +939,11 @@ main:focus { outline: none; }
 .holbar.hol-doctors { background: linear-gradient(100deg, #0E2A52 0%, #1D5FA6 45%, #2BB3A3 75%, #C81E3A 100%); }
 .holbar.hol-match { background: linear-gradient(100deg, #1E3A8A 0%, #2563EB 35%, #EC4899 70%, #EAB308 100%); }
 .holbar.hol-welcome { background: var(--hero-grad); }
+.holbar.hol-eidfitr, .holbar.hol-eidadha { background: linear-gradient(100deg, #022C22 0%, #065F46 40%, #047857 65%, #D4A017 100%); }
+.holbar.hol-roshhashanah { background: linear-gradient(100deg, #450A0A 0%, #B91C1C 45%, #D97706 80%, #E0A526 100%); }
+.holbar.hol-yomkippur { background: linear-gradient(100deg, #1E293B 0%, #3B5B8C 60%, #7C8FAD 100%); box-shadow: none; }
+.holbar.hol-passover { background: linear-gradient(100deg, #3B0A1E 0%, #7E1D3A 45%, #1D4ED8 85%, #3B5BDB 100%); }
+.holbar.hol-hanukkah { background: linear-gradient(100deg, #0B1B4A 0%, #1D4ED8 55%, #60A5FA 80%, #E5C76B 100%); }
 :root[data-holiday="halloween"]:not([data-holiday=""]) header.top::after { height: 4px; bottom: -4px; background: repeating-linear-gradient(90deg, #FF7A1A 0 22px, #170D12 22px 30px, #7C3AED 30px 52px, #170D12 52px 60px); }
 </style>
 
@@ -1139,6 +1144,16 @@ async function boot() {
  * On these days everyone gets the holiday's colors (light and dark versions), overriding the chosen color scheme.
  * Turn off with Control Panel ▸ Settings ▸ "Holiday themes" = off. Preview any time with ?holiday=halloween (etc.). */
 const nthWeekday = (y, m, wd, n) => { const d = new Date(y, m, 1); return 1 + ((wd - d.getDay() + 7) % 7) + 7 * (n - 1); };   // m 0-based, wd 0=Sun
+/* Islamic and Hebrew calendar dates, from the browser's own calendars (Umm al-Qura for Eid; local moon sighting can differ by a day). */
+const calCache = {};
+function calDay(d, cal) {
+  const k = cal + d.toDateString(); if (calCache[k]) return calCache[k];
+  const o = {}; try { new Intl.DateTimeFormat("en-u-ca-" + cal, { day: "numeric", month: cal === "hebrew" ? "long" : "numeric", year: "numeric" }).formatToParts(d).forEach(x => o[x.type] = x.value); } catch {}
+  return (calCache[k] = o);
+}
+const islamic = d => { const o = calDay(d, "islamic-umalqura"); return { m: +o.month, day: +o.day }; };
+const hebrew = d => { const o = calDay(d, "hebrew"); return { m: o.month || "", day: +o.day }; };
+function inHanukkah(d) { for (let i = 0; i < 8; i++) { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate() - i), h = hebrew(x); if (h.m === "Kislev" && h.day === 25) return true; } return false; }
 const HOLIDAYS = [
   { id: "newyear", greet: "Happy New Year", when: d => (d.getMonth() === 11 && d.getDate() === 31) || (d.getMonth() === 0 && d.getDate() === 1),
     light: ["#F6F1E1", "#FFFFFF", "#EDE3C6", "#14141C", "#5A5A66", "#DDDAD0", "#8A6A00", "#F4EBCB", "#FFFFFF", "#4B5563", "#E5E7EB", ["#B8860B", "#E5C76B", "#9CA3AF"]],
@@ -1168,7 +1183,25 @@ const HOLIDAYS = [
   { id: "thanksgiving", greet: "Happy Thanksgiving", when: d => { if (d.getMonth() !== 10) return false; const t = nthWeekday(d.getFullYear(), 10, 4, 4); return d.getDate() >= t && d.getDate() <= t + 3; },
     light: ["#F9EEDD", "#FFFFFF", "#F1DEC0", "#2B1A10", "#6E5A49", "#E7D6BF", "#A3361B", "#F6DCD2", "#FFFFFF", "#9A6412", "#F8EACB", ["#C2410C", "#B45309", "#7C2D12"]],
     dark: ["#1A120C", "#251A12", "#312318", "#F5EBDD", "#C2AE97", "#3E2E21", "#F08A5D", "#3D2116", "#241008", "#F2B65A", "#3A2A12", ["#F08A5D", "#F2B65A", "#E0784A"]] },
-  { id: "christmas", greet: "Merry Christmas", when: d => d.getMonth() === 11 && d.getDate() >= 24 && d.getDate() <= 26,
+  { id: "eidfitr", greet: "Eid Mubarak", when: d => { const i = islamic(d); return i.m === 10 && i.day <= 3; }, pri: 1,
+    light: ["#ECF7F1", "#FFFFFF", "#D6EEE0", "#0B2219", "#4B6659", "#C7E3D3", "#047857", "#D1F0E1", "#FFFFFF", "#A16207", "#FBF0CF", ["#047857", "#D4A017", "#065F46"]],
+    dark: ["#06150F", "#0C2018", "#122C21", "#EAF7F0", "#A3C2B3", "#1C3D2F", "#34D399", "#0F3A28", "#04140C", "#F5C84B", "#352A0C", ["#34D399", "#F5C84B", "#10B981"]] },
+  { id: "eidadha", greet: "Eid al-Adha Mubarak", when: d => { const i = islamic(d); return i.m === 12 && i.day >= 10 && i.day <= 12; }, pri: 1,
+    light: ["#ECF7F1", "#FFFFFF", "#D6EEE0", "#0B2219", "#4B6659", "#C7E3D3", "#047857", "#D1F0E1", "#FFFFFF", "#A16207", "#FBF0CF", ["#047857", "#D4A017", "#065F46"]],
+    dark: ["#06150F", "#0C2018", "#122C21", "#EAF7F0", "#A3C2B3", "#1C3D2F", "#34D399", "#0F3A28", "#04140C", "#F5C84B", "#352A0C", ["#34D399", "#F5C84B", "#10B981"]] },
+  { id: "roshhashanah", greet: "Shana Tova", when: d => { const h = hebrew(d); return h.m === "Tishri" && h.day <= 2; }, pri: 1,
+    light: ["#FFF6E5", "#FFFFFF", "#FCE8C2", "#2A1508", "#6E5440", "#F2DAB0", "#B91C1C", "#FCE0DC", "#FFFFFF", "#B7791F", "#FBEFCF", ["#B91C1C", "#E0A526", "#B7791F"]],
+    dark: ["#160E06", "#22160C", "#2E1F12", "#FFF3E0", "#C9AE8F", "#3E2A18", "#F87171", "#3B1616", "#2A0606", "#F6C453", "#3A2C0E", ["#F87171", "#F6C453", "#E0A526"]] },
+  { id: "yomkippur", greet: "G'mar Chatima Tova", when: d => { const h = hebrew(d); return h.m === "Tishri" && h.day === 10; }, pri: 1,
+    light: ["#F4F7FB", "#FFFFFF", "#E6ECF4", "#121B2B", "#56637A", "#D6DEEA", "#3B5B8C", "#DFE7F3", "#FFFFFF", "#6B7A90", "#E7EBF1", ["#3B5B8C", "#A7B4C8", "#3B5B8C"]],
+    dark: ["#0B1220", "#121B2D", "#1A253B", "#EEF2F8", "#A8B4C7", "#26334D", "#93B4E8", "#1C2C48", "#0A1426", "#C9D3E2", "#222B3A", ["#93B4E8", "#C9D3E2", "#93B4E8"]] },
+  { id: "passover", greet: "Chag Pesach Sameach", when: d => { const h = hebrew(d); return h.m === "Nisan" && h.day >= 15 && h.day <= 22; }, pri: 1,
+    light: ["#F6F3FB", "#FFFFFF", "#E9E2F5", "#1C1030", "#5E5275", "#DAD0EC", "#7E1D3A", "#F5DCE4", "#FFFFFF", "#1D4ED8", "#DCE6FB", ["#7E1D3A", "#1D4ED8", "#C9A227"]],
+    dark: ["#120B1E", "#1C1330", "#261B40", "#F3EEFF", "#B7AAD6", "#34275A", "#F07A9A", "#3D1424", "#2A0612", "#8EB3FF", "#18264D", ["#F07A9A", "#8EB3FF", "#F2C94C"]] },
+  { id: "hanukkah", greet: "Happy Hanukkah", when: d => inHanukkah(d),
+    light: ["#EEF4FC", "#FFFFFF", "#DCE7F7", "#0D1B33", "#4C5E78", "#CCDAEE", "#1D4ED8", "#DCE6FB", "#FFFFFF", "#8A6A00", "#F4EBCB", ["#1D4ED8", "#94A3B8", "#E5C76B"]],
+    dark: ["#08122A", "#0F1B38", "#16264A", "#EEF3FC", "#A6B4CC", "#22345C", "#7AA2FF", "#17284D", "#06142E", "#F2C94C", "#33290E", ["#7AA2FF", "#E2E8F0", "#F2C94C"]] },
+  { id: "christmas", greet: "Merry Christmas", when: d => d.getMonth() === 11 && d.getDate() >= 24 && d.getDate() <= 26, pri: 1,
     light: ["#EDF6EF", "#FFFFFF", "#D9ECDE", "#10241A", "#4F6658", "#D3E3D7", "#B91C1C", "#FBE0E0", "#FFFFFF", "#15803D", "#DDF1E3", ["#DC2626", "#CA8A04", "#16A34A"]],
     dark: ["#0B1A12", "#12251A", "#1A3123", "#EEF6EF", "#A7BFAE", "#24402E", "#F87171", "#3B1616", "#2A0606", "#4ADE80", "#123322", ["#F87171", "#FACC15", "#4ADE80"]] },
 ];
@@ -2335,9 +2368,11 @@ function fitWhere() {
   if (btn) btn.hidden = extra.every(e => e.classList.contains("fit"));
 }
 window.addEventListener("resize", () => { clearTimeout(window.__fw); window.__fw = setTimeout(fitWhere, 150); });
-const HOL_EMOJI = { newyear: "🎆", valentines: "💘", stpatricks: "☘️", doctors: "🩺", match: "🎉", graduation: "🎓", welcome: "👋", july4: "🎇", halloween: "🎃", thanksgiving: "🦃", christmas: "🎄" };
-const HOL_DECO = { halloween: "🦇 🕸️ 👻 🦇", christmas: "❄️ ✨ ❄️", newyear: "✨ 🥂 ✨", july4: "🇺🇸 ✨", valentines: "💕", stpatricks: "🍀 🌈", match: "🎊 🥳", graduation: "🎉 👩‍⚕️ 👨‍⚕️", thanksgiving: "🍂 🥧", doctors: "💙", welcome: "🌴" };
-function holBar() { const h = holidayNow(); if (!h) return ""; return `<div class="holbar hol-${h.id}${h.greet.length > 20 && window.innerWidth < 480 ? " long" : ""}" role="note"><span class="hb-e" aria-hidden="true">${HOL_EMOJI[h.id] || "🎉"}</span><b>${esc(h.greet)}</b><span class="hb-d" aria-hidden="true">${HOL_DECO[h.id] || ""}</span></div>`; }
+const HOL_EMOJI = { eidfitr: "🌙", eidadha: "🌙", roshhashanah: "🍎", yomkippur: "🕯️", passover: "🍷", hanukkah: "🕎", newyear: "🎆", valentines: "💘", stpatricks: "☘️", doctors: "🩺", match: "🎉", graduation: "🎓", welcome: "👋", july4: "🎇", halloween: "🎃", thanksgiving: "🦃", christmas: "🎄" };
+const HOL_DECO = { eidfitr: "✨ 🏮 ✨", eidadha: "✨ 🏮 ✨", roshhashanah: "🍯 🍎", yomkippur: "", passover: "🌸 ✨", hanukkah: "✡️ ✨ 🕎", halloween: "🦇 🕸️ 👻 🦇", christmas: "❄️ ✨ ❄️", newyear: "✨ 🥂 ✨", july4: "🇺🇸 ✨", valentines: "💕", stpatricks: "🍀 🌈", match: "🎊 🥳", graduation: "🎉 👩‍⚕️ 👨‍⚕️", thanksgiving: "🍂 🥧", doctors: "💙", welcome: "🌴" };
+function holBar() { const h = holidayNow(); if (!h) return "";
+  const also = new URLSearchParams(location.search).get("holiday") ? [] : HOLIDAYS.filter(x => x !== h && x.when(new Date()));
+  const greet = [h.greet, ...also.map(x => x.greet)].join(" & "); return `<div class="holbar hol-${h.id}${greet.length > 20 && window.innerWidth < 480 ? " long" : ""}" role="note"><span class="hb-e" aria-hidden="true">${HOL_EMOJI[h.id] || "🎉"}</span><b>${esc(greet)}</b><span class="hb-d" aria-hidden="true">${HOL_DECO[h.id] || ""}</span></div>`; }
 function viewHome() {
   const onb = onboardingPanel();
   const days = nextSessions();
