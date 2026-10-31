@@ -939,6 +939,11 @@ main:focus { outline: none; }
 .holbar.hol-doctors { background: linear-gradient(100deg, #0E2A52 0%, #1D5FA6 45%, #2BB3A3 75%, #C81E3A 100%); }
 .holbar.hol-match { background: linear-gradient(100deg, #1E3A8A 0%, #2563EB 35%, #EC4899 70%, #EAB308 100%); }
 .holbar.hol-welcome { background: var(--hero-grad); }
+.holbar.hol-presidents, .holbar.hol-election { background: linear-gradient(100deg, #172554 0%, #1E3A8A 50%, #B91C1C 100%); }
+.holbar.hol-memorial { background: linear-gradient(100deg, #0F172A 0%, #1E3A8A 70%, #475569 100%); box-shadow: none; }
+.holbar.hol-veterans { background: linear-gradient(100deg, #1A2E05 0%, #3F6212 40%, #1E3A8A 80%, #B91C1C 100%); }
+.holbar.hol-labor { background: linear-gradient(100deg, #0F2A4A 0%, #1E5AA8 50%, #F59E0B 90%, #C2410C 100%); }
+.holbar.hol-columbus { background: linear-gradient(100deg, #042F2E 0%, #0F766E 45%, #B45309 85%, #7C2D12 100%); }
 .holbar.hol-eidfitr, .holbar.hol-eidadha { background: linear-gradient(100deg, #022C22 0%, #065F46 40%, #047857 65%, #D4A017 100%); }
 .holbar.hol-hanukkah { background: linear-gradient(100deg, #0B1B4A 0%, #1D4ED8 55%, #60A5FA 80%, #E5C76B 100%); }
 :root[data-holiday="halloween"]:not([data-holiday=""]) header.top::after { height: 4px; bottom: -4px; background: repeating-linear-gradient(90deg, #FF7A1A 0 22px, #170D12 22px 30px, #7C3AED 30px 52px, #170D12 52px 60px); }
@@ -1177,6 +1182,24 @@ const HOLIDAYS = [
   { id: "halloween", greet: "Happy Halloween", when: d => d.getMonth() === 9 && d.getDate() === 31,
     light: ["#FFF1E2", "#FFFFFF", "#FFE2C4", "#170D12", "#6B4A3A", "#F2CFA8", "#D9480F", "#FFDDBF", "#FFFFFF", "#6D28D9", "#EDE4FB", ["#F97316", "#170D12", "#7C3AED"]],
     dark: ["#0C0809", "#181012", "#24171A", "#FFF1E2", "#C9A98F", "#3A2620", "#FF7A1A", "#3D1D08", "#1A0A00", "#B07CFF", "#24163D", ["#FF7A1A", "#FFB347", "#B07CFF"]] },
+  { id: "presidents", greet: "Happy Presidents' Day", when: d => d.getMonth() === 1 && d.getDate() === nthWeekday(d.getFullYear(), 1, 1, 3),
+    light: ["#EEF2FA", "#FFFFFF", "#DCE4F5", "#0D1838", "#4D5878", "#D3DCEE", "#1E3A8A", "#DCE4F7", "#FFFFFF", "#B91C1C", "#FBE0E0", ["#1E3A8A", "#94A3B8", "#B91C1C"]],
+    dark: ["#0A1128", "#111A38", "#19244A", "#F1F4FB", "#A9B3CF", "#24305A", "#7AA2FF", "#18264D", "#0A1430", "#F87171", "#3B1616", ["#7AA2FF", "#E2E8F0", "#F87171"]] },
+  { id: "memorial", greet: "Memorial Day · Remembering those who gave all", when: d => d.getMonth() === 4 && d.getDate() > 24 && d.getDay() === 1,
+    light: ["#F2F4F8", "#FFFFFF", "#E2E7EF", "#111827", "#55607A", "#D5DCE6", "#1E3A8A", "#DCE4F7", "#FFFFFF", "#7F1D1D", "#F3E0E0", ["#1E3A8A", "#64748B", "#7F1D1D"]],
+    dark: ["#0B0F19", "#121826", "#1A2233", "#EEF1F6", "#A7B0C2", "#263046", "#8FA8E0", "#1C2A48", "#0A1222", "#E08A8A", "#341818", ["#8FA8E0", "#CBD5E1", "#E08A8A"]] },
+  { id: "labor", greet: "Happy Labor Day", when: d => d.getMonth() === 8 && d.getDate() === nthWeekday(d.getFullYear(), 8, 1, 1),
+    light: ["#EEF4FA", "#FFFFFF", "#DDE8F4", "#0F1B2B", "#4E5E73", "#CFDCEB", "#1E5AA8", "#DCE8F7", "#FFFFFF", "#C2410C", "#FCE3D3", ["#1E5AA8", "#F59E0B", "#C2410C"]],
+    dark: ["#0A1220", "#111C30", "#18263F", "#EEF3FA", "#A6B4C8", "#22344F", "#7FB0F0", "#17304D", "#06182E", "#FB923C", "#3A2010", ["#7FB0F0", "#FBBF24", "#FB923C"]] },
+  { id: "columbus", greet: "Columbus Day · Indigenous Peoples' Day", when: d => d.getMonth() === 9 && d.getDate() === nthWeekday(d.getFullYear(), 9, 1, 2),
+    light: ["#F7F1E8", "#FFFFFF", "#EDE2D0", "#24170E", "#6B5A49", "#E2D3BC", "#0F766E", "#D3EFEA", "#FFFFFF", "#B45309", "#F8E6CF", ["#0F766E", "#B45309", "#7C2D12"]],
+    dark: ["#14100B", "#1F1811", "#2A2118", "#F6EEE3", "#C4B29A", "#3A2E22", "#2DD4BF", "#123C38", "#04201C", "#F59E0B", "#3A2A10", ["#2DD4BF", "#F59E0B", "#E07A4A"]] },
+  { id: "election", greet: "It's Election Day", when: d => d.getFullYear() % 2 === 0 && d.getMonth() === 10 && d.getDay() === 2 && d.getDate() >= 2 && d.getDate() <= 8,
+    light: ["#EEF2FA", "#FFFFFF", "#DCE4F5", "#0D1838", "#4D5878", "#D3DCEE", "#1E3A8A", "#DCE4F7", "#FFFFFF", "#B91C1C", "#FBE0E0", ["#1E3A8A", "#94A3B8", "#B91C1C"]],
+    dark: ["#0A1128", "#111A38", "#19244A", "#F1F4FB", "#A9B3CF", "#24305A", "#7AA2FF", "#18264D", "#0A1430", "#F87171", "#3B1616", ["#7AA2FF", "#E2E8F0", "#F87171"]] },
+  { id: "veterans", greet: "Happy Veterans Day · Thank you for your service", when: d => d.getMonth() === 10 && d.getDate() === 11, pri: 1,
+    light: ["#F2F5EE", "#FFFFFF", "#E2E8D8", "#16200F", "#56614A", "#D6DECB", "#3F6212", "#E1EDCF", "#FFFFFF", "#1E3A8A", "#DCE4F7", ["#3F6212", "#1E3A8A", "#B91C1C"]],
+    dark: ["#0D120A", "#151C11", "#1E2818", "#EFF4E9", "#ADB9A0", "#2B3822", "#A3D16A", "#24361A", "#0E1A06", "#8FA8E0", "#1C2A48", ["#A3D16A", "#8FA8E0", "#F87171"]] },
   { id: "thanksgiving", greet: "Happy Thanksgiving", when: d => { if (d.getMonth() !== 10) return false; const t = nthWeekday(d.getFullYear(), 10, 4, 4); return d.getDate() >= t && d.getDate() <= t + 3; },
     light: ["#F9EEDD", "#FFFFFF", "#F1DEC0", "#2B1A10", "#6E5A49", "#E7D6BF", "#A3361B", "#F6DCD2", "#FFFFFF", "#9A6412", "#F8EACB", ["#C2410C", "#B45309", "#7C2D12"]],
     dark: ["#1A120C", "#251A12", "#312318", "#F5EBDD", "#C2AE97", "#3E2E21", "#F08A5D", "#3D2116", "#241008", "#F2B65A", "#3A2A12", ["#F08A5D", "#F2B65A", "#E0784A"]] },
@@ -2356,8 +2379,8 @@ function fitWhere() {
   if (btn) btn.hidden = extra.every(e => e.classList.contains("fit"));
 }
 window.addEventListener("resize", () => { clearTimeout(window.__fw); window.__fw = setTimeout(fitWhere, 150); });
-const HOL_EMOJI = { eidfitr: "🌙", eidadha: "🌙", hanukkah: "🕎", newyear: "🎆", valentines: "💘", stpatricks: "☘️", doctors: "🩺", match: "🎉", graduation: "🎓", welcome: "👋", july4: "🎇", halloween: "🎃", thanksgiving: "🦃", christmas: "🎄" };
-const HOL_DECO = { eidfitr: "✨ 🏮 ✨", eidadha: "✨ 🏮 ✨", hanukkah: "✡️ ✨ 🕎", halloween: "🦇 🕸️ 👻 🦇", christmas: "❄️ ✨ ❄️", newyear: "✨ 🥂 ✨", july4: "🇺🇸 ✨", valentines: "💕", stpatricks: "🍀 🌈", match: "🎊 🥳", graduation: "🎉 👩‍⚕️ 👨‍⚕️", thanksgiving: "🍂 🥧", doctors: "💙", welcome: "🌴" };
+const HOL_EMOJI = { presidents: "🇺🇸", memorial: "🇺🇸", labor: "🛠️", columbus: "🧭", election: "🗳️", veterans: "🎖️", eidfitr: "🌙", eidadha: "🌙", hanukkah: "🕎", newyear: "🎆", valentines: "💘", stpatricks: "☘️", doctors: "🩺", match: "🎉", graduation: "🎓", welcome: "👋", july4: "🎇", halloween: "🎃", thanksgiving: "🦃", christmas: "🎄" };
+const HOL_DECO = { presidents: "⭐ ⭐ ⭐", memorial: "", labor: "🌭 ☀️", columbus: "🌎 🍂", election: "🇺🇸", veterans: "🇺🇸 ⭐", eidfitr: "✨ 🏮 ✨", eidadha: "✨ 🏮 ✨", hanukkah: "✡️ ✨ 🕎", halloween: "🦇 🕸️ 👻 🦇", christmas: "❄️ ✨ ❄️", newyear: "✨ 🥂 ✨", july4: "🇺🇸 ✨", valentines: "💕", stpatricks: "🍀 🌈", match: "🎊 🥳", graduation: "🎉 👩‍⚕️ 👨‍⚕️", thanksgiving: "🍂 🥧", doctors: "💙", welcome: "🌴" };
 function holBar() { const h = holidayNow(); if (!h) return "";
   const also = new URLSearchParams(location.search).get("holiday") ? [] : HOLIDAYS.filter(x => x !== h && x.when(new Date()));
   const greet = [h.greet, ...also.map(x => x.greet)].join(" & "); return `<div class="holbar hol-${h.id}${greet.length > 20 && window.innerWidth < 480 ? " long" : ""}" role="note"><span class="hb-e" aria-hidden="true">${HOL_EMOJI[h.id] || "🎉"}</span><b>${esc(greet)}</b><span class="hb-d" aria-hidden="true">${HOL_DECO[h.id] || ""}</span></div>`; }
