@@ -291,6 +291,12 @@ main { padding-block: 28px 64px; }
 :root .today::before { background: linear-gradient(180deg, var(--accent), var(--sun)); }
 .today b { display: block; font: 700 20px/1.15 var(--display); white-space: nowrap; }
 .today .muted { font-size: 14px; }
+.holbar { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; padding: 10px 16px; border-radius: var(--r); background: var(--hero-grad); color: #fff; font-size: 16px; box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 25%, transparent); }
+.holbar b { font: 800 17px/1.2 var(--display); letter-spacing: -.01em; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+.holbar .hb-e { font-size: 22px; line-height: 1; } .holbar .hb-d { margin-left: auto; letter-spacing: 4px; opacity: .95; white-space: nowrap; }
+.holbar b { white-space: nowrap; } @media (max-width: 480px) { .holbar { padding: 9px 12px; gap: 8px; } .holbar .hb-d { letter-spacing: 1px; font-size: 14px; } }
+.holbar.hol-halloween { background: linear-gradient(100deg, #170D12 0%, #3B1206 35%, #D9480F 72%, #FF8A2A 100%); border: 1px solid #FF7A1A; }
+.today .hol { display: none; }
 .today .hol { font: 700 12px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin-top: 2px; }
 .today b em { font-style: normal; color: var(--accent); background: var(--hero-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; align-items: start; }
@@ -916,6 +922,10 @@ a.who-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
 .skip:focus { top: 12px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 main:focus { outline: none; }
+/* Halloween: unmistakably Halloween (pumpkin-orange header line, black + orange header, purple accents) */
+:root[data-holiday="halloween"] header.top { background: linear-gradient(180deg, color-mix(in srgb, #FF7A1A 10%, var(--surface)), var(--surface)); }
+:root[data-holiday="halloween"] header.top::after { height: 4px; bottom: -4px; background: repeating-linear-gradient(90deg, #FF7A1A 0 22px, #170D12 22px 30px, #7C3AED 30px 52px, #170D12 52px 60px); }
+:root[data-holiday="halloween"] .bottomnav a[aria-current="page"] svg { background: color-mix(in srgb, #FF7A1A 22%, transparent); }
 </style>
 
 <button type="button" class="skip" onclick="document.getElementById('main').focus()">Skip to content</button>
@@ -1139,8 +1149,8 @@ const HOLIDAYS = [
     light: ["#F6F8FC", "#FFFFFF", "#E6ECF7", "#0D1838", "#4D5878", "#D3DCEE", "#B91C1C", "#FBE0E0", "#FFFFFF", "#1D4ED8", "#DCE6FB", ["#DC2626", "#94A3B8", "#2563EB"]],
     dark: ["#0A1128", "#111A38", "#19244A", "#F1F4FB", "#A9B3CF", "#24305A", "#F87171", "#3B1616", "#2A0606", "#7AA2FF", "#18264D", ["#F87171", "#F8FAFC", "#7AA2FF"]] },
   { id: "halloween", greet: "Happy Halloween", when: d => d.getMonth() === 9 && d.getDate() === 31,
-    light: ["#FFF6EC", "#FFFFFF", "#FBE9D6", "#1E1026", "#6B5560", "#F0D9C2", "#C2410C", "#FDE3CC", "#FFFFFF", "#6D28D9", "#EDE4FB", ["#F97316", "#A855F7", "#22C55E"]],
-    dark: ["#130B17", "#1E1424", "#2A1B31", "#F6EEE6", "#B9A6B5", "#3A2840", "#FF8A2A", "#3A2112", "#1A0C02", "#B98CFF", "#2A1A44", ["#FF8A2A", "#B98CFF", "#7CF27C"]] },
+    light: ["#FFF1E2", "#FFFFFF", "#FFE2C4", "#170D12", "#6B4A3A", "#F2CFA8", "#D9480F", "#FFDDBF", "#FFFFFF", "#6D28D9", "#EDE4FB", ["#F97316", "#170D12", "#7C3AED"]],
+    dark: ["#0C0809", "#181012", "#24171A", "#FFF1E2", "#C9A98F", "#3A2620", "#FF7A1A", "#3D1D08", "#1A0A00", "#B07CFF", "#24163D", ["#FF7A1A", "#FFB347", "#B07CFF"]] },
   { id: "thanksgiving", greet: "Happy Thanksgiving", when: d => { if (d.getMonth() !== 10) return false; const t = nthWeekday(d.getFullYear(), 10, 4, 4); return d.getDate() >= t && d.getDate() <= t + 3; },
     light: ["#FBF5EC", "#FFFFFF", "#F3E6D3", "#2B1A10", "#6E5A49", "#E7D6BF", "#A3361B", "#F6DCD2", "#FFFFFF", "#9A6412", "#F8EACB", ["#C2410C", "#B45309", "#7C2D12"]],
     dark: ["#1A120C", "#251A12", "#312318", "#F5EBDD", "#C2AE97", "#3E2E21", "#F08A5D", "#3D2116", "#241008", "#F2B65A", "#3A2A12", ["#F08A5D", "#F2B65A", "#E0784A"]] },
@@ -2307,6 +2317,9 @@ function fitWhere() {
   if (btn) btn.hidden = extra.every(e => e.classList.contains("fit"));
 }
 window.addEventListener("resize", () => { clearTimeout(window.__fw); window.__fw = setTimeout(fitWhere, 150); });
+const HOL_EMOJI = { newyear: "🎆", valentines: "💘", stpatricks: "☘️", doctors: "🩺", match: "🎉", graduation: "🎓", welcome: "👋", july4: "🎇", halloween: "🎃", thanksgiving: "🦃", christmas: "🎄" };
+const HOL_DECO = { halloween: "🦇 🕸️ 👻 🦇", christmas: "❄️ ✨ ❄️", newyear: "✨ 🥂 ✨", july4: "🇺🇸 ✨", valentines: "💕", stpatricks: "🍀 🌈", match: "🎊 🥳", graduation: "🎉 👩‍⚕️ 👨‍⚕️", thanksgiving: "🍂 🥧", doctors: "💙", welcome: "🌴" };
+function holBar() { const h = holidayNow(); if (!h) return ""; return `<div class="holbar hol-${h.id}" role="note"><span class="hb-e" aria-hidden="true">${HOL_EMOJI[h.id] || "🎉"}</span><b>${esc(h.greet)}</b><span class="hb-d" aria-hidden="true">${HOL_DECO[h.id] || ""}</span></div>`; }
 function viewHome() {
   const onb = onboardingPanel();
   const days = nextSessions();
@@ -2324,6 +2337,7 @@ function viewHome() {
     </div>
     <div class="today"><span class="eyebrow">Today</span><b>${d.toLocaleDateString("en-US", { weekday: "long" })}, ${d.toLocaleDateString("en-US", { month: "long" })} <em>${d.getDate()}</em></b><span class="muted">Block month: ${MONTH_FULL[mi]}</span>${(h => h ? `<span class="hol">${esc(h.greet)}</span>` : "")(holidayNow())}</div>
   </section>
+  ${holBar()}
   ${assignAlert()}
   ${meCard()}
   ${ann}
