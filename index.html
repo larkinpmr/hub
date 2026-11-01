@@ -959,8 +959,8 @@ main:focus { outline: none; }
 .holbar.hol-hanukkah { background: linear-gradient(100deg, #0B1B4A 0%, #1D4ED8 55%, #60A5FA 80%, #E5C76B 100%); }
 :root[data-holiday="halloween"]:not([data-holiday=""]) header.top::after { height: 4px; bottom: -4px; background: repeating-linear-gradient(90deg, #FF7A1A 0 22px, #170D12 22px 30px, #7C3AED 30px 52px, #170D12 52px 60px); }
 /* PTO */
-.away { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 14px; }
-.away > b { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.away { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: -8px 0 14px; padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); font-size: 14px; }
+.aw-h { font: 700 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); text-decoration: none; border-bottom: 1px dotted currentColor; padding-bottom: 2px; } .aw-h::after { content: " →"; } .aw-h:hover { border-bottom-style: solid; }
 .aw-i { white-space: nowrap; } .aw-w { color: var(--muted); font-size: 13px; }
 .aw-t { font: 700 10px/1 var(--mono); letter-spacing: .05em; padding: 2px 5px; border-radius: 4px; background: var(--sun-soft); color: var(--sun); vertical-align: 1px; } .aw-t.cme { background: var(--accent-soft); color: var(--accent); }
 .aw-all { margin-left: auto; font-weight: 600; text-decoration: none; white-space: nowrap; }
@@ -2475,6 +2475,7 @@ function viewHome() {
     </div>
     <div class="today"><span class="eyebrow">Today</span><b>${d.toLocaleDateString("en-US", { weekday: "long" })}, ${d.toLocaleDateString("en-US", { month: "long" })} <em>${d.getDate()}</em></b><span class="muted">Block month: ${MONTH_FULL[mi]}</span>${(h => h ? `<span class="hol">${esc(h.greet)}</span>` : "")(holidayNow())}</div>
   </section>
+  ${awayLine()}
   ${countdowns()}
   ${bdayBar()}
   ${holBar()}
@@ -2504,7 +2505,7 @@ function viewHome() {
       <section class="panel wide duo">
         <h2>Where everyone is in ${MONTH_FULL[mi]}</h2>
         <p class="sub">From the resident block schedule. Tap a rotation for its guide.</p>
-        <div class="where">${sites.map((x, i) => `<div class="site${i >= 4 ? " more" : ""}"><a href="#rot-${x.r.id}">${chipSpan(x.r)} <b style="color:var(--ink)">${esc(x.r.short)}</b></a><span class="names">${x.people.map(p => whoLink(p) + offNote(p)).join(", ")}</span></div>`).join("")}</div>${sites.length > 4 ? `<button type="button" class="linkbtn wmore">Show all ${sites.length} rotations</button>` : ""}${awayLine()}
+        <div class="where">${sites.map((x, i) => `<div class="site${i >= 4 ? " more" : ""}"><a href="#rot-${x.r.id}">${chipSpan(x.r)} <b style="color:var(--ink)">${esc(x.r.short)}</b></a><span class="names">${x.people.map(p => whoLink(p) + offNote(p)).join(", ")}</span></div>`).join("")}</div>${sites.length > 4 ? `<button type="button" class="linkbtn wmore">Show all ${sites.length} rotations</button>` : ""}
       </section>
   </div>
   ${quickLinks()}`;
@@ -2653,7 +2654,7 @@ function awayLine() {
   const item = x => { const s0 = x.start < todayISO ? todayISO : x.start, e0 = x.end || x.start, nm = x.other || !x.name.includes(" ") ? x.name : `${x.name.split(" ")[0]} ${x.name.split(" ").pop()[0]}.`;
     const when = x.start <= todayISO ? (e0 === todayISO ? "today" : e0 > endISO ? "all week" : "thru " + wd(e0)) : (s0 === e0 ? wd(s0) : `${wd(s0)}–${e0 > endISO ? "" : wd(e0)}`.replace(/–$/, " on"));
     return `<span class="aw-i">${x.other ? esc(nm) : `<a class="who-link" href="#res-${slug(x.name)}">${esc(nm)}</a>`} <span class="aw-t${ptoType(x) === "CME" ? " cme" : ""}">${ptoType(x)}</span> <span class="aw-w">${when}</span></span>`; };
-  return `<div class="away"><b>Away this week</b>${xs.map(item).join("")}<a class="aw-all" href="#schedule" data-showpto>See all time off →</a></div>`;
+  return `<div class="away"><a class="aw-h" href="#schedule" data-showpto title="See the full time-off calendar">Away this week</a>${xs.map(item).join("")}</div>`;
 }
 document.addEventListener("click", e => { if (e.target.closest("[data-showpto]")) sState.view = "pto"; });
 /** Resident Schedule ▸ Time off: a month calendar on computers, a list on phones. */
