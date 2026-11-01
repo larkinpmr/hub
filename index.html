@@ -954,6 +954,12 @@ main:focus { outline: none; }
 .cdowns { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: -6px 0 16px; }
 .cdown { display: inline-flex; align-items: baseline; gap: 4px; padding: 5px 11px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
 .cdown b { font: 800 15px/1 var(--display); color: var(--accent); }
+.cdown b { font-variant-numeric: tabular-nums; }
+.reels { display: inline-flex; }
+.reel { --rh: 1.15em; display: inline-block; height: var(--rh); margin: -.075em 0; overflow: hidden; vertical-align: bottom; }
+.reel-s { display: flex; flex-direction: column; transform: translateY(calc(var(--n) * var(--rh) * -1)); animation: reelspin 1s cubic-bezier(.15, .7, .2, 1) both; }
+.reel-s > span { display: block; height: var(--rh); line-height: var(--rh); }
+@keyframes reelspin { from { transform: translateY(0); filter: blur(.6px); } 85% { filter: none; } to { transform: translateY(calc(var(--n) * var(--rh) * -1)); } }
 .eyetop { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; }
 .cdowns.cd-top { margin: 0; } .cdowns.cd-top .cdown { padding: 3px 10px; font-size: 12.5px; } .cdowns.cd-top .cdown b { font-size: 13.5px; }
 @media (min-width: 641px) { .cdowns.cd-body { display: none; } }
@@ -2466,10 +2472,27 @@ function bdayBar() {
   return `<div class="holbar bday" role="note"><span class="hb-e" aria-hidden="true">🎂</span><b>${mine ? `Happy birthday, ${esc(first(me.name))}!${list.length > 1 ? ` <span class="bd-also">Also celebrating: ${esc(list.filter(n => n !== first(me.name)).join(", "))}</span>` : ""}` : `Happy birthday, ${esc(who)}!`}</b><span class="hb-d" aria-hidden="true">🎉 🎈 🎁</span></div>`;
 }
 /** Countdown chips under the headline (Settings "Countdowns"); a date drops off once it has passed. */
+/** Just for fun: the first time the countdowns show after the app opens (or reloads), each number spins like a slot machine and settles.
+ *  Re-renders during the spin pick up where the reels are; after that the numbers are plain. Skipped for "reduce motion". */
+let cdRollAt = 0;
+function cdRoll(n) {
+  const digits = String(n);
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return digits;
+  const now = performance.now();
+  if (!cdRollAt) cdRollAt = now;
+  const t = now - cdRollAt, dur = 1300, step = 300, total = dur + step * (digits.length - 1);
+  if (t > total + 200) return digits;
+  clearTimeout(cdRoll.done); cdRoll.done = setTimeout(() => document.querySelectorAll(".reels").forEach(r => r.replaceWith(r.dataset.n)), total - t + 250);
+  return `<span class="reels" role="img" aria-label="${digits}" data-n="${digits}">${[...digits].map((d, i) => {
+    const seq = []; for (let k = 0; k < 2 + i; k++) for (let j = 0; j < 10; j++) seq.push(j);
+    for (let j = 0; j <= +d; j++) seq.push(j);
+    return `<span class="reel" aria-hidden="true"><span class="reel-s" style="--n:${seq.length - 1};animation-duration:${dur + step * i}ms;animation-delay:${-Math.round(t)}ms">${seq.map(x => `<span>${x}</span>`).join("")}</span></span>`;
+  }).join("")}</span>`;
+}
 function countdowns(where) {
   const list = (S.countdowns || []).map(c => ({ ...c, days: Math.round((parseISO(c.date) - today) / 86400000) })).filter(c => c.days >= 0).sort((a, b) => a.days - b.days).slice(0, 4);
   if (!list.length) return "";
-  return `<div class="cdowns${where === "top" ? " cd-top" : " cd-body"}">${list.map(c => `<span class="cdown"><b>${c.days === 0 ? "Today" : c.days}</b>${c.days === 0 ? "" : ` day${c.days === 1 ? "" : "s"} to`} ${esc(c.label)}</span>`).join("")}</div>`;
+  return `<div class="cdowns${where === "top" ? " cd-top" : " cd-body"}">${list.map(c => `<span class="cdown"><b>${c.days === 0 ? "Today" : cdRoll(c.days)}</b>${c.days === 0 ? "" : ` day${c.days === 1 ? "" : "s"} to`} ${esc(c.label)}</span>`).join("")}</div>`;
 }
 /** Rotation feedback: in the last week of your rotation and the week after, a short card links to the chiefs' Google Form. */
 function feedbackCard() {
