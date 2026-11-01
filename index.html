@@ -1284,7 +1284,11 @@ async function boot() {
   S = prepare(snap.guides ? (() => { const d = JSON.parse(JSON.stringify(snap)); applyGuides(d, d.guides); return d; })() : snap);
   source = { mode: "saved", when: snap.builtAt };
   route();
-  if (cfg.liveDataUrl) { gateCheck(false); loadLive(cfg.liveDataUrl, snap); }
+  if (cfg.liveDataUrl) {
+    // A new device on a hub with email sign-in: show the sign-in form right away instead of a loading cover while Google wakes up.
+    if (!AUTH && cfg.signIn === "email" && !readLiveCache()) showSignIn(); else gateCheck(false);
+    loadLive(cfg.liveDataUrl, snap);
+  }
   else setStatus();
 }
 
@@ -1598,6 +1602,7 @@ function deviceName() {
 }
 function signOut() { try { localStorage.removeItem(AUTH_KEY); localStorage.removeItem("hub.live.v1"); } catch {} AUTH = null; location.reload(); }
 function showSignIn(reason) {
+  if ((!reason || reason === "none") && document.querySelector("#gate-email")) return;   // already showing (opened early on a new device): keep what they typed
   try { localStorage.removeItem("hub.live.v1"); } catch {}
   if (AUTH) { AUTH = null; try { localStorage.removeItem(AUTH_KEY); } catch {} }
   document.querySelector(".gate")?.remove();
@@ -1685,6 +1690,7 @@ async function loadLive(url, snap) {
     try {
       const core = await get(url, 45000);
       lastLive = Date.now();
+      if (!AUTH) { const eg = document.querySelector("#gate-email"); if (eg) { eg.closest(".gate").remove(); document.body.classList.remove("gated"); } }   // sign-in is off after all
       cached = { core, hb: cached && cached.hb };
       show(Object.assign({}, core, cached.hb || {}), "live");
       writeLiveCache(cached);

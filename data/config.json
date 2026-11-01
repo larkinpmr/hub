@@ -1,4 +1,5 @@
 {
   "liveDataUrl": "https://script.google.com/macros/s/AKfycbwSlnaF96Oxszxz32tzyyJjmijxbgfQXEjwz61GrOcBkRl81NSXlYJ3qqrbzJJYWlJekw/exec",
-  "adminUrl": "https://script.google.com/macros/s/AKfycbxMHA_F7zWwxeOx9Q9tygvAym70udY8JpsGb7wwLxgq5bbh4kiM7M6WELcEnoNcjyoPVA/exec?page=admin"
+  "adminUrl": "https://script.google.com/macros/s/AKfycbxMHA_F7zWwxeOx9Q9tygvAym70udY8JpsGb7wwLxgq5bbh4kiM7M6WELcEnoNcjyoPVA/exec?page=admin",
+  "signIn": "email"
 }
