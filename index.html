@@ -3243,7 +3243,10 @@ function guideTop() {
   }
   const steps = onboardingSteps(r).slice(0, 3);
   const rows = [];
-  if (addr) rows.push(`<div class="fd-row"><span class="fd-k">Where</span><span class="fd-v"><button type="button" class="addr" id="fd-addr" data-addr="${esc(addr.dataset.addr || addr.textContent)}">${esc(addr.textContent)}</button></span></div>`);
+  // show the whole address (street, city, state, zip) — the guide may split it over two lines; keep the doc's wording when it never names a city
+  const fdFull = addr ? (addr.dataset.addr || addr.textContent).replace(/\s+/g, " ").trim() : "";
+  const fdShow = addr ? (fdFull === addr.textContent.replace(/\s+/g, " ").trim() + ", Florida" ? addr.textContent.replace(/\s+/g, " ").trim() : fdFull) : "";
+  if (addr) rows.push(`<div class="fd-row"><span class="fd-k">Where</span><span class="fd-v"><button type="button" class="addr" id="fd-addr" data-addr="${esc(fdFull)}">${esc(fdShow).replace(/\b(FL|Fl|Florida|OH|Ohio) (\d{5})/, "$1&nbsp;$2")}</button></span></div>`);
   if (phones.length) rows.push(`<div class="fd-row"><span class="fd-k">Call</span><span class="fd-v">${phones.map(p => `<span class="fd-ph">${p.label ? esc(p.label) + ": " : ""}<a href="tel:+1${p.num.replace(/\D/g, "").slice(-10)}">${esc(p.num)}</a></span>`).join("")}</span></div>`);
   if (steps.length) rows.push(`<div class="fd-row fd-steps"><span class="fd-k">Before you start</span><ul class="fd-v">${steps.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>`);
   const first = $("#gfirst"); if (first) first.innerHTML = rows.length ? `<section class="firstday" aria-label="First day"><h2>First day</h2>${rows.join("")}</section>` : "";
