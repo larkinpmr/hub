@@ -959,6 +959,14 @@ main:focus { outline: none; }
 .holbar.hol-hanukkah { background: linear-gradient(100deg, #0B1B4A 0%, #1D4ED8 55%, #60A5FA 80%, #E5C76B 100%); }
 :root[data-holiday="halloween"]:not([data-holiday=""]) header.top::after { height: 4px; bottom: -4px; background: repeating-linear-gradient(90deg, #FF7A1A 0 22px, #170D12 22px 30px, #7C3AED 30px 52px, #170D12 52px 60px); }
 /* PTO */
+.away { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 14px; }
+.away > b { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.aw-i { white-space: nowrap; } .aw-w { color: var(--muted); font-size: 13px; }
+.aw-t { font: 700 10px/1 var(--mono); letter-spacing: .05em; padding: 2px 5px; border-radius: 4px; background: var(--sun-soft); color: var(--sun); vertical-align: 1px; } .aw-t.cme { background: var(--accent-soft); color: var(--accent); }
+.aw-all { margin-left: auto; font-weight: 600; text-decoration: none; white-space: nowrap; }
+table.sched td { position: relative; }
+.ptodot { position: absolute; top: 3px; right: 3px; width: 8px; height: 8px; padding: 0; border: 2px solid var(--surface); border-radius: 50%; background: var(--sun); cursor: pointer; box-sizing: content-box; }
+.ptodot.cme { background: var(--accent); } .ptodot::after { content: ""; position: absolute; inset: -8px; }
 .offtag { font: 600 10.5px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 6px; margin-left: 3px; vertical-align: 1px; white-space: nowrap; }
 .pto-note { font-size: 13.5px; color: var(--muted); margin: -4px 0 12px; }
 .ptowrap { display: grid; gap: 18px; } .pto-cal { display: none; }
@@ -2496,7 +2504,7 @@ function viewHome() {
       <section class="panel wide duo">
         <h2>Where everyone is in ${MONTH_FULL[mi]}</h2>
         <p class="sub">From the resident block schedule. Tap a rotation for its guide.</p>
-        <div class="where">${sites.map((x, i) => `<div class="site${i >= 4 ? " more" : ""}"><a href="#rot-${x.r.id}">${chipSpan(x.r)} <b style="color:var(--ink)">${esc(x.r.short)}</b></a><span class="names">${x.people.map(p => whoLink(p) + offNote(p)).join(", ")}</span></div>`).join("")}</div>${sites.length > 4 ? `<button type="button" class="linkbtn wmore">Show all ${sites.length} rotations</button>` : ""}
+        <div class="where">${sites.map((x, i) => `<div class="site${i >= 4 ? " more" : ""}"><a href="#rot-${x.r.id}">${chipSpan(x.r)} <b style="color:var(--ink)">${esc(x.r.short)}</b></a><span class="names">${x.people.map(p => whoLink(p) + offNote(p)).join(", ")}</span></div>`).join("")}</div>${sites.length > 4 ? `<button type="button" class="linkbtn wmore">Show all ${sites.length} rotations</button>` : ""}${awayLine()}
       </section>
   </div>
   ${quickLinks()}`;
@@ -2629,6 +2637,25 @@ function ptoRange(x) {
 }
 const ptoType = x => x.type === "CME" ? "CME" : "PTO";
 const offNote = p => { const x = ptoOn(todayISO).find(y => y.name === p.name); return x ? ` <span class="offtag${ptoType(x) === "CME" ? " cme" : ""}" title="${ptoType(x)} ${esc(ptoRange(x))}">${ptoType(x) === "CME" ? "at CME" : "off today"}</span>` : ""; };
+/** Schedule grid: a small dot in a month cell when that resident has PTO/CME that month (tap or hover for the dates). */
+function ptoDot(p, i) {
+  const a = isoOf(monthStart(i)), e = new Date(monthStart(i)); e.setMonth(e.getMonth() + 1); e.setDate(0); const b = isoOf(e);
+  const xs = ptoOf(p.name).filter(x => x.start <= b && (x.end || x.start) >= a); if (!xs.length) return "";
+  const txt = xs.map(x => `${ptoType(x)} ${ptoRange(x)}`).join(" · "), cme = xs.every(x => ptoType(x) === "CME");
+  return `<button type="button" class="ptodot${cme ? " cme" : ""}" title="${esc(p.name)}: ${esc(txt)}" aria-label="${esc(p.name)} ${esc(txt)}" data-ptotip="${esc(p.name.split(" ")[0])}: ${esc(txt)}"></button>`;
+}
+document.addEventListener("click", e => { const d = e.target.closest("[data-ptotip]"); if (d) { e.preventDefault(); toast(d.dataset.ptotip); } });
+/** "Where everyone is": who is away today through the next 6 days, on one quiet line. */
+function awayLine() {
+  const end = new Date(today); end.setDate(end.getDate() + 6); const endISO = isoOf(end);
+  const xs = (S.pto || []).filter(x => x.start <= endISO && (x.end || x.start) >= todayISO); if (!xs.length) return "";
+  const wd = iso => parseISO(iso).toLocaleDateString("en-US", { weekday: "short" });
+  const item = x => { const s0 = x.start < todayISO ? todayISO : x.start, e0 = x.end || x.start, nm = x.other || !x.name.includes(" ") ? x.name : `${x.name.split(" ")[0]} ${x.name.split(" ").pop()[0]}.`;
+    const when = x.start <= todayISO ? (e0 === todayISO ? "today" : e0 > endISO ? "all week" : "thru " + wd(e0)) : (s0 === e0 ? wd(s0) : `${wd(s0)}–${e0 > endISO ? "" : wd(e0)}`.replace(/–$/, " on"));
+    return `<span class="aw-i">${x.other ? esc(nm) : `<a class="who-link" href="#res-${slug(x.name)}">${esc(nm)}</a>`} <span class="aw-t${ptoType(x) === "CME" ? " cme" : ""}">${ptoType(x)}</span> <span class="aw-w">${when}</span></span>`; };
+  return `<div class="away"><b>Away this week</b>${xs.map(item).join("")}<a class="aw-all" href="#schedule" data-showpto>See all time off →</a></div>`;
+}
+document.addEventListener("click", e => { if (e.target.closest("[data-showpto]")) sState.view = "pto"; });
 /** Resident Schedule ▸ Time off: a month calendar on computers, a list on phones. */
 function viewTimeOff() {
   const all = S.pto || [];
@@ -2680,7 +2707,7 @@ function viewSchedule() {
   const who = sState.who.toLowerCase();
   const rows = groups.map(g => `<tr class="pgy"><th colspan="${cols.length + 1}">${esc(g)}</th></tr>` + S.residents.filter(p => p.pgy === g).map(p => {
     const match = who && p.name.toLowerCase().includes(who);
-    return `<tr class="${who ? (match ? "hl" : "dim") : ""}${p.name === ME ? " me" : ""}"><th class="name" scope="row">${whoLink(p)}</th>${cols.map(i => `<td class="${i === curMonth ? "now" : ""}">${p.months2[i] ? `<span class="split" title="${esc(p.months[i])} ${MON[(i + 6) % 12]} 1–${HALF_DAY - 1}, then ${esc(p.months2[i])} from ${MON[(i + 6) % 12]} ${HALF_DAY}"><span class="${i === curMonth && nowHalf ? "past" : ""}">${chipRaw(p.months[i], p.rots[i])}</span><span class="${i === curMonth && !nowHalf ? "later" : ""}">${chipRaw(p.months2[i], p.rots2[i])}</span></span>` : chipRaw(p.months[i], p.rots[i])}</td>`).join("")}</tr>`;
+    return `<tr class="${who ? (match ? "hl" : "dim") : ""}${p.name === ME ? " me" : ""}"><th class="name" scope="row">${whoLink(p)}</th>${cols.map(i => `<td class="${i === curMonth ? "now" : ""}">${p.months2[i] ? `<span class="split" title="${esc(p.months[i])} ${MON[(i + 6) % 12]} 1–${HALF_DAY - 1}, then ${esc(p.months2[i])} from ${MON[(i + 6) % 12]} ${HALF_DAY}"><span class="${i === curMonth && nowHalf ? "past" : ""}">${chipRaw(p.months[i], p.rots[i])}</span><span class="${i === curMonth && !nowHalf ? "later" : ""}">${chipRaw(p.months2[i], p.rots2[i])}</span></span>` : chipRaw(p.months[i], p.rots[i])}${ptoDot(p, i)}</td>`).join("")}</tr>`;
   }).join("")).join("");
   const used = S.rotations.filter(r => S.residents.some(p => p.rots.includes(r) || p.rots2.includes(r)));
   return head + `<div class="sched-wrap${cols.length > 6 ? " wide" : ""}"><table class="sched"><thead><tr><th class="name">Resident</th>${cols.map(i => `<th class="${i === curMonth ? "now" : ""}">${MONTHS[i]}${i === curMonth ? " · now" : ""}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
