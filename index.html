@@ -990,6 +990,12 @@ table.sched td { position: relative; }
   .ptowrap { grid-template-columns: minmax(0, 1fr) 280px; align-items: start; } .pto-cal { display: block; }
   .mg-t.pto { background: var(--sun-soft); border-left-color: var(--sun); font-weight: 600; } .mg-t.pto.cme { background: var(--accent-soft); border-left-color: var(--accent); } .ptogrid .mg-c { min-height: 92px; } .ptogrid .mg-c.we { background: color-mix(in srgb, var(--raised) 35%, transparent); }
 }
+/* Schedule ▸ Time off: its own color so it doesn't blend in with the other view buttons */
+.seg button.seg-pto { display: inline-flex; align-items: center; gap: 6px; margin-left: 4px; background: var(--sun-soft); color: var(--sun); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sun) 35%, transparent); }
+.seg button.seg-pto:hover { background: color-mix(in srgb, var(--sun) 22%, var(--surface)); }
+.seg button.seg-pto[aria-pressed="true"] { background: var(--sun); color: var(--surface); box-shadow: none; }
+.seg-n { font: 700 11px/1 var(--mono); min-width: 18px; height: 18px; display: inline-grid; place-items: center; border-radius: 999px; background: var(--sun); color: var(--surface); padding: 0 5px; }
+.seg button.seg-pto[aria-pressed="true"] .seg-n { background: var(--surface); color: var(--sun); }
 </style>
 
 <button type="button" class="skip" onclick="document.getElementById('main').focus()">Skip to content</button>
@@ -2698,7 +2704,7 @@ function viewSchedule() {
     <div class="seg" role="group" aria-label="View">
       <button data-sview="grid" aria-pressed="${sState.view === "grid"}">By resident</button>
       <button data-sview="site" aria-pressed="${sState.view === "site"}">By site</button>
-      ${(S.pto || []).length ? `<button data-sview="pto" aria-pressed="${sState.view === "pto"}">Time off</button>` : ""}
+      ${(S.pto || []).length ? `<button data-sview="pto" class="seg-pto" aria-pressed="${sState.view === "pto"}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>Time off${ptoOn(todayISO).length ? `<span class="seg-n">${ptoOn(todayISO).length}</span>` : ""}</button>` : ""}
     </div>
     ${sState.view === "grid" ? `<div class="srow"><select id="sspan" aria-label="Months shown"><option value="3" ${sState.span === "3" ? "selected" : ""}>Next 3 months</option><option value="12" ${sState.span === "12" ? "selected" : ""}>Full year</option></select>
       <select id="spgy" aria-label="PGY year">${["all", ...pgys].map(p => `<option value="${esc(p)}" ${sState.pgy === p ? "selected" : ""}>${p === "all" ? "All years" : esc(p)}</option>`).join("")}</select></div>
