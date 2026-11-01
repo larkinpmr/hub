@@ -131,10 +131,12 @@ function build_() {
  *  blank = this account's main calendar). Only the matched resident's name and the dates leave the calendar —
  *  never the title text, description or reason. Events whose name doesn't match a resident are skipped (testPTO lists them). */
 function ptoEvents_(settings, residentRows) {
-  const id = String(settings['PTO calendar'] || '').trim();
+  const get = k => { const hit = Object.keys(settings).find(x => x.trim().toLowerCase().replace(/\s+/g, ' ') === k); return hit ? String(settings[hit] || '').trim() : ''; };   // "PTO Calendar", "pto calendar"… all work
+  const id = get('pto calendar').replace(/^.*[?&]src=([^&]+).*$/, (m, x) => decodeURIComponent(x)).replace(/^mailto:/i, '');   // an ID, or a calendar link that contains it
   const cal = id ? CalendarApp.getCalendarById(id) : CalendarApp.getDefaultCalendar();
-  if (!cal) throw new Error('calendar not found: check the "PTO calendar" row in Settings (it should be the Calendar ID from the calendar\'s settings page)');
-  const word = new RegExp('\\b(' + (String(settings['PTO keyword'] || '').trim() || 'PTO') + ')\\b', 'i');
+  if (!cal) throw new Error('calendar not found: check the "PTO calendar" row in Settings (it should be the Calendar ID from the calendar\'s settings page, and the chief Gmail must have access to that calendar)');
+  // A separate PTO calendar: every event on it is PTO. The main calendar: only events whose title says PTO (or the "PTO keyword").
+  const kw = get('pto keyword'), word = id && !kw ? /./ : new RegExp('\\b(' + (kw || 'PTO') + ')\\b', 'i');
   const now = new Date(), from = new Date(now.getFullYear() - 1, 6, 1), to = new Date(now.getFullYear() + 1, 6, 1);
   const names = parseResidents_(residentRows || []).map(r => r.name);
   const key = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -162,7 +164,7 @@ function testPTO() {
   const out = build_(), settings = {};
   (out.panel['Settings'] || []).forEach(r => { if (r[0]) settings[String(r[0]).trim()] = String(r[1] || '').trim(); });
   const r = ptoEvents_(settings, out.residents);
-  Logger.log('Calendar: ' + r.calendar + ' · ' + r.list.length + ' PTO entries on the hub');
+  Logger.log('Calendar: ' + r.calendar + ' · ' + r.list.length + ' PTO entries on the hub (' + parseResidents_(out.residents || []).length + ' residents to match against)');
   r.list.forEach(p => Logger.log('  ' + p.name + ': ' + p.start + (p.end !== p.start ? ' to ' + p.end : '')));
   Logger.log(r.skipped.length ? 'Not shown (no resident name matched — write the resident\'s name in the event title):\n  ' + r.skipped.join('\n  ') : 'Every PTO event matched a resident.');
 }
@@ -1611,7 +1613,7 @@ const HOWTO_LINES = [
   ['Settings tab → Academic Year, Home headline and subtitle, Email sign-in (on/off), Virtual lecture link (the usual Zoom link), Lecture slides folder (link to the shared Drive folder where residents upload slides: adds an "Upload slides" button on Didactics; residents need edit access to that folder), Holiday themes (off to turn off), and the Lecture reminder settings.'],
   [''],
   ['HOME PAGE EXTRAS'],
-  ['PTO → nothing extra to do: the hub reads the chief Google Calendar and shows every event with "PTO" and a resident\'s name in the title (e.g. "PTO – Chris Keener") on Resident Schedule ▸ Time off. Only the name and dates are shown, never the reason or notes. Run testPTO to see what it found. Optional Settings rows: "PTO calendar" (a Calendar ID, if PTO lives on a calendar other than the main one) and "PTO keyword" (if you title events differently, e.g. Vacation).'],
+  ['PTO → nothing extra to do: the hub reads the chief Google Calendar and shows every event with "PTO" and a resident\'s name in the title (e.g. "PTO – Chris Keener") on Resident Schedule ▸ Time off. Only the name and dates are shown, never the reason or notes. Run testPTO to see what it found. Optional Settings rows: "PTO calendar" (a Calendar ID: then every event on that calendar counts as PTO, and the title only needs the resident\'s name) and "PTO keyword" (if you title events differently, e.g. Vacation).'],
   ['Birthdays → add a "Birthday" column to the Approved Emails tab (any format, e.g. 3/15 or March 15; the year is never shown). On the day, Home says "Happy birthday" to everyone.'],
   ['Countdowns → Settings row "Countdowns": one per line or separated by ;, written Label = date (for example: In-training exam = 2/27/2027; Graduation = 6/30/2027). Home shows "41 days to In-training exam" until the date passes.'],
   ['Rotation feedback → Settings row "Rotation feedback form": the link to a Google Form. In the last week of a rotation and the week after, that resident\'s Home shows "How was SA? 2-minute feedback". Optional: put {rotation} and {name} in the link (a prefilled-form link) and they are filled in.'],
