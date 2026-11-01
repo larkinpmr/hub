@@ -1029,8 +1029,8 @@ main:focus { outline: none; }
   .tc-m { justify-self: stretch; background: var(--accent); color: var(--on-accent); font: 700 10.5px/18px var(--mono); letter-spacing: .14em; text-align: center; padding-left: .14em; }
   .tc-d { font: 800 27px/1 var(--display); color: var(--ink); align-self: center; letter-spacing: -.02em; }
   .tc-w { font: 600 9px/1 var(--mono); letter-spacing: .12em; color: var(--muted); padding: 0 0 6px .12em; }
-  .tc-p.rip { animation: tcrip 260ms cubic-bezier(.5, 0, .9, .6) both; }
-  @keyframes tcrip { 0% { transform: rotateX(0); opacity: 1; } 70% { opacity: 1; } 100% { transform: rotateX(100deg) translateY(-4px); opacity: 0; } }
+  .tc-p.rip { animation: tcrip 120ms linear both; } .tc-p.rip > .tc-d { filter: blur(4px); opacity: .7; } .tc-p.rip > .tc-w, .tc-p.rip > .tc-m { color: transparent; }
+  @keyframes tcrip { 0% { transform: rotateX(0); opacity: 1; } 60% { opacity: 1; } 100% { transform: rotateX(95deg); opacity: 0; } }
 }
 .cdowns.cd-top { margin: 0; } .cdowns.cd-top .cdown { padding: 3px 10px; font-size: 12.5px; } .cdowns.cd-top .cdown b { font-size: 13.5px; }
 @media (min-width: 641px) { .cdowns.cd-body { display: none; } }
@@ -2600,7 +2600,7 @@ function tearCal() {
   const t = calmMotion() ? Infinity : bootT();
   let flips = "";
   if (t < BOOT_END) {
-    const n = 6, dur = 260, starts = Array.from({ length: n }, (_, k) => Math.round(150 + (BOOT_END - dur - 150) * Math.pow(k / (n - 1), 1.35)));   // speeds through, then slows into today
+    const n = 18, dur = 120, starts = Array.from({ length: n }, (_, k) => Math.round(120 + (BOOT_END - dur - 120) * k / (n - 1)));   // a fast, steady riffle of pages (blurred, unreadable) that lands on today
     flips = starts.map((st, k) => page(new Date(today.getTime() - (n - k) * DAY), " rip", `z-index:${n - k + 1};animation-duration:${dur}ms;animation-delay:${Math.round(st - t)}ms`)).join("");
   }
   return `<span class="tearcal" role="img" aria-label="${esc(today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }))}">${page(today, " now", "z-index:1")}${flips}</span>`;
