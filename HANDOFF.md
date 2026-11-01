@@ -43,6 +43,7 @@ The hub website (**https://larkinpmr.github.io**) is built from Google Drive. No
 
 # Home page extras
 
+- **PTO / Time off:** the hub reads the **chief Google Calendar** (the account's main calendar). Every event whose title has **PTO** and a resident's name (e.g. `PTO – Chris Keener`, `Keener PTO`) appears on **Resident Schedule ▸ Time off** (month calendar on computers, list on phones), on that resident's page, and as a small "off today" tag next to their name on Home and on their rotation guide. Only the name and dates are shown; the title text, notes and reason never leave the calendar. Events with no matching resident name are skipped: run **testPTO** to see what was found and what was skipped. First time only: running testPTO asks you to allow Calendar access. Optional Settings rows: **PTO calendar** (a Calendar ID, if PTO is kept on a separate calendar) and **PTO keyword** (if events are titled differently, e.g. `Vacation`).
 - **Birthdays:** add a column headed **Birthday** to the private **Approved Emails** tab and type each person's birthday (any format: 3/15, 3/15/1994, March 15). On the day, Home shows "🎂 Happy birthday, …!" to everyone; the person sees their own name. Only the name and month-day ever reach the website, never the year or email.
 - **Countdowns:** Settings row **Countdowns**, written `Label = date` and separated by `;` (e.g. `In-training exam = 2/27/2027; Graduation = 6/30/2027`). Home shows "41 days to In-training exam" chips; each disappears after its date.
 - **Rotation feedback:** Settings row **Rotation feedback form** = the link to a Google Form. In the last week of a resident's rotation and the week after, their Home shows "How was SA? 2-minute feedback" (Give feedback / Not now). To have the form filled in automatically, use a prefilled-form link with `{rotation}` and `{name}` where the answers go.
@@ -154,6 +155,7 @@ Open the **Hub Control Panel** sheet ▸ **Extensions ▸ Apps Script**. Choose 
 | **testCalendar** / **testMyCalendar** | To preview the didactics calendar or one resident's personal calendar |
 | **installLectureReminders** / **previewLectureReminders** / **sendTestReminder** / **checkLecturerEmails** | Guest lecturer reminder emails (see above) |
 | **installInvitations** / **createInvitationDrafts** / **draftUpcomingInvitations** | Lecture invitation drafts (see above) |
+| **testPTO** | Lists the PTO the hub found on the chief calendar and any events it skipped (no resident name in the title). Run it once first to allow Calendar access |
 | **installApplicantPage** | Once: creates the Applicant Page tab with a starter draft (see above) |
 | **installAutoRefresh** | Only if the automatic 5-minute refresh ever stops (check the clock icon, "Triggers", on the left) |
 

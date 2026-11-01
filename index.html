@@ -958,6 +958,17 @@ main:focus { outline: none; }
 .holbar.hol-eidfitr, .holbar.hol-eidadha { background: linear-gradient(100deg, #022C22 0%, #065F46 40%, #047857 65%, #D4A017 100%); }
 .holbar.hol-hanukkah { background: linear-gradient(100deg, #0B1B4A 0%, #1D4ED8 55%, #60A5FA 80%, #E5C76B 100%); }
 :root[data-holiday="halloween"]:not([data-holiday=""]) header.top::after { height: 4px; bottom: -4px; background: repeating-linear-gradient(90deg, #FF7A1A 0 22px, #170D12 22px 30px, #7C3AED 30px 52px, #170D12 52px 60px); }
+/* PTO */
+.offtag { font: 600 10.5px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 6px; margin-left: 3px; vertical-align: 1px; white-space: nowrap; }
+.pto-note { font-size: 13.5px; color: var(--muted); margin: -4px 0 12px; }
+.ptowrap { display: grid; gap: 18px; } .pto-cal { display: none; }
+.ptolist { list-style: none; margin: 0 0 14px; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.ptolist li { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; padding: 10px 14px; } .ptolist li + li { border-top: 1px solid var(--line); }
+.ptolist .pt-d { margin-left: auto; font: 600 13px/1.3 var(--mono); color: var(--ink); }
+@media (min-width: 900px) {
+  .ptowrap { grid-template-columns: minmax(0, 1fr) 280px; align-items: start; } .pto-cal { display: block; }
+  .mg-t.pto { background: var(--sun-soft); border-left-color: var(--sun); font-weight: 600; } .ptogrid .mg-c { min-height: 92px; } .ptogrid .mg-c.we { background: color-mix(in srgb, var(--raised) 35%, transparent); }
+}
 </style>
 
 <button type="button" class="skip" onclick="document.getElementById('main').focus()">Skip to content</button>
@@ -1655,6 +1666,7 @@ function mergeLive(snap, live) {
   d.countdowns = String(settings["countdowns"] || "").split(/[;\n]+/).map(x => { const m = x.match(/^\s*(.+?)\s*[=:–—]\s*(\S.*?)\s*$/); return m ? { label: m[1], date: parseLooseDate(m[2]) } : null; }).filter(x => x && x.date);
   d.feedbackForm = /^https?:\/\//i.test(settings["rotation feedback form"] || "") ? settings["rotation feedback form"] : "";
   d.birthdays = Array.isArray(live.birthdays) ? live.birthdays : (d.birthdays || []);
+  d.pto = Array.isArray(live.pto) ? live.pto.filter(x => x && x.name && /^\d{4}-\d{2}-\d{2}$/.test(x.start)) : (d.pto || []);
   const contacts = rowsOf(tab("contacts"));
   if (contacts.length) d.contacts = contacts.map(r => ({ role: r.role || "", name: r.name || "", phone: r.phone || "", email: r.email || "" }));
   const links = rowsOf(tab("quick links") || tab("links"));
@@ -2481,7 +2493,7 @@ function viewHome() {
       <section class="panel wide duo">
         <h2>Where everyone is in ${MONTH_FULL[mi]}</h2>
         <p class="sub">From the resident block schedule. Tap a rotation for its guide.</p>
-        <div class="where">${sites.map((x, i) => `<div class="site${i >= 4 ? " more" : ""}"><a href="#rot-${x.r.id}">${chipSpan(x.r)} <b style="color:var(--ink)">${esc(x.r.short)}</b></a><span class="names">${x.people.map(p => whoLink(p)).join(", ")}</span></div>`).join("")}</div>${sites.length > 4 ? `<button type="button" class="linkbtn wmore">Show all ${sites.length} rotations</button>` : ""}
+        <div class="where">${sites.map((x, i) => `<div class="site${i >= 4 ? " more" : ""}"><a href="#rot-${x.r.id}">${chipSpan(x.r)} <b style="color:var(--ink)">${esc(x.r.short)}</b></a><span class="names">${x.people.map(p => whoLink(p) + offNote(p)).join(", ")}</span></div>`).join("")}</div>${sites.length > 4 ? `<button type="button" class="linkbtn wmore">Show all ${sites.length} rotations</button>` : ""}
       </section>
   </div>
   ${quickLinks()}`;
@@ -2603,7 +2615,36 @@ function didacticList() {
   }).join("") + moreBtn;
 }
 
-let sState = { pgy: store.get("hub.s.pgy") || "all", view: "grid", month: curMonth, who: "", span: window.innerWidth < 640 ? "3" : "12" };
+let sState = { ptoCal: todayISO.slice(0, 7), pgy: store.get("hub.s.pgy") || "all", view: "grid", month: curMonth, who: "", span: window.innerWidth < 640 ? "3" : "12" };
+/* ---------- PTO (from the chief Google Calendar: name + dates only) */
+const ptoOf = name => (S.pto || []).filter(x => x.name === name);
+const ptoOn = iso => (S.pto || []).filter(x => x.start <= iso && iso <= (x.end || x.start));
+function ptoRange(x) {
+  const a = parseISO(x.start), b = parseISO(x.end || x.start), f = (d, o) => d.toLocaleDateString("en-US", o);
+  if (x.start === (x.end || x.start)) return f(a, { weekday: "short", month: "short", day: "numeric" });
+  return a.getMonth() === b.getMonth() ? `${f(a, { month: "short", day: "numeric" })}–${b.getDate()}` : `${f(a, { month: "short", day: "numeric" })} – ${f(b, { month: "short", day: "numeric" })}`;
+}
+const offNote = p => { const x = ptoOn(todayISO).find(y => y.name === p.name); return x ? ` <span class="offtag" title="PTO ${esc(ptoRange(x))}">off today</span>` : ""; };
+/** Resident Schedule ▸ Time off: a month calendar on computers, a list on phones. */
+function viewTimeOff() {
+  const all = S.pto || [];
+  if (!all.length) return `<div class="empty">No PTO on the chief calendar yet.</div>`;
+  const [y, m] = sState.ptoCal.split("-").map(Number), first = new Date(y, m - 1, 1), days = new Date(y, m, 0).getDate();
+  const cells = []; for (let i = 0; i < first.getDay(); i++) cells.push(null); for (let d = 1; d <= days; d++) cells.push(d); while (cells.length % 7) cells.push(null);
+  const iso = d => `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  const grid = `<div class="mgrid-h"><button type="button" class="iconbtn" data-ptocal="-1" aria-label="Previous month">‹</button><b>${first.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</b><button type="button" class="iconbtn" data-ptocal="1" aria-label="Next month">›</button>${sState.ptoCal !== todayISO.slice(0, 7) ? `<button type="button" class="linkbtn" data-ptocal="0">Today</button>` : ""}</div>
+  <div class="mgrid ptogrid"><div class="mg-w">${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(x => `<span>${x}</span>`).join("")}</div>
+  ${Array.from({ length: cells.length / 7 }, (_, w) => `<div class="mg-row">${cells.slice(w * 7, w * 7 + 7).map(d => {
+    if (!d) return `<div class="mg-c blank"></div>`;
+    const who = ptoOn(iso(d)), we = [0, 6].includes(new Date(y, m - 1, d).getDay());
+    return `<div class="mg-c${iso(d) === todayISO ? " tdy" : ""}${iso(d) < todayISO ? " past" : ""}${we ? " we" : ""}"><span class="mg-d">${d}</span>${who.map(x => `<a class="mg-t pto" href="#res-${slug(x.name)}" title="${esc(x.name)} · PTO ${esc(ptoRange(x))}">${esc(x.name.split(" ")[0])} ${esc(x.name.split(" ").pop()[0])}.</a>`).join("")}</div>`;
+  }).join("")}</div>`).join("")}</div>`;
+  const up = all.filter(x => (x.end || x.start) >= todayISO);
+  const groups = []; up.forEach(x => { const k = x.start <= todayISO ? "Off now" : parseISO(x.start).toLocaleDateString("en-US", { month: "long", year: "numeric" }); let g = groups.find(g => g.k === k); if (!g) groups.push(g = { k, items: [] }); g.items.push(x); });
+  const list = up.length ? groups.map(g => `<h3 class="dir-h">${esc(g.k)}</h3><ul class="ptolist">${g.items.map(x => { const p = S.residents.find(r => r.name === x.name);
+    return `<li><a class="who-link" href="#res-${slug(x.name)}">${esc(x.name)}</a>${p ? ` <span class="muted">${esc(p.pgy)}</span>` : ""}<span class="pt-d">${esc(ptoRange(x))}</span></li>`; }).join("")}</ul>`).join("") : `<p class="muted">No upcoming PTO.</p>`;
+  return `<p class="pto-note">From the chief calendar. Names and dates only; ask a chief to change anything.</p><div class="ptowrap"><div class="pto-cal">${grid}</div><div class="pto-list">${list}</div></div>`;
+}
 function viewSchedule() {
   const pgys = [...new Set(S.residents.map(p => p.pgy))];
   const head = `
@@ -2613,12 +2654,14 @@ function viewSchedule() {
     <div class="seg" role="group" aria-label="View">
       <button data-sview="grid" aria-pressed="${sState.view === "grid"}">By resident</button>
       <button data-sview="site" aria-pressed="${sState.view === "site"}">By site</button>
+      ${(S.pto || []).length ? `<button data-sview="pto" aria-pressed="${sState.view === "pto"}">Time off</button>` : ""}
     </div>
     ${sState.view === "grid" ? `<div class="srow"><select id="sspan" aria-label="Months shown"><option value="3" ${sState.span === "3" ? "selected" : ""}>Next 3 months</option><option value="12" ${sState.span === "12" ? "selected" : ""}>Full year</option></select>
       <select id="spgy" aria-label="PGY year">${["all", ...pgys].map(p => `<option value="${esc(p)}" ${sState.pgy === p ? "selected" : ""}>${p === "all" ? "All years" : esc(p)}</option>`).join("")}</select></div>
       <input id="swho" type="search" placeholder="Find a resident" value="${esc(sState.who)}" aria-label="Find a resident">`
-    : `<select id="smonth" aria-label="Month">${MONTH_FULL.map((m, i) => `<option value="${i}" ${sState.month === i ? "selected" : ""}>${m}${i === curMonth ? " (now)" : ""}</option>`).join("")}</select>`}
+    : sState.view === "pto" ? "" : `<select id="smonth" aria-label="Month">${MONTH_FULL.map((m, i) => `<option value="${i}" ${sState.month === i ? "selected" : ""}>${m}${i === curMonth ? " (now)" : ""}</option>`).join("")}</select>`}
   </div>`;
+  if (sState.view === "pto") return head + viewTimeOff();
   if (sState.view === "site") {
     const mi = sState.month;
     const cards = S.rotations.map(r => ({ r, ppl: whoIsAt(r, mi) })).filter(x => x.ppl.length);
@@ -2736,7 +2779,7 @@ function viewRotation(id) {
       <div><dt>PGY level</dt><dd>${esc(r.pgy || "—")}</dd></div>
       <div><dt>Location</dt><dd>${esc(r.location || "—")}</dd></div>
       <div><dt>Key attendings</dt><dd>${esc(r.attendings || "—")}</dd></div>
-      <div class="who"><dt>On this rotation in ${MONTH_FULL[curMonth]}</dt><dd>${now.length ? now.map(p => `${whoLink(p)} <span class="muted">(${esc(p.pgy)})</span>`).join(", ") : "No one this month"}</dd>
+      <div class="who"><dt>On this rotation in ${MONTH_FULL[curMonth]}</dt><dd>${now.length ? now.map(p => `${whoLink(p)} <span class="muted">(${esc(p.pgy)})</span>${offNote(p)}`).join(", ") : "No one this month"}</dd>
         <dd>${yearStrip(year)}</dd></div>
     </dl>` : ""}
     <div id="gtop"></div>
@@ -2775,6 +2818,7 @@ function viewResident(id) {
       <section class="panel"><h2>Lectures they present</h2>
         ${up.length ? `<ul class="rlist">${up.map(t => `<li><b>${esc(t.topic)}</b><span>${fmtDate(t.date)}${t.location ? " · " + esc(t.location) : ""}</span></li>`).join("")}</ul>` : `<p class="muted">Nothing upcoming on the didactic schedule.</p>`}
         ${past.length ? `<p class="muted" style="margin:10px 0 0">${past.length} earlier this year.</p>` : ""}</section>
+      ${ptoOf(p.name).filter(x => (x.end || x.start) >= todayISO).length ? `<section class="panel"><h2>Time off</h2><ul class="rlist">${ptoOf(p.name).filter(x => (x.end || x.start) >= todayISO).map(x => `<li><b>${esc(ptoRange(x))}</b></li>`).join("")}</ul></section>` : ""}
       <section class="panel"><h2>Onboarding coming up</h2>
         ${onb.length ? `<ul class="rlist">${onb.map(x => `<li><b>${x.rot ? `<a href="#rot-${x.rot.id}">${esc(x.rot.title)}</a>` : esc(x.raw)}</b><span>Starts ${x.start.toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric" })} · ${x.days} days away</span></li>`).join("")}</ul>` : `<p class="muted">Nothing due right now.</p>`}</section>
     </div></div>`;
@@ -3119,6 +3163,10 @@ function bindView() {
   });
   const dq = $("#dq"); if (dq) dq.oninput = () => { dState.q = dq.value; $("#dlist").innerHTML = didacticList(); };
   document.querySelectorAll("[data-sview]").forEach(b => b.onclick = () => { sState.view = b.dataset.sview; route(true); });
+  document.querySelectorAll("[data-ptocal]").forEach(b => b.onclick = () => {
+    const n = +b.dataset.ptocal; if (!n) sState.ptoCal = todayISO.slice(0, 7); else { const [y, m] = sState.ptoCal.split("-").map(Number), d = new Date(y, m - 1 + n, 1); sState.ptoCal = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; }
+    route(true);
+  });
   const sp = $("#sspan"); if (sp) sp.onchange = () => { sState.span = sp.value; route(true); };
   const sg = $("#spgy"); if (sg) sg.onchange = () => { sState.pgy = sg.value; store.set("hub.s.pgy", sState.pgy); route(true); };
   const sw = $("#swho"); if (sw) sw.oninput = () => { sState.who = sw.value; const pos = sw.selectionStart; route(true); const n = $("#swho"); n.focus(); n.setSelectionRange(pos, pos); };
