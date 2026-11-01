@@ -754,7 +754,8 @@ button.addr { all: unset; cursor: pointer; color: var(--accent); text-decoration
 button.addr::before { content: ""; display: inline-block; width: .8em; height: .95em; margin-right: .25em; vertical-align: -.1em; background: currentColor;
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28'%3E%3Cpath d='M12 0a10 10 0 0 0-10 10c0 7.5 10 18 10 18s10-10.5 10-18A10 10 0 0 0 12 0zm0 14a4 4 0 1 1 0-8 4 4 0 0 1 0 8z'/%3E%3C/svg%3E") center / contain no-repeat;
           mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28'%3E%3Cpath d='M12 0a10 10 0 0 0-10 10c0 7.5 10 18 10 18s10-10.5 10-18A10 10 0 0 0 12 0zm0 14a4 4 0 1 1 0-8 4 4 0 0 1 0 8z'/%3E%3C/svg%3E") center / contain no-repeat; }
-button.addr:hover { text-decoration-style: solid; }
+button.addr:hover, button.addr.hot { text-decoration-style: solid; }
+button.addr.addr-cont::before { display: none; }
 button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
 .mapback { position: fixed; inset: 0; background: rgb(0 0 0 / .35); z-index: 30; }
 .mapsheet { position: fixed; z-index: 31; left: 0; right: 0; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; width: min(380px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 16px 40px rgb(0 0 0 / .25); padding: 16px; display: grid; gap: 8px; }
@@ -3095,28 +3096,55 @@ function linkAddresses(root) {
     }
     return out.replace(/[ \t]*\n\s*/g, "\n");   // blank lines between paragraphs count as one line break
   };
+  // Pass 1: find each street address and, when its city / state / zip sits further on (next line, next paragraph), where that text is,
+  // so the whole address is one link ("8850 NW 122nd St, Hialeah, FL 33018" — not just the street).
+  const ranges = new Map(); const add = (k, r) => { if (!ranges.has(k)) ranges.set(k, []); ranges.get(k).push(r); };
+  let grp = 0;
   nodes.forEach((node, i) => {
-    const text = node.nodeValue; ADDR_RE.lastIndex = 0;
-    if (!ADDR_RE.test(text)) return;
-    ADDR_RE.lastIndex = 0;
-    const frag = document.createDocumentFragment(); let last = 0, m;
+    const text = node.nodeValue; ADDR_RE.lastIndex = 0; let m;
     while ((m = ADDR_RE.exec(text))) {
       const shown = m[0].replace(/[\s,.]+$/, "");
-      let full = shown.replace(/\s+/g, " ");
+      let full = shown.replace(/\s+/g, " "), endAt = m.index + shown.length, tail = null;
       if (!/\b(FL|OH|Florida|Ohio)\b/.test(shown)) {
-        const c = after(i, m.index + shown.length).match(CITY_RE);
+        const c = after(i, endAt).match(CITY_RE);
         full += c ? `, ${c[1].replace(/^FTL$/i, "Fort Lauderdale")}, ${c[2] && c[2] !== "Fl" ? c[2] : "FL"}${c[3] || c[4] ? " " + (c[3] || c[4]) : ""}` : ", Florida";
+        if (c) {
+          // the city text as written ("Hialeah, FL 33018"), found again in the page text so it can be underlined too
+          const cityTxt = c[0].slice(c[0].lastIndexOf(c[1])).trim();
+          const rx = new RegExp(cityTxt.split(/[\s,]+/).filter(Boolean).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("[\\s,]*"));
+          const here = rx.exec(text.slice(endAt));
+          if (here && /^[\s,.;]*$/.test(text.slice(endAt, endAt + here.index))) endAt = endAt + here.index + here[0].length;   // same line: one link
+          else if (here) tail = { k: i, s: endAt + here.index, e: endAt + here.index + here[0].length };
+          else for (let k = i + 1; k < nodes.length && k <= i + 6; k++) { const h = rx.exec(nodes[k].nodeValue); if (h) { tail = { k, s: h.index, e: h.index + h[0].length }; break; } }
+        }
       }
-      frag.appendChild(document.createTextNode(text.slice(last, m.index)));
-      const b = document.createElement("button"); b.type = "button"; b.className = "addr"; b.textContent = shown;
-      b.dataset.addr = full;
-      b.setAttribute("aria-label", "Open " + full + " in a maps app");
-      frag.appendChild(b); last = m.index + shown.length;
+      const g = tail ? String(++grp) : "";
+      add(i, { s: m.index, e: endAt, full, g, cont: false });
+      if (tail) add(tail.k, { s: tail.s, e: tail.e, full, g, cont: true });
+      ADDR_RE.lastIndex = Math.max(ADDR_RE.lastIndex, endAt);
     }
+  });
+  // Pass 2: wrap those pieces in map buttons (pieces of one address share data-grp and highlight together)
+  nodes.forEach((node, i) => {
+    const rs = (ranges.get(i) || []).sort((a, b) => a.s - b.s); if (!rs.length) return;
+    const text = node.nodeValue, frag = document.createDocumentFragment(); let last = 0;
+    rs.forEach(r => {
+      if (r.s < last) return;
+      frag.appendChild(document.createTextNode(text.slice(last, r.s)));
+      const b = document.createElement("button"); b.type = "button"; b.className = "addr" + (r.cont ? " addr-cont" : ""); b.textContent = text.slice(r.s, r.e);
+      b.dataset.addr = r.full; if (r.g) b.dataset.grp = r.g;
+      b.setAttribute("aria-label", "Open " + r.full + " in a maps app");
+      frag.appendChild(b); last = r.e;
+    });
     frag.appendChild(document.createTextNode(text.slice(last)));
     node.replaceWith(frag);
   });
 }
+// pieces of one address on two lines light up together
+["mouseover", "mouseout"].forEach(ev => document.addEventListener(ev, e => {
+  const b = e.target.closest && e.target.closest("button.addr[data-grp]"); if (!b) return;
+  document.querySelectorAll(`button.addr[data-grp="${b.dataset.grp}"]`).forEach(x => x.classList.toggle("hot", ev === "mouseover"));
+}));
 function openMaps(btn) {
   closeMaps();
   const a = btn.dataset.addr || btn.textContent.trim(), q = encodeURIComponent(a);
