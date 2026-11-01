@@ -203,19 +203,24 @@ header.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: 
   --wm-tube: #FFE1F2; --wm-tube-glow: 0 0 3px #FF4FA3, 0 0 10px #FF4FA3, 0 0 22px #FF4FA3; --wm-tube2: #DFFFFF; --wm-tube2-glow: 0 0 3px #3BE0E3, 0 0 10px #3BE0E3, 0 0 20px #3BE0E3;
   --wm-sunset: linear-gradient(180deg, #FFC2DD 0%, #FF6BB5 50%, #B48CFF 100%);
   --wm-chrome: linear-gradient(180deg, #E6F7FF 0%, #9FE8FF 45%, #2A1158 50%, #FF8CC6 58%, #FFE3F2 100%); --wm-chrome2: #FF6BB5; --wm-chrome2-glow: 0 0 6px #FF4FA3, 0 0 14px #FF4FA3; } }
+/* the logo's second color (PM&R HUB / year / underline): a clear contrast to the theme color, used only in the logo */
+:root { --wm2: var(--sun); }
+:root[data-accent="coral"] { --wm2: #5B3CC4; } :root[data-accent="ocean"] { --wm2: #B54708; } :root[data-accent="forest"] { --wm2: #C2410C; } :root[data-accent="plum"] { --wm2: #16130E; }
+:root[data-theme="dark"][data-accent="coral"] { --wm2: #B9A6FF; } :root[data-theme="dark"][data-accent="ocean"] { --wm2: #FFB86B; } :root[data-theme="dark"][data-accent="forest"] { --wm2: #FF9F5A; } :root[data-theme="dark"][data-accent="plum"] { --wm2: #E6EDF7; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent="coral"] { --wm2: #B9A6FF; } :root:not([data-theme="light"])[data-accent="ocean"] { --wm2: #FFB86B; } :root:not([data-theme="light"])[data-accent="forest"] { --wm2: #FF9F5A; } :root:not([data-theme="light"])[data-accent="plum"] { --wm2: #E6EDF7; } }
 /* themed wordmark: same styles, recolored from the active theme */
-:root[data-accent]:not([data-accent="vice"]) { --wm-pink: var(--accent); --wm-cyan: var(--sun); --wm-cyanbg: color-mix(in srgb, var(--sun) 28%, var(--surface)); --wm-shadow: var(--ink); --wm-body: var(--t3); --wm-soft: var(--ink);
+:root[data-accent]:not([data-accent="vice"]) { --wm-pink: var(--accent); --wm-cyan: var(--wm2); --wm-cyanbg: color-mix(in srgb, var(--wm2) 28%, var(--surface)); --wm-shadow: var(--ink); --wm-body: var(--t3); --wm-soft: var(--ink);
   --wm-neon: var(--accent); --wm-neon-glow: 0 0 1px #fff, 0 0 6px color-mix(in srgb, var(--accent) 70%, transparent), 0 0 16px color-mix(in srgb, var(--accent) 40%, transparent);
-  --wm-cyan-glow: 0 0 6px color-mix(in srgb, var(--sun) 55%, transparent); --wm-pink-glow: 0 0 6px color-mix(in srgb, var(--accent) 50%, transparent);
-  --wm-tube: var(--accent); --wm-tube-glow: 0 0 8px color-mix(in srgb, var(--accent) 35%, transparent); --wm-tube2: var(--sun); --wm-tube2-glow: 0 0 8px color-mix(in srgb, var(--sun) 35%, transparent);
-  --wm-sunset: linear-gradient(180deg, var(--sun) 0%, var(--accent) 55%, var(--t3) 100%);
-  --wm-chrome: linear-gradient(180deg, var(--t3) 0%, var(--accent) 45%, var(--ink) 50%, var(--accent) 58%, var(--sun) 100%); --wm-chrome2: var(--accent); --wm-chrome2-glow: none; }
-:root[data-theme="dark"][data-accent]:not([data-accent="vice"]) { --wm-neon: color-mix(in srgb, var(--accent) 25%, #fff); --wm-neon-glow: 0 0 3px var(--accent), 0 0 12px var(--accent), 0 0 24px var(--accent);
-  --wm-tube: color-mix(in srgb, var(--accent) 20%, #fff); --wm-tube-glow: 0 0 3px var(--accent), 0 0 10px var(--accent), 0 0 22px var(--accent); --wm-tube2: color-mix(in srgb, var(--sun) 20%, #fff); --wm-tube2-glow: 0 0 3px var(--sun), 0 0 10px var(--sun), 0 0 20px var(--sun);
-  --wm-cyanbg: color-mix(in srgb, var(--sun) 35%, var(--bg)); --wm-shadow: #000; --wm-chrome: linear-gradient(180deg, #fff 0%, var(--sun) 45%, var(--bg) 50%, var(--accent) 58%, #fff 100%); --wm-chrome2-glow: 0 0 6px var(--accent), 0 0 14px var(--accent); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent]:not([data-accent="vice"]) { --wm-neon: color-mix(in srgb, var(--accent) 25%, #fff); --wm-neon-glow: 0 0 3px var(--accent), 0 0 12px var(--accent), 0 0 24px var(--accent);
-  --wm-tube: color-mix(in srgb, var(--accent) 20%, #fff); --wm-tube-glow: 0 0 3px var(--accent), 0 0 10px var(--accent), 0 0 22px var(--accent); --wm-tube2: color-mix(in srgb, var(--sun) 20%, #fff); --wm-tube2-glow: 0 0 3px var(--sun), 0 0 10px var(--sun), 0 0 20px var(--sun);
-  --wm-cyanbg: color-mix(in srgb, var(--sun) 35%, var(--bg)); --wm-shadow: #000; --wm-chrome: linear-gradient(180deg, #fff 0%, var(--sun) 45%, var(--bg) 50%, var(--accent) 58%, #fff 100%); --wm-chrome2-glow: 0 0 6px var(--accent), 0 0 14px var(--accent); } }
+  --wm-cyan-glow: 0 0 6px color-mix(in srgb, var(--wm2) 55%, transparent); --wm-pink-glow: 0 0 6px color-mix(in srgb, var(--accent) 50%, transparent);
+  --wm-tube: var(--accent); --wm-tube-glow: 0 0 8px color-mix(in srgb, var(--accent) 35%, transparent); --wm-tube2: var(--wm2); --wm-tube2-glow: 0 0 8px color-mix(in srgb, var(--wm2) 35%, transparent);
+  --wm-sunset: linear-gradient(180deg, var(--wm2) 0%, var(--accent) 55%, var(--t3) 100%);
+  --wm-chrome: linear-gradient(180deg, var(--t3) 0%, var(--accent) 45%, var(--ink) 50%, var(--accent) 58%, var(--wm2) 100%); --wm-chrome2: var(--wm2); --wm-chrome2-glow: none; }
+:root[data-theme="dark"][data-accent]:not([data-accent="vice"]) { --wm-neon: color-mix(in srgb, var(--accent) 50%, #fff); --wm-neon-glow: 0 0 3px var(--accent), 0 0 12px var(--accent), 0 0 24px var(--accent);
+  --wm-tube: color-mix(in srgb, var(--accent) 55%, #fff); --wm-tube-glow: 0 0 3px var(--accent), 0 0 10px var(--accent), 0 0 22px var(--accent); --wm-tube2: color-mix(in srgb, var(--wm2) 60%, #fff); --wm-tube2-glow: 0 0 3px var(--wm2), 0 0 10px var(--wm2), 0 0 20px var(--wm2);
+  --wm-cyanbg: color-mix(in srgb, var(--wm2) 35%, var(--bg)); --wm-shadow: #000; --wm-chrome: linear-gradient(180deg, #fff 0%, var(--wm2) 45%, var(--bg) 50%, var(--accent) 58%, #fff 100%); --wm-chrome2: color-mix(in srgb, var(--wm2) 85%, #fff); --wm-chrome2-glow: 0 0 6px var(--wm2), 0 0 14px var(--wm2); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"])[data-accent]:not([data-accent="vice"]) { --wm-neon: color-mix(in srgb, var(--accent) 50%, #fff); --wm-neon-glow: 0 0 3px var(--accent), 0 0 12px var(--accent), 0 0 24px var(--accent);
+  --wm-tube: color-mix(in srgb, var(--accent) 55%, #fff); --wm-tube-glow: 0 0 3px var(--accent), 0 0 10px var(--accent), 0 0 22px var(--accent); --wm-tube2: color-mix(in srgb, var(--wm2) 60%, #fff); --wm-tube2-glow: 0 0 3px var(--wm2), 0 0 10px var(--wm2), 0 0 20px var(--wm2);
+  --wm-cyanbg: color-mix(in srgb, var(--wm2) 35%, var(--bg)); --wm-shadow: #000; --wm-chrome: linear-gradient(180deg, #fff 0%, var(--wm2) 45%, var(--bg) 50%, var(--accent) 58%, #fff 100%); --wm-chrome2: color-mix(in srgb, var(--wm2) 85%, #fff); --wm-chrome2-glow: 0 0 6px var(--wm2), 0 0 14px var(--wm2); } }
 .brand.has-wm > b, .brand.has-wm > #ayear { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .wm { font-size: 16px; display: flex; flex-direction: column; justify-content: center; min-width: 0; line-height: 1; white-space: nowrap; padding: 2px 0 4px; }
 .wm .r { display: flex; align-items: center; gap: .7em; }
