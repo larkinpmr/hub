@@ -257,10 +257,13 @@ header.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: 
 @keyframes wmback { from { opacity: .3; transform: scale(.97); } to { opacity: .85; transform: scale(1.03); } }
 /* Switching on (first load only, ~1.6 s, a few soft flickers): neon logos flicker themselves; the others flicker their backlight.
    "booted" starts the slow glow at its brightest so it eases down from the moment the sign comes on. */
-.wm-boot.wm-tube, .wm-boot.wm-signed { animation: wmflick 1.6s linear both; }
+/* neon: the tubes ignite in order — "Larkin South Miami" catches first, then "PM&R Hub", the year and the underline */
+.wm.wm-boot.wm-tube .t, .wm.wm-boot.wm-signed .t { animation: wmneon 8s cubic-bezier(.45, 0, .55, 1) infinite alternate, wmon1 1.6s linear both; animation-delay: -8s, 0s; }
+.wm.wm-boot.wm-tube .k, .wm.wm-boot.wm-tube .yr, .wm.wm-boot.wm-signed .k, .wm.wm-boot.wm-signed .yr, .wm.wm-boot.wm-signed svg { animation: wmneon 8s cubic-bezier(.45, 0, .55, 1) infinite alternate, wmon2 1.6s linear both; animation-delay: -8s, 0s; }
+@keyframes wmon1 { 0%, 6% { opacity: .12; } 9% { opacity: .9; } 13%, 20% { opacity: .25; } 23%, 100% { opacity: 1; } }
+@keyframes wmon2 { 0%, 42% { opacity: .12; } 45% { opacity: .85; } 49%, 57% { opacity: .2; } 60% { opacity: 1; } 64% { opacity: .55; } 68%, 100% { opacity: 1; } }
 .wm.booted .t, .wm.booted .k, .wm.booted .yr, .wm.booted svg, .wm.booted:not(.wm-tube):not(.wm-signed)::before { animation-delay: -8s; }
-.wm.wm-boot:not(.wm-tube):not(.wm-signed)::before { animation: wmflickbg 1.6s linear both; }
-@keyframes wmflick { 0%, 10% { opacity: .15; } 13% { opacity: .8; } 17%, 32% { opacity: .22; } 35% { opacity: 1; } 40%, 52% { opacity: .5; } 56%, 100% { opacity: 1; } }
+.wm.wm-boot.booted:not(.wm-tube):not(.wm-signed)::before { animation: wmflickbg 1.6s linear both; animation-delay: 0s; }
 @keyframes wmflickbg { 0%, 10% { opacity: 0; } 13% { opacity: .75; } 17%, 32% { opacity: .05; } 35% { opacity: .9; } 40%, 52% { opacity: .3; } 56%, 100% { opacity: .85; } }
 @media (prefers-reduced-motion: reduce) { .wm, .wm *, .wm::before { animation: none !important; } }
 .search { position: relative; flex: 1 1 240px; max-width: 340px; }
