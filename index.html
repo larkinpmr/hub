@@ -964,10 +964,13 @@ main:focus { outline: none; }
 .ptowrap { display: grid; gap: 18px; } .pto-cal { display: none; }
 .ptolist { list-style: none; margin: 0 0 14px; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
 .ptolist li { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; padding: 10px 14px; } .ptolist li + li { border-top: 1px solid var(--line); }
-.ptolist .pt-d { margin-left: auto; font: 600 13px/1.3 var(--mono); color: var(--ink); }
+.pt-t { font: 700 10.5px/1 var(--mono); letter-spacing: .05em; padding: 3px 6px; border-radius: 5px; background: var(--sun-soft); color: var(--sun); margin-left: auto; }
+.pt-t.cme, .offtag.cme { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.ptokey { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; margin: 0 2px; } .ptokey i { width: 10px; height: 10px; border-radius: 3px; background: var(--sun); display: inline-block; } .ptokey.cme i { background: var(--accent); }
+.ptolist .pt-d { margin-left: 4px; font: 600 13px/1.3 var(--mono); color: var(--ink); }
 @media (min-width: 900px) {
   .ptowrap { grid-template-columns: minmax(0, 1fr) 280px; align-items: start; } .pto-cal { display: block; }
-  .mg-t.pto { background: var(--sun-soft); border-left-color: var(--sun); font-weight: 600; } .ptogrid .mg-c { min-height: 92px; } .ptogrid .mg-c.we { background: color-mix(in srgb, var(--raised) 35%, transparent); }
+  .mg-t.pto { background: var(--sun-soft); border-left-color: var(--sun); font-weight: 600; } .mg-t.pto.cme { background: var(--accent-soft); border-left-color: var(--accent); } .ptogrid .mg-c { min-height: 92px; } .ptogrid .mg-c.we { background: color-mix(in srgb, var(--raised) 35%, transparent); }
 }
 </style>
 
@@ -2624,7 +2627,8 @@ function ptoRange(x) {
   if (x.start === (x.end || x.start)) return f(a, { weekday: "short", month: "short", day: "numeric" });
   return a.getMonth() === b.getMonth() ? `${f(a, { month: "short", day: "numeric" })}–${b.getDate()}` : `${f(a, { month: "short", day: "numeric" })} – ${f(b, { month: "short", day: "numeric" })}`;
 }
-const offNote = p => { const x = ptoOn(todayISO).find(y => y.name === p.name); return x ? ` <span class="offtag" title="PTO ${esc(ptoRange(x))}">off today</span>` : ""; };
+const ptoType = x => x.type === "CME" ? "CME" : "PTO";
+const offNote = p => { const x = ptoOn(todayISO).find(y => y.name === p.name); return x ? ` <span class="offtag${ptoType(x) === "CME" ? " cme" : ""}" title="${ptoType(x)} ${esc(ptoRange(x))}">${ptoType(x) === "CME" ? "at CME" : "off today"}</span>` : ""; };
 /** Resident Schedule ▸ Time off: a month calendar on computers, a list on phones. */
 function viewTimeOff() {
   const all = S.pto || [];
@@ -2637,13 +2641,14 @@ function viewTimeOff() {
   ${Array.from({ length: cells.length / 7 }, (_, w) => `<div class="mg-row">${cells.slice(w * 7, w * 7 + 7).map(d => {
     if (!d) return `<div class="mg-c blank"></div>`;
     const who = ptoOn(iso(d)), we = [0, 6].includes(new Date(y, m - 1, d).getDay());
-    return `<div class="mg-c${iso(d) === todayISO ? " tdy" : ""}${iso(d) < todayISO ? " past" : ""}${we ? " we" : ""}"><span class="mg-d">${d}</span>${who.map(x => `<a class="mg-t pto" href="#res-${slug(x.name)}" title="${esc(x.name)} · PTO ${esc(ptoRange(x))}">${esc(x.name.split(" ")[0])} ${esc(x.name.split(" ").pop()[0])}.</a>`).join("")}</div>`;
+    return `<div class="mg-c${iso(d) === todayISO ? " tdy" : ""}${iso(d) < todayISO ? " past" : ""}${we ? " we" : ""}"><span class="mg-d">${d}</span>${who.map(x => { const short = x.other || !x.name.includes(" ") ? x.name : `${x.name.split(" ")[0]} ${x.name.split(" ").pop()[0]}.`;
+      return `<${x.other ? "span" : "a"} class="mg-t pto${ptoType(x) === "CME" ? " cme" : ""}"${x.other ? "" : ` href="#res-${slug(x.name)}"`} title="${esc(x.name)} · ${ptoType(x)} ${esc(ptoRange(x))}">${esc(short)}</${x.other ? "span" : "a"}>`; }).join("")}</div>`;
   }).join("")}</div>`).join("")}</div>`;
   const up = all.filter(x => (x.end || x.start) >= todayISO);
   const groups = []; up.forEach(x => { const k = x.start <= todayISO ? "Off now" : parseISO(x.start).toLocaleDateString("en-US", { month: "long", year: "numeric" }); let g = groups.find(g => g.k === k); if (!g) groups.push(g = { k, items: [] }); g.items.push(x); });
   const list = up.length ? groups.map(g => `<h3 class="dir-h">${esc(g.k)}</h3><ul class="ptolist">${g.items.map(x => { const p = S.residents.find(r => r.name === x.name);
-    return `<li><a class="who-link" href="#res-${slug(x.name)}">${esc(x.name)}</a>${p ? ` <span class="muted">${esc(p.pgy)}</span>` : ""}<span class="pt-d">${esc(ptoRange(x))}</span></li>`; }).join("")}</ul>`).join("") : `<p class="muted">No upcoming PTO.</p>`;
-  return `<p class="pto-note">From the chief calendar. Names and dates only; ask a chief to change anything.</p><div class="ptowrap"><div class="pto-cal">${grid}</div><div class="pto-list">${list}</div></div>`;
+    return `<li>${x.other ? `<span>${esc(x.name)}</span>` : `<a class="who-link" href="#res-${slug(x.name)}">${esc(x.name)}</a>`}${p ? ` <span class="muted">${esc(p.pgy)}</span>` : ""}<span class="pt-t${ptoType(x) === "CME" ? " cme" : ""}">${ptoType(x)}</span><span class="pt-d">${esc(ptoRange(x))}</span></li>`; }).join("")}</ul>`).join("") : `<p class="muted">No upcoming PTO.</p>`;
+  return `<p class="pto-note">From the chief calendar. <span class="ptokey"><i></i>PTO</span> <span class="ptokey cme"><i></i>CME</span> · ask a chief to change anything.</p><div class="ptowrap"><div class="pto-cal">${grid}</div><div class="pto-list">${list}</div></div>`;
 }
 function viewSchedule() {
   const pgys = [...new Set(S.residents.map(p => p.pgy))];
@@ -2818,7 +2823,7 @@ function viewResident(id) {
       <section class="panel"><h2>Lectures they present</h2>
         ${up.length ? `<ul class="rlist">${up.map(t => `<li><b>${esc(t.topic)}</b><span>${fmtDate(t.date)}${t.location ? " · " + esc(t.location) : ""}</span></li>`).join("")}</ul>` : `<p class="muted">Nothing upcoming on the didactic schedule.</p>`}
         ${past.length ? `<p class="muted" style="margin:10px 0 0">${past.length} earlier this year.</p>` : ""}</section>
-      ${ptoOf(p.name).filter(x => (x.end || x.start) >= todayISO).length ? `<section class="panel"><h2>Time off</h2><ul class="rlist">${ptoOf(p.name).filter(x => (x.end || x.start) >= todayISO).map(x => `<li><b>${esc(ptoRange(x))}</b></li>`).join("")}</ul></section>` : ""}
+      ${ptoOf(p.name).filter(x => (x.end || x.start) >= todayISO).length ? `<section class="panel"><h2>Time off</h2><ul class="rlist">${ptoOf(p.name).filter(x => (x.end || x.start) >= todayISO).map(x => `<li><b>${esc(ptoRange(x))}</b><span>${ptoType(x)}</span></li>`).join("")}</ul></section>` : ""}
       <section class="panel"><h2>Onboarding coming up</h2>
         ${onb.length ? `<ul class="rlist">${onb.map(x => `<li><b>${x.rot ? `<a href="#rot-${x.rot.id}">${esc(x.rot.title)}</a>` : esc(x.raw)}</b><span>Starts ${x.start.toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric" })} · ${x.days} days away</span></li>`).join("")}</ul>` : `<p class="muted">Nothing due right now.</p>`}</section>
     </div></div>`;

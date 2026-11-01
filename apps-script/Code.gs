@@ -162,9 +162,17 @@ function ptoEvents_(settings, residentRows) {
   const ymd = d => Utilities.formatDate(d, TZ, 'yyyy-MM-dd'), list = [], skipped = [];
   cal.getEvents(from, to).forEach(ev => {
     const title = ev.getTitle(); if (!word.test(title)) return;
-    const who = match(title); if (!who) { skipped.push(title + ' (' + ymd(ev.getStartTime()) + ')'); return; }
+    let who = match(title), other = false;
+    if (!who) {
+      if (!id) { skipped.push(title + ' (' + ymd(ev.getStartTime()) + ')'); return; }
+      // the dedicated PTO calendar: never skip. Show the title as the name, minus the type and anything in brackets (reasons stay private)
+      who = String(title).replace(/[(\[{].*?[)\]}]/g, ' ').replace(/\b(pto|cme|vacation|conference|congress|course|sick|personal|day off|days off|off|half day|leave|time off|am|pm)\b/gi, ' ')
+        .replace(/[-–—:|/,]+/g, ' ').replace(/\s+/g, ' ').trim() || 'Resident';
+      other = true; skipped.push(title + ' (' + ymd(ev.getStartTime()) + ') → shown as "' + who + '"');
+    }
     let end = ev.getEndTime(); if (ev.isAllDayEvent()) end = new Date(end.getTime() - 86400000);   // all-day end is the next morning
-    list.push({ name: who, start: ymd(ev.getStartTime()), end: ymd(end) < ymd(ev.getStartTime()) ? ymd(ev.getStartTime()) : ymd(end) });
+    const type = /\b(cme|conference|congress|course|aapm&?r|aapmr)\b/i.test(title) ? 'CME' : 'PTO';   // only these two labels are ever shown
+    list.push({ name: who, other: other || undefined, type: type, start: ymd(ev.getStartTime()), end: ymd(end) < ymd(ev.getStartTime()) ? ymd(ev.getStartTime()) : ymd(end) });
   });
   list.sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : 0);
   return { list: list, skipped: skipped, calendar: cal.getName() };
@@ -177,7 +185,7 @@ function testPTO() {
   const r = ptoEvents_(settings, out.residents);
   Logger.log('Calendar: ' + r.calendar + ' · ' + r.list.length + ' PTO entries on the hub (' + parseResidents_(out.residents || []).length + ' residents to match against)');
   r.list.forEach(p => Logger.log('  ' + p.name + ': ' + p.start + (p.end !== p.start ? ' to ' + p.end : '')));
-  Logger.log(r.skipped.length ? 'Not shown (no resident name matched — write the resident\'s name in the event title):\n  ' + r.skipped.join('\n  ') : 'Every PTO event matched a resident.');
+  Logger.log(r.skipped.length ? 'No resident name matched (add a "Nicknames" row in Settings, or fix the event title):\n  ' + r.skipped.join('\n  ') : 'Every PTO event matched a resident.');
 }
 
 /** Birthdays for the Home banner: the optional "Birthday" column of the private Approved Emails tab.
@@ -1624,7 +1632,7 @@ const HOWTO_LINES = [
   ['Settings tab → Academic Year, Home headline and subtitle, Email sign-in (on/off), Virtual lecture link (the usual Zoom link), Lecture slides folder (link to the shared Drive folder where residents upload slides: adds an "Upload slides" button on Didactics; residents need edit access to that folder), Holiday themes (off to turn off), and the Lecture reminder settings.'],
   [''],
   ['HOME PAGE EXTRAS'],
-  ['PTO → nothing extra to do: the hub reads the chief Google Calendar and shows every event with "PTO" and a resident\'s name in the title (e.g. "PTO – Chris Keener") on Resident Schedule ▸ Time off. Only the name and dates are shown, never the reason or notes. Run testPTO to see what it found. Optional Settings rows: "PTO calendar" (a Calendar ID: then every event on that calendar counts as PTO, and the title only needs the resident\'s name) and "PTO keyword" (if you title events differently, e.g. Vacation). Nicknames written in quotes in Contacts or Approved Emails (Bhargavi "Vee" Madhu) are recognized; add others in a Settings row "Nicknames" (Vee = Bhargavi Madhu; Rudy = Rodolfo Rivera). Small spelling slips are matched too.'],
+  ['PTO → nothing extra to do: the hub reads the chief Google Calendar and shows every event with "PTO" and a resident\'s name in the title (e.g. "PTO – Chris Keener") on Resident Schedule ▸ Time off. Only the name, the dates and whether it is CME or PTO are shown (CME when the title says CME or conference), never the reason or notes. Run testPTO to see what it found. Optional Settings rows: "PTO calendar" (a Calendar ID: then every event on that calendar counts as PTO, and the title only needs the resident\'s name) and "PTO keyword" (if you title events differently, e.g. Vacation). Nicknames written in quotes in Contacts or Approved Emails (Bhargavi "Vee" Madhu) are recognized; add others in a Settings row "Nicknames" (Vee = Bhargavi Madhu; Rudy = Rodolfo Rivera). Small spelling slips are matched too.'],
   ['Birthdays → add a "Birthday" column to the Approved Emails tab (any format, e.g. 3/15 or March 15; the year is never shown). On the day, Home says "Happy birthday" to everyone.'],
   ['Countdowns → Settings row "Countdowns": one per line or separated by ;, written Label = date (for example: In-training exam = 2/27/2027; Graduation = 6/30/2027). Home shows "41 days to In-training exam" until the date passes.'],
   ['Rotation feedback → Settings row "Rotation feedback form": the link to a Google Form. In the last week of a rotation and the week after, that resident\'s Home shows "How was SA? 2-minute feedback". Optional: put {rotation} and {name} in the link (a prefilled-form link) and they are filled in.'],
