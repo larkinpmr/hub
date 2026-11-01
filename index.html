@@ -129,6 +129,8 @@ header.top .wrap { position: relative; }
 .strip-more { display: none; }
 /* computers: past months fold away (one compact row from this month to June); "Show all months" brings them back */
 @media (min-width: 641px) { .strip:not(.all) .run.later6 { display: none; }
+  .strip.fit-all .run.later6, .strip.fit-future .run.later6:not(.past) { display: grid !important; }
+  .strip-more[hidden] { display: none !important; }
   .strip-more.has-past { display: inline-block; margin-top: 6px; padding: 2px 0; background: none; border: 0; color: var(--accent); font: 600 13px/1.2 var(--body); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; } }
 @media (max-width: 640px) { .strip { flex-direction: column; } .run { flex: none; grid-template-columns: 74px 1fr; align-items: baseline; }
   .strip:not(.all) .run.later { display: none; }
@@ -2460,7 +2462,30 @@ function fitWhere() {
   panel.style.alignSelf = other.style.alignSelf = "";
   if (btn) btn.hidden = extra.every(e => e.classList.contains("fit"));
 }
-window.addEventListener("resize", () => { clearTimeout(window.__fw); window.__fw = setTimeout(fitWhere, 150); });
+window.addEventListener("resize", () => { clearTimeout(window.__fw); window.__fw = setTimeout(() => { fitWhere(); fitStrips(); }, 150); });
+if (document.fonts) { document.fonts.ready.then(() => fitStrips()); document.fonts.addEventListener && document.fonts.addEventListener("loadingdone", () => fitStrips()); }
+/** Computers: the "who's on this rotation" month strip shows as much of the year as fits on one row without squeezing names —
+ *  the whole year on big screens, otherwise this month to June, otherwise this month + the next five. "Show all months" only appears when something is hidden. */
+function fitStrips() {
+  document.querySelectorAll(".strip").forEach(st => {
+    const btn = st.nextElementSibling && st.nextElementSibling.matches(".strip-more") ? st.nextElementSibling : null;
+    st.classList.remove("fit-all", "fit-future");
+    if (phone() || st.classList.contains("all")) { if (btn) btn.hidden = false; return; }
+    const fits = () => {
+      const runs = [...st.querySelectorAll(".run")].filter(x => x.offsetParent); if (!runs.length) return true;
+      const top = runs[0].offsetTop;
+      return runs.every(x => {
+        if (x.offsetTop !== top) return false;
+        const sp = x.querySelector("span"), sm = x.querySelector("small");
+        const n = sp.innerHTML.split("<br>").length, lh = parseFloat(getComputedStyle(sp).lineHeight), lh2 = parseFloat(getComputedStyle(sm).lineHeight);
+        return sp.getBoundingClientRect().height <= n * lh + 2 && sm.getBoundingClientRect().height <= lh2 + 2;
+      });
+    };
+    let mode = "";
+    st.classList.add("fit-all"); if (fits()) mode = "fit-all"; else { st.classList.remove("fit-all"); st.classList.add("fit-future"); if (fits()) mode = "fit-future"; else st.classList.remove("fit-future"); }
+    if (btn) btn.hidden = mode === "fit-all" || (mode === "fit-future" && !st.querySelector(".run.past"));
+  });
+}
 const HOL_EMOJI = { presidents: "🇺🇸", memorial: "🇺🇸", labor: "🛠️", columbus: "🧭", election: "🗳️", veterans: "🎖️", eidfitr: "🌙", eidadha: "🌙", hanukkah: "🕎", newyear: "🎆", valentines: "💘", stpatricks: "☘️", doctors: "🩺", match: "🎉", graduation: "🎓", welcome: "👋", july4: "🎇", halloween: "🎃", thanksgiving: "🦃", christmas: "🎄" };
 const HOL_DECO = { presidents: "⭐ ⭐ ⭐", memorial: "", labor: "🌭 ☀️", columbus: "🌎 🍂", election: "🇺🇸", veterans: "🇺🇸 ⭐", eidfitr: "✨ 🏮 ✨", eidadha: "✨ 🏮 ✨", hanukkah: "✡️ ✨ 🕎", halloween: "🦇 🕸️ 👻 🦇", christmas: "❄️ ✨ ❄️", newyear: "✨ 🥂 ✨", july4: "🇺🇸 ✨", valentines: "💕", stpatricks: "🍀 🌈", match: "🎊 🥳", graduation: "🎉 👩‍⚕️ 👨‍⚕️", thanksgiving: "🍂 🥧", doctors: "💙", welcome: "🌴" };
 /** "Happy birthday" banner (names from the Approved Emails tab's Birthday column; only month-day is ever sent). */
@@ -2943,6 +2968,7 @@ document.addEventListener("click", e => {
   const b = e.target.closest(".strip-more"); if (!b) return;
   const st = b.previousElementSibling, open = st.classList.toggle("all");
   b.setAttribute("aria-expanded", open); b.textContent = open ? "Show fewer months" : "Show all months";
+  if (!open) fitStrips();
 });
 /** "Last updated" line on guide and policy pages: the time the Google Doc was last edited (from Drive). */
 function lastUpdated(it) {
@@ -3220,7 +3246,7 @@ function bindView() {
   const dq2 = $("#dirq"); if (dq2) dq2.oninput = () => { dirQ = dq2.value; $("#dirlist").innerHTML = directoryList(); };
   const ms = $("#mesel"); if (ms) ms.onchange = () => { ME = ms.value; store.set("hub.me", ME); route(true); };
   const wm = $(".wmore"); if (wm) wm.onclick = () => { wm.previousElementSibling.classList.add("all"); wm.remove(); };
-  fitWhere();
+  fitWhere(); fitStrips();
   const ok = $("#assign-ok"); if (ok) ok.onclick = () => {
     let seen = []; try { seen = JSON.parse(store.get(SEEN_KEY) || "[]"); } catch {}
     const keep = new Set(seen.filter(k => k.slice(0, 10) >= todayISO)); myNewTalks().forEach(t => keep.add(talkKey(t)));
