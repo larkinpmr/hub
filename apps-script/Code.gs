@@ -139,13 +139,24 @@ function ptoEvents_(settings, residentRows) {
   const kw = get('pto keyword'), word = id && !kw ? /./ : new RegExp('\\b(' + (kw || 'PTO') + ')\\b', 'i');
   const now = new Date(), from = new Date(now.getFullYear() - 1, 6, 1), to = new Date(now.getFullYear() + 1, 6, 1);
   const names = parseResidents_(residentRows || []).map(r => r.name);
-  const key = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+  const key = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/['’`-]/g, '').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+  // Nicknames: quoted ones in the Contacts / Approved Emails names (Bhargavi "Vee" Madhu) and the Settings row "Nicknames" (Vee = Bhargavi Madhu; …)
+  const nick = {};
+  const addNick = (n, full) => { const k = key(n), hit = names.find(x => key(x) === key(full)) || names.find(x => { const a = key(x).split(' '), b = key(full).split(' '); return a.pop() === b.pop() && a[0] === b[0]; }); if (k && hit) nick[k] = hit; };
+  ['Contacts', 'Approved Emails'].forEach(tab => { const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tab); if (!sh) return;
+    values_(sh).forEach(r => r.forEach(c => { const m = String(c).match(/^(.*?)["“'‘]([^"”'’]{2,20})["”'’](.*)$/); if (m) addNick(m[2], (m[1] + ' ' + m[3]).replace(/,.*$/, '')); })); });
+  get('nicknames').split(/[;\n]+/).forEach(x => { const m = x.split(/\s*=\s*/); if (m.length === 2) addNick(m[0], m[1]); });
+  const lev = (a, b) => { const d = Array.from({ length: a.length + 1 }, (_, i) => [i]); for (let j = 1; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return d[a.length][b.length]; };
   const match = title => {
     const t = ' ' + key(title) + ' ';
+    for (const k in nick) if (t.indexOf(' ' + k + ' ') >= 0) return nick[k];                          // nickname
     let hit = names.filter(n => t.indexOf(' ' + key(n) + ' ') >= 0);                                   // full name
     if (!hit.length) hit = names.filter(n => { const p = key(n).split(' '); return p.length > 1 && t.indexOf(' ' + p[p.length - 1] + ' ') >= 0; });   // last name
     if (hit.length > 1) hit = hit.filter(n => t.indexOf(' ' + key(n).split(' ')[0] + ' ') >= 0);       // shared last name: first name decides
     if (!hit.length) hit = names.filter(n => t.indexOf(' ' + key(n).split(' ')[0] + ' ') >= 0);        // first name only
+    if (!hit.length) { const words = t.trim().split(' ').filter(w => w.length >= 5);                     // spelling slip: Bharghavi → Bhargavi
+      hit = names.filter(n => key(n).split(' ').some(p => p.length >= 5 && words.some(w => lev(w, p) <= (p.length >= 8 ? 2 : 1)))); }
     return hit.length === 1 ? hit[0] : '';
   };
   const ymd = d => Utilities.formatDate(d, TZ, 'yyyy-MM-dd'), list = [], skipped = [];
@@ -1613,7 +1624,7 @@ const HOWTO_LINES = [
   ['Settings tab → Academic Year, Home headline and subtitle, Email sign-in (on/off), Virtual lecture link (the usual Zoom link), Lecture slides folder (link to the shared Drive folder where residents upload slides: adds an "Upload slides" button on Didactics; residents need edit access to that folder), Holiday themes (off to turn off), and the Lecture reminder settings.'],
   [''],
   ['HOME PAGE EXTRAS'],
-  ['PTO → nothing extra to do: the hub reads the chief Google Calendar and shows every event with "PTO" and a resident\'s name in the title (e.g. "PTO – Chris Keener") on Resident Schedule ▸ Time off. Only the name and dates are shown, never the reason or notes. Run testPTO to see what it found. Optional Settings rows: "PTO calendar" (a Calendar ID: then every event on that calendar counts as PTO, and the title only needs the resident\'s name) and "PTO keyword" (if you title events differently, e.g. Vacation).'],
+  ['PTO → nothing extra to do: the hub reads the chief Google Calendar and shows every event with "PTO" and a resident\'s name in the title (e.g. "PTO – Chris Keener") on Resident Schedule ▸ Time off. Only the name and dates are shown, never the reason or notes. Run testPTO to see what it found. Optional Settings rows: "PTO calendar" (a Calendar ID: then every event on that calendar counts as PTO, and the title only needs the resident\'s name) and "PTO keyword" (if you title events differently, e.g. Vacation). Nicknames written in quotes in Contacts or Approved Emails (Bhargavi "Vee" Madhu) are recognized; add others in a Settings row "Nicknames" (Vee = Bhargavi Madhu; Rudy = Rodolfo Rivera). Small spelling slips are matched too.'],
   ['Birthdays → add a "Birthday" column to the Approved Emails tab (any format, e.g. 3/15 or March 15; the year is never shown). On the day, Home says "Happy birthday" to everyone.'],
   ['Countdowns → Settings row "Countdowns": one per line or separated by ;, written Label = date (for example: In-training exam = 2/27/2027; Graduation = 6/30/2027). Home shows "41 days to In-training exam" until the date passes.'],
   ['Rotation feedback → Settings row "Rotation feedback form": the link to a Google Form. In the last week of a rotation and the week after, that resident\'s Home shows "How was SA? 2-minute feedback". Optional: put {rotation} and {name} in the link (a prefilled-form link) and they are filled in.'],
