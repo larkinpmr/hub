@@ -1029,8 +1029,6 @@ main:focus { outline: none; }
   .tc-m { justify-self: stretch; background: var(--accent); color: var(--on-accent); font: 700 10.5px/18px var(--mono); letter-spacing: .14em; text-align: center; padding-left: .14em; }
   .tc-d { font: 800 27px/1 var(--display); color: var(--ink); align-self: center; letter-spacing: -.02em; }
   .tc-w { font: 600 9px/1 var(--mono); letter-spacing: .12em; color: var(--muted); padding: 0 0 6px .12em; }
-  .tc-p.rip { animation: tcrip 70ms linear both; } 
-  @keyframes tcrip { 0% { transform: rotateX(0); opacity: 1; } 60% { opacity: 1; } 100% { transform: rotateX(95deg); opacity: 0; } }
 }
 .cdowns.cd-top { margin: 0; } .cdowns.cd-top .cdown { padding: 3px 10px; font-size: 12.5px; } .cdowns.cd-top .cdown b { font-size: 13.5px; }
 @media (min-width: 641px) { .cdowns.cd-body { display: none; } }
@@ -2593,17 +2591,10 @@ function cdRoll(n) {
     return `<span class="reel" aria-hidden="true"><span class="reel-s" style="--n:${seq.length - 1};animation-duration:${total - step * (digits.length - 1 - i)}ms;animation-delay:${-Math.round(t)}ms">${seq.map(x => `<span>${x}</span>`).join("")}</span></span>`;
   }).join("")}</span>`;
 }
-/** Phones: an old-school tear-off day calendar beside the headline. On opening, a few earlier days are ripped off one after another
- *  (flip-book style) and it lands on today, the last page leaving exactly at BOOT_END. */
+/** Phones: an old-school tear-off day calendar beside the headline, showing today (no animation; the home screen has enough moving parts). */
 function tearCal() {
-  const page = (d, cls, style) => `<span class="tc-p${cls}"${style ? ` style="${style}"` : ""}><span class="tc-m">${MON[d.getMonth()].toUpperCase()}</span><span class="tc-d">${d.getDate()}</span><span class="tc-w">${DOW[d.getDay()].toUpperCase()}</span></span>`;
-  const t = calmMotion() ? Infinity : bootT();
-  let flips = "";
-  if (t < BOOT_END) {
-    const n = 18, dur = 70, starts = Array.from({ length: n }, (_, k) => Math.round(40 + (BOOT_END - dur - 40) * k / (n - 1)));   // a quick riffle (~75 ms a page, too fast to read) that lands on today
-    flips = starts.map((st, k) => page(new Date(today.getTime() - (n - k) * DAY), " rip", `z-index:${n - k + 1};animation-duration:${dur}ms;animation-delay:${Math.round(st - t)}ms`)).join("");
-  }
-  return `<span class="tearcal" role="img" aria-label="${esc(today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }))}">${page(today, " now", "z-index:1")}${flips}</span>`;
+  const d = today;
+  return `<span class="tearcal" role="img" aria-label="${esc(d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }))}"><span class="tc-p now"><span class="tc-m">${MON[d.getMonth()].toUpperCase()}</span><span class="tc-d">${d.getDate()}</span><span class="tc-w">${DOW[d.getDay()].toUpperCase()}</span></span></span>`;
 }
 function countdowns(where) {
   const list = (S.countdowns || []).map(c => ({ ...c, days: Math.round((parseISO(c.date) - today) / 86400000) })).filter(c => c.days >= 0).sort((a, b) => a.days - b.days).slice(0, 4);
