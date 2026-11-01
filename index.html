@@ -247,7 +247,6 @@ header.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: 
 /* Logos come alive, very slowly: neon logos (tube, signed) breathe like a neon sign warming up;
    the others get a soft backlight that swells and fades. ~5-6 s per cycle, no flicker; off for "reduce motion". */
 .wm-tube .t, .wm-tube .k, .wm-tube .yr, .wm-signed .t, .wm-signed svg, .wm-signed .k, .wm-signed .yr { animation: wmneon 5.5s ease-in-out infinite; }
-.wm-tube .k, .wm-tube .yr, .wm-signed .k, .wm-signed .yr { animation-delay: -1.4s; }
 @keyframes wmneon { 0%, 100% { filter: brightness(.92) saturate(.92); } 50% { filter: brightness(1.16) saturate(1.12) drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 45%, transparent)); } }
 .wm:not(.wm-tube):not(.wm-signed) { position: relative; isolation: isolate; }
 .wm:not(.wm-tube):not(.wm-signed)::before { content: ""; position: absolute; inset: -18% -8% -14% -6%; z-index: -1; pointer-events: none; border-radius: 50%;
