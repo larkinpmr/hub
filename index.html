@@ -244,6 +244,17 @@ header.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: 
 .wm-signed .t .cap { font-size: 1.4em; }
 .wm-signed svg { display: block; width: 15em; height: .7em; margin: -.3em 0 0 1.6em; overflow: visible; } .wm-signed svg path { stroke: var(--wm-cyan); filter: drop-shadow(0 0 3px rgba(59, 224, 227, .8)); }
 .wm-signed .r { margin: .2em 0 0 8em; } .wm-signed .k { color: var(--wm-cyan); text-shadow: var(--wm-cyan-glow); } .wm-signed .yr { color: var(--wm-pink); text-shadow: var(--wm-pink-glow); }
+/* Logos come alive, very slowly: neon logos (tube, signed) breathe like a neon sign warming up;
+   the others get a soft backlight that swells and fades. ~5-6 s per cycle, no flicker; off for "reduce motion". */
+.wm-tube .t, .wm-tube .k, .wm-tube .yr, .wm-signed .t, .wm-signed svg, .wm-signed .k, .wm-signed .yr { animation: wmneon 5.5s ease-in-out infinite; }
+.wm-tube .k, .wm-tube .yr, .wm-signed .k, .wm-signed .yr { animation-delay: -1.4s; }
+@keyframes wmneon { 0%, 100% { filter: brightness(.92) saturate(.92); } 50% { filter: brightness(1.16) saturate(1.12) drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 45%, transparent)); } }
+.wm:not(.wm-tube):not(.wm-signed) { position: relative; isolation: isolate; }
+.wm:not(.wm-tube):not(.wm-signed)::before { content: ""; position: absolute; inset: -18% -8% -14% -6%; z-index: -1; pointer-events: none; border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 30%, transparent), color-mix(in srgb, var(--sun) 12%, transparent) 60%, transparent);
+  filter: blur(12px); opacity: .35; animation: wmback 6s ease-in-out infinite; }
+@keyframes wmback { 0%, 100% { opacity: .3; transform: scale(.97); } 50% { opacity: .85; transform: scale(1.03); } }
+@media (prefers-reduced-motion: reduce) { .wm *, .wm::before { animation: none !important; } }
 .search { position: relative; flex: 1 1 240px; max-width: 340px; }
 /* Phones zoom the whole page in when a text box with text smaller than 16px is tapped (iPhone), and stay zoomed.
    16px text in every box on phones prevents that; overflow-x: clip stops the page from sliding sideways. */
@@ -421,6 +432,7 @@ table.sched tr.hl th.name { color: var(--accent); }
 table.sched tr.dim { opacity: .35; }
 .legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px 20px; margin-top: 18px; }
 .legend a { display: grid; grid-template-columns: minmax(96px, auto) minmax(0, 1fr); gap: 10px; align-items: center; text-decoration: none; color: var(--ink); font-size: 14px; } .legend a .code { justify-self: start; }
+@media (min-width: 1200px) { .legend { display: flex; flex-wrap: wrap; gap: 8px 26px; } .legend a { display: inline-flex; gap: 8px; white-space: nowrap; } }
 .bysite { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
 .bysite .panel { padding: 16px; }
 @media (max-width: 640px) { .bysite { gap: 8px; } .bysite .panel { padding: 12px 14px; } .bysite ul { gap: 2px; font-size: 14.5px; } }
@@ -466,6 +478,14 @@ table.sched tr.dim { opacity: .35; }
 .mc-k { display: flex; gap: 12px; margin: 6px 2px 0; font: 500 10.5px/1.2 var(--mono); color: var(--muted); }
 .mc-k i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; } .mc-k i.lec { background: var(--accent); } .mc-k i.jc { background: var(--sun); }
 @media (max-width: 899px) { .minical { display: none; } .didtop { display: block; } }
+/* Wide screens: lecture days as cards, two side by side (less scrolling); block headings and "Show the rest" span both */
+@media (min-width: 1200px) {
+  #dlist:not(.is-month) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+  #dlist > .blockhead, #dlist > .morebtn, #dlist > .empty { grid-column: 1 / -1; }
+  #dlist > .blockhead { margin: 14px 0 0; }
+  #dlist:not(.is-month) .day { grid-template-columns: 74px minmax(0, 1fr); gap: 10px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+  #dlist:not(.is-month) .day.jc-day { padding-left: 16px; background: linear-gradient(90deg, color-mix(in srgb, var(--sun-soft) 70%, var(--surface)), var(--surface) 70%); box-shadow: inset 3px 0 0 var(--sun); }
+}
 .day.flash { animation: dayflash 1.6s ease-out; } @keyframes dayflash { 0%, 40% { background-color: var(--accent-soft); } 100% { background-color: transparent; } }
 /* didactics calendar button + home screen setup sheet */
 .titlerow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; }
@@ -673,6 +693,7 @@ a.dead { color: inherit; text-decoration: none; pointer-events: none; }
 .dirpromo span { color: var(--muted); font-size: 14px; }
 .dirpromo .ar { color: var(--accent); font-size: 20px; }
 .dir-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 18px; align-items: start; }
+@media (min-width: 1200px) { .dir-grid { display: block; columns: 330px; column-gap: 18px; } .dir-grid > .dirgroup { break-inside: avoid; display: inline-block; width: 100%; margin: 0 0 18px; } }
 .dirgroup .dir-h a { color: inherit; text-decoration: none; }
 .dirlist { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
 .dirlist li { padding: 9px 14px; display: grid; gap: 2px; font-size: 14.5px; }
@@ -687,7 +708,7 @@ a.dead { color: inherit; text-decoration: none; pointer-events: none; }
 .reslist a:hover { background: var(--raised); }
 .reslist .rt { font-weight: 600; }
 .reslist .rs { font-size: 13.5px; color: var(--muted); line-height: 1.4; }
-@media (max-width: 640px) { .reslist .rs { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; } }
+.reslist .rs { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .res-back { display: none; }
 /* personal "my month" strip */
 .mycard { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); margin-bottom: 20px; overflow: hidden; }
@@ -808,6 +829,16 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 .hero-date { display: none; } .you { font: 700 11px/1 var(--body); color: var(--on-accent); background: var(--accent); padding: 3px 7px; border-radius: 999px; margin-left: 6px; vertical-align: 2px; }
 .onbline { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); font-size: 14px; color: var(--muted); } .onbline b { color: var(--ink); }
 .where:not(.all) .site.more { display: none; }
+.where-next { display: none; margin-top: 14px; } .where-next.fit { display: block; }
+.where-next h3 { font: 600 11.5px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+.where-next { padding-top: 10px; border-top: 1px dashed var(--line); }
+.wn { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; color: var(--muted); } .wn-i { white-space: nowrap; } .wn-i > a:first-child { text-decoration: none; } .wn .who-link { color: var(--muted); }
+.nd-pair .nd-2 { display: none; }
+@media (min-width: 1200px) {   /* only when Next didactics spans the full width */
+  .didpanel.wide .nd-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .didpanel.wide .nd-pair > .next-date:first-child { padding-right: 28px; }
+  .didpanel.wide .nd-pair .nd-2 { display: flex; padding-left: 28px; border-left: 1px solid var(--line); }
+}
 .where:not(.all) .site.fit { display: grid; }
 @media (min-width: 1100px) {   /* beside Key contacts: compact rows so more rotations fit */
   .homegrid > .duo .where { gap: 0 18px; }
@@ -905,6 +936,11 @@ a.who-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
 .resgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; align-items: start; }
 @media (min-width: 900px) { .resp { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); column-gap: 18px; align-items: start; }
   .resp > .crumb, .resp > .eyebrow, .resp > h1 { grid-column: 1 / -1; } .resp .resgrid { grid-template-columns: 1fr; gap: 0; } }
+@media (min-width: 1200px) {   /* rotations | lectures | time off + onboarding */
+  .resp { grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr); }
+  .resp .resgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 18px; }
+  .resp .resgrid > :first-child { grid-row: span 3; }
+}
 #gfirst:not(:empty) { margin-top: 14px; }
 .rlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; } .rlist li { display: grid; gap: 2px; } .rlist span { font-size: 14px; color: var(--muted); }
 @media (max-width: 640px) { .tline li { grid-template-columns: 1fr; } .tl-l { grid-column: 1; } }
@@ -917,6 +953,7 @@ a.who-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
   .mgrid-h { display: flex; align-items: center; gap: 10px; margin: 6px 0 10px; } .mgrid-h b { font: 700 20px/1.2 var(--display); min-width: 170px; text-align: center; }
   .mgrid { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: var(--surface); }
   .mg-w, .mg-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .mgrid .mg-w, .mgrid .mg-row { grid-template-columns: var(--cols, repeat(7, minmax(0, 1fr))); }
   .mg-w span { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); }
   .mg-c { min-height: 112px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 6px 6px 8px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .mg-row .mg-c:last-child { border-right: 0; } .mg-row:last-child .mg-c { border-bottom: 0; }
@@ -2456,15 +2493,18 @@ function fitWhere() {
   const panel = where.closest(".panel"), other = [...panel.parentElement.children].find(e => e !== panel && e.classList.contains("duo"));
   const extra = [...where.querySelectorAll(".site.more")]; extra.forEach(e => e.classList.remove("fit"));
   const btn = panel.querySelector(".wmore");
-  if (!other || window.innerWidth < 1100) { if (btn) btn.hidden = false; return; }
+  if (!other || window.innerWidth < 1100) { if (btn) btn.hidden = false; const nx = panel.querySelector(".where-next"); if (nx) nx.classList.remove("fit"); return; }
   panel.style.alignSelf = other.style.alignSelf = "start";   // measure natural heights, not the stretched row
   const limit = other.getBoundingClientRect().height;
+  const nx = panel.querySelector(".where-next"); if (nx) nx.classList.remove("fit");
   for (const e of extra) { e.classList.add("fit"); if (panel.getBoundingClientRect().height > limit + 2) { e.classList.remove("fit"); break; } }
+  const allIn = extra.every(e => e.classList.contains("fit"));
+  if (nx && allIn && window.innerWidth >= 1200) { nx.classList.add("fit"); if (panel.getBoundingClientRect().height > limit + 2) nx.classList.remove("fit"); }
   panel.style.alignSelf = other.style.alignSelf = "";
-  if (btn) btn.hidden = extra.every(e => e.classList.contains("fit"));
+  if (btn) btn.hidden = allIn;
 }
 window.addEventListener("resize", () => { clearTimeout(window.__fw); window.__fw = setTimeout(() => { fitWhere(); fitStrips(); }, 150); });
-if (document.fonts) { document.fonts.ready.then(() => fitStrips()); document.fonts.addEventListener && document.fonts.addEventListener("loadingdone", () => fitStrips()); }
+if (document.fonts) { document.fonts.ready.then(() => { fitStrips(); fitWhere(); }); document.fonts.addEventListener && document.fonts.addEventListener("loadingdone", () => fitStrips()); }
 /** Computers: the "who's on this rotation" month strip shows as much of the year as fits on one row without squeezing names —
  *  the whole year on big screens, otherwise this month to June, otherwise this month + the next five. "Show all months" only appears when something is hidden. */
 function fitStrips() {
@@ -2574,12 +2614,12 @@ function viewHome() {
       <section class="panel didpanel ${onb && !onb.startsWith('<div class="onbline"') ? "" : "wide"}">
         <h2>Next didactics</h2>
         <p class="sub">Lectures are Mondays; Journal Club and workshops are Thursdays.</p>
-        ${nd ? `<div class="next-date ${talks.some(t => t.kind === "jc") ? "jc-day" : ""}">
+        ${nd ? `<div class="nd-pair">${days.slice(0, 2).map(([nd, talks], k) => `<div class="next-date ${talks.some(t => t.kind === "jc") ? "jc-day" : ""}${k ? " nd-2" : ""}">
             <div class="datebox"><small>${DOW[parseISO(nd).getDay()]}</small><b>${parseISO(nd).getDate()}</b><small>${MON[parseISO(nd).getMonth()]}</small></div>
             <div style="min-width:0">
               <div class="dmeta"><span>${esc(talks[0].location || "Location TBA")}</span>${talks[0].time ? `<span>${esc(talks[0].time)}</span>` : ""}${joinBtn(talks)}</div>
               <ul class="talks">${talks.map(t => `<li><span class="t">${esc(t.topic)}${kindTag(t)}${meResident() && presentsTalk(t.speaker, meResident().name) ? ' <span class="you">You</span>' : ""}</span>${t.speaker ? `<span class="s">${esc(t.speaker)}</span>` : ""}</li>`).join("")}</ul>
-            </div></div>
+            </div></div>`).join("")}</div>
             <p style="margin:16px 0 0"><a href="#didactics">Full didactic calendar →</a></p>`
           : `<div class="empty">No upcoming sessions on the calendar.</div>`}
       </section>
@@ -2593,6 +2633,7 @@ function viewHome() {
         <h2>Where everyone is in ${MONTH_FULL[mi]}</h2>
         <p class="sub">From the resident block schedule. Tap a rotation for its guide.</p>
         <div class="where">${sites.map((x, i) => `<div class="site${i >= 4 ? " more" : ""}"><a href="#rot-${x.r.id}">${chipSpan(x.r)} <b style="color:var(--ink)">${esc(x.r.short)}</b></a><span class="names">${x.people.map(p => whoLink(p) + offNote(p)).join(", ")}</span></div>`).join("")}</div>${sites.length > 4 ? `<button type="button" class="linkbtn wmore">Show all ${sites.length} rotations</button>` : ""}
+        ${mi < 11 ? `<div class="where-next"><h3>Next: ${MONTH_FULL[mi + 1]}</h3><div class="wn">${S.rotations.map(r => ({ r, people: whoIsAt(r, mi + 1) })).filter(x => x.people.length).map(x => `<span class="wn-i"><a href="#rot-${x.r.id}" title="${esc(x.r.title)}">${chipSpan(x.r)}</a> ${x.people.map(p => `<a class="who-link" href="#res-${slug(p.name)}">${esc(p.name.split(" ")[0])}</a>`).join(", ")}</span>`).join("")}</div></div>` : ""}
       </section>
   </div>
   ${quickLinks()}`;
@@ -2639,13 +2680,16 @@ function monthGrid() {
   const byDay = new Map(); S.didactics.forEach(t => { if (t.date.startsWith(dState.cal)) (byDay.get(t.date) || byDay.set(t.date, []).get(t.date)).push(t); });
   const cells = []; for (let i = 0; i < first.getDay(); i++) cells.push(null); for (let d = 1; d <= days; d++) cells.push(d); while (cells.length % 7) cells.push(null);
   const title = first.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  // weekdays with lectures this month get wide columns (full titles); empty weekdays and weekends stay narrow
+  const busy = [0, 1, 2, 3, 4, 5, 6].map(i => [...byDay.keys()].some(k => parseISO(k).getDay() === i));
+  const cols = busy.some(Boolean) ? busy.map(b => b ? "minmax(0, 3.2fr)" : "minmax(0, 1fr)").join(" ") : "";
   return `<div class="mgrid-h"><button type="button" class="iconbtn" data-cal="-1" aria-label="Previous month">‹</button><b>${title}</b><button type="button" class="iconbtn" data-cal="1" aria-label="Next month">›</button>${dState.cal !== todayISO.slice(0, 7) ? `<button type="button" class="linkbtn" data-cal="0">Today</button>` : ""}</div>
-  <div class="mgrid"><div class="mg-w">${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(x => `<span>${x}</span>`).join("")}</div>
+  <div class="mgrid"${cols ? ` style="--cols: ${cols}"` : ""}><div class="mg-w">${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(x => `<span>${x}</span>`).join("")}</div>
   ${Array.from({ length: cells.length / 7 }, (_, w) => `<div class="mg-row">${cells.slice(w * 7, w * 7 + 7).map(d => {
     if (!d) return `<div class="mg-c blank"></div>`;
     const iso = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`, ts = (byDay.get(iso) || []);
     const off = ts.length && ts.every(t => t.kind === "off");
-    return `<div class="mg-c${iso === todayISO ? " tdy" : ""}${iso < todayISO ? " past" : ""}${off ? " off" : ""}"><span class="mg-d">${d}</span>${ts.slice(0, 4).map(t => `<a href="#didactics" data-mgo="${iso}" class="mg-t ${t.kind || ""}" title="${esc(t.topic)}${t.speaker ? " · " + esc(t.speaker) : ""}">${esc(t.topic)}</a>`).join("")}${ts.length > 4 ? `<a href="#didactics" data-mgo="${iso}" class="mg-more">+${ts.length - 4} more</a>` : ""}</div>`;
+    return `<div class="mg-c${iso === todayISO ? " tdy" : ""}${iso < todayISO ? " past" : ""}${off ? " off" : ""}"><span class="mg-d">${d}</span>${ts.slice(0, 6).map(t => `<a href="#didactics" data-mgo="${iso}" class="mg-t ${t.kind || ""}" title="${esc(t.topic)}${t.speaker ? " · " + esc(t.speaker) : ""}">${esc(t.topic)}</a>`).join("")}${ts.length > 6 ? `<a href="#didactics" data-mgo="${iso}" class="mg-more">+${ts.length - 6} more</a>` : ""}</div>`;
   }).join("")}</div>`).join("")}</div>`;
 }
 /** Small month calendar (desktop only): today circled, this week shaded, a dot on didactic days. */
@@ -2988,13 +3032,13 @@ function viewSubpage(h) {
     <h1 style="font-size:clamp(28px,4vw,40px);letter-spacing:-.02em;margin:6px 0 14px">${esc(sp.title)}</h1>
     <div class="prose">${sp.html}</div></article></div>`;
 }
-function summaryOf(html, title) {
+function summaryOf(html, title, n = 120) {
   const d = document.createElement("div"); d.innerHTML = html;
   d.querySelectorAll("pre, table, h1, h2, h3, h4, figure, .faces").forEach(n => n.remove());
   let t = d.textContent.replace(/\s+/g, " ").trim();
   if (title && t.toLowerCase().startsWith(title.toLowerCase())) t = t.slice(title.length).trim();
   if (!t) return "";
-  const cut = t.slice(0, 120);
+  const cut = t.slice(0, n);
   return cut.length < t.length ? cut.replace(/\s+\S*$/, "").replace(/[\s.,;:–—-]+$/, "") + "…" : cut;
 }
 function resSide(active) {
@@ -3008,7 +3052,7 @@ function resSide(active) {
 function polSide(active) { return resSide(active); }
 function viewResources() {
   const extra = S.extraSections || [];
-  const row = (href, title, html, tag) => `<li><a href="#${href}"><span class="rt">${esc(title)}${tag ? `<span class="tag">${tag}</span>` : ""}</span><span class="rs">${esc(summaryOf(html, title))}</span></a></li>`;
+  const row = (href, title, html, tag) => `<li><a href="#${href}"><span class="rt">${esc(title)}${tag ? `<span class="tag">${tag}</span>` : ""}</span><span class="rs">${esc(summaryOf(html, title, 300))}</span></a></li>`;
   return `<div class="view-head"><div><div class="eyebrow">Resources</div><h1>Resources</h1><p>Program policies, copy-ready note templates and the contact directory.</p></div></div>
   <a class="dirpromo" href="#directory"><b>Directory</b><span>Every attending, coordinator and site phone number from the rotation guides, tap to call or email.</span><span class="ar" aria-hidden="true">→</span></a>
   <div class="res">
