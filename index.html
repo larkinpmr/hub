@@ -832,7 +832,7 @@ button.addr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 }
 @media (max-width: 480px) {
   .day { grid-template-columns: 64px minmax(0, 1fr); gap: 12px; }
-  .brand #ayear, .wm .yr { display: none; }
+  .brand #ayear { display: none; }   /* plain-text fallback only; the logo keeps its year on phones */
   .wm { font-size: 11px; }
 }
 @media (prefers-reduced-motion: no-preference) {
