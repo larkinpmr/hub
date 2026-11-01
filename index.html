@@ -255,7 +255,14 @@ header.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: 
   background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 30%, transparent), color-mix(in srgb, var(--sun) 12%, transparent) 60%, transparent);
   filter: blur(12px); opacity: .35; animation: wmback 8s cubic-bezier(.45, 0, .55, 1) infinite alternate; }
 @keyframes wmback { from { opacity: .3; transform: scale(.97); } to { opacity: .85; transform: scale(1.03); } }
-@media (prefers-reduced-motion: reduce) { .wm *, .wm::before { animation: none !important; } }
+/* Switching on (first load only, ~1.6 s, a few soft flickers): neon logos flicker themselves; the others flicker their backlight.
+   "booted" starts the slow glow at its brightest so it eases down from the moment the sign comes on. */
+.wm-boot.wm-tube, .wm-boot.wm-signed { animation: wmflick 1.6s linear both; }
+.wm.booted .t, .wm.booted .k, .wm.booted .yr, .wm.booted svg, .wm.booted:not(.wm-tube):not(.wm-signed)::before { animation-delay: -8s; }
+.wm.wm-boot:not(.wm-tube):not(.wm-signed)::before { animation: wmflickbg 1.6s linear both; }
+@keyframes wmflick { 0%, 10% { opacity: .15; } 13% { opacity: .8; } 17%, 32% { opacity: .22; } 35% { opacity: 1; } 40%, 52% { opacity: .5; } 56%, 100% { opacity: 1; } }
+@keyframes wmflickbg { 0%, 10% { opacity: 0; } 13% { opacity: .75; } 17%, 32% { opacity: .05; } 35% { opacity: .9; } 40%, 52% { opacity: .3; } 56%, 100% { opacity: .85; } }
+@media (prefers-reduced-motion: reduce) { .wm, .wm *, .wm::before { animation: none !important; } }
 .search { position: relative; flex: 1 1 240px; max-width: 340px; }
 /* Phones zoom the whole page in when a text box with text smaller than 16px is tapped (iPhone), and stay zoomed.
    16px text in every box on phones prevents that; overflow-x: clip stops the page from sliding sideways. */
@@ -1386,7 +1393,7 @@ const WM_STYLES = [
   { id: "formal", fonts: "Great+Vibes|Syncopate:wght@700", html: y => `<span class="t"><span class="cap">L</span>arkin South Miami</span><svg viewBox="0 0 300 14" preserveAspectRatio="none"><path d="M2 10C60 4 140 2 220 5C254 6 278 5 296 2" fill="none" stroke-width="1.8" stroke-linecap="round"/><circle cx="296" cy="2.4" r="1.8"/></svg><span class="r"><span class="k">PM&amp;R HUB</span><span class="yr">${y}</span></span>` },
   { id: "signed", fonts: "Herr+Von+Muellerhoff|Syncopate:wght@700", html: y => `<span class="t"><span class="cap">L</span>arkin South Miami</span><svg viewBox="0 0 280 14" preserveAspectRatio="none"><path d="M2 10C80 2 180 2 276 7" fill="none" stroke-width="2" stroke-linecap="round"/></svg><span class="r"><span class="k">PM&amp;R HUB</span><span class="yr">${y}</span></span>` },
 ];
-let wmTimer = null, wmShown = "";
+let wmTimer = null, wmShown = "", wmBooted = false;
 function wmIndex() {
   const pick = +(new URLSearchParams(location.search).get("wm") || 0);
   if (pick >= 1 && pick <= WM_STYLES.length) return pick - 1;
@@ -1405,6 +1412,8 @@ function showWordmark() {
       if (wmShown !== key) return;
       brand.querySelector(".wm")?.remove();
       const w = document.createElement("span"); w.className = "wm wm-" + st.id; w.setAttribute("aria-hidden", "true"); w.innerHTML = st.html(year);
+      // first time the logo appears after the app opens / reloads: it flickers on like a neon sign, then settles into the slow glow
+      if (!wmBooted) { wmBooted = true; if (performance.now() < 8000) { w.classList.add("wm-boot", "booted"); setTimeout(() => w.classList.remove("wm-boot"), 1700); } }
       brand.appendChild(w); brand.classList.add("has-wm");
     };
     // swap in once its fonts are ready (the plain title shows meanwhile); give up waiting after 2.5 s
