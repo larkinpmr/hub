@@ -263,12 +263,12 @@ header.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: 
 /* Switching on (first load only, ~1.6 s, a few soft flickers): neon logos flicker themselves; the others flicker their backlight.
    "booted" starts the slow glow at its brightest so it eases down from the moment the sign comes on. */
 /* neon: the tubes ignite in order — "Larkin South Miami" catches first, then "PM&R Hub", the year and the underline */
-.wm.wm-boot.wm-tube .t, .wm.wm-boot.wm-signed .t { animation: wmneon 8s cubic-bezier(.45, 0, .55, 1) infinite alternate, wmon1 1.6s linear both; animation-delay: -8s, 0s; }
-.wm.wm-boot.wm-tube .k, .wm.wm-boot.wm-tube .yr, .wm.wm-boot.wm-signed .k, .wm.wm-boot.wm-signed .yr, .wm.wm-boot.wm-signed svg { animation: wmneon 8s cubic-bezier(.45, 0, .55, 1) infinite alternate, wmon2 1.6s linear both; animation-delay: -8s, 0s; }
+.wm.wm-boot.wm-tube .t, .wm.wm-boot.wm-signed .t { animation: wmneon 8s cubic-bezier(.45, 0, .55, 1) infinite alternate, wmon1 var(--boot, 1.6s) linear both; animation-delay: -8s, 0s; }
+.wm.wm-boot.wm-tube .k, .wm.wm-boot.wm-tube .yr, .wm.wm-boot.wm-signed .k, .wm.wm-boot.wm-signed .yr, .wm.wm-boot.wm-signed svg { animation: wmneon 8s cubic-bezier(.45, 0, .55, 1) infinite alternate, wmon2 var(--boot, 1.6s) linear both; animation-delay: -8s, 0s; }
 @keyframes wmon1 { 0%, 6% { opacity: .12; } 9% { opacity: .9; } 13%, 20% { opacity: .25; } 23%, 100% { opacity: 1; } }
 @keyframes wmon2 { 0%, 42% { opacity: .12; } 45% { opacity: .85; } 49%, 57% { opacity: .2; } 60% { opacity: 1; } 64% { opacity: .55; } 68%, 100% { opacity: 1; } }
 .wm.booted .t, .wm.booted .k, .wm.booted .yr, .wm.booted svg, .wm.booted:not(.wm-tube):not(.wm-signed)::before { animation-delay: -8s; }
-.wm.wm-boot.booted:not(.wm-tube):not(.wm-signed)::before { animation: wmflickbg 1.6s linear both; animation-delay: 0s; }
+.wm.wm-boot.booted:not(.wm-tube):not(.wm-signed)::before { animation: wmflickbg var(--boot, 1.6s) linear both; animation-delay: 0s; }
 @keyframes wmflickbg { 0%, 10% { opacity: 0; } 13% { opacity: .75; } 17%, 32% { opacity: .05; } 35% { opacity: .9; } 40%, 52% { opacity: .3; } 56%, 100% { opacity: .85; } }
 @media (prefers-reduced-motion: reduce) { .wm, .wm *, .wm::before { animation: none !important; } }
 .search { position: relative; flex: 1 1 240px; max-width: 340px; }
@@ -1017,6 +1017,21 @@ main:focus { outline: none; }
 .reel-s > span { display: block; height: var(--rh); line-height: var(--rh); }
 @keyframes reelspin { from { transform: translateY(0); filter: blur(.6px); } 85% { filter: none; } to { transform: translateY(calc(var(--n) * var(--rh) * -1)); } }
 .eyetop { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; }
+/* tear-off day calendar (phones only) */
+.tearcal { display: none; }
+@media (max-width: 640px) {
+  .hero .eyetop { display: none; }
+  .h1row { display: flex; align-items: center; gap: 14px; }
+  .h1row h1 { flex: 1; min-width: 0; margin-top: 0; }
+  .tearcal { display: block; position: relative; flex: none; width: 58px; height: 68px; perspective: 260px; margin: 4px 2px 8px 0; }
+  .tearcal::after { content: ""; position: absolute; left: 3px; right: 3px; bottom: -5px; height: 6px; border-radius: 0 0 8px 8px; background: var(--raised); border: 1px solid var(--line); border-top: 0; z-index: 0; }
+  .tc-p { position: absolute; inset: 0; display: grid; grid-template-rows: 18px 1fr auto; justify-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; transform-origin: 50% 0; backface-visibility: hidden; box-shadow: 0 1px 2px rgba(0, 0, 0, .08); }
+  .tc-m { justify-self: stretch; background: var(--accent); color: var(--on-accent); font: 700 10.5px/18px var(--mono); letter-spacing: .14em; text-align: center; padding-left: .14em; }
+  .tc-d { font: 800 27px/1 var(--display); color: var(--ink); align-self: center; letter-spacing: -.02em; }
+  .tc-w { font: 600 9px/1 var(--mono); letter-spacing: .12em; color: var(--muted); padding: 0 0 6px .12em; }
+  .tc-p.rip { animation: tcrip 260ms cubic-bezier(.5, 0, .9, .6) both; }
+  @keyframes tcrip { 0% { transform: rotateX(0); opacity: 1; } 70% { opacity: 1; } 100% { transform: rotateX(100deg) translateY(-4px); opacity: 0; } }
+}
 .cdowns.cd-top { margin: 0; } .cdowns.cd-top .cdown { padding: 3px 10px; font-size: 12.5px; } .cdowns.cd-top .cdown b { font-size: 13.5px; }
 @media (min-width: 641px) { .cdowns.cd-body { display: none; } }
 @media (max-width: 640px) { .cdowns.cd-top { display: none; } }
@@ -1421,7 +1436,8 @@ function showWordmark() {
       brand.querySelector(".wm")?.remove();
       const w = document.createElement("span"); w.className = "wm wm-" + st.id; w.setAttribute("aria-hidden", "true"); w.innerHTML = st.html(year);
       // first time the logo appears after the app opens / reloads: it flickers on like a neon sign, then settles into the slow glow
-      if (!wmBooted) { wmBooted = true; if (performance.now() < 8000) { w.classList.add("wm-boot", "booted"); setTimeout(() => w.classList.remove("wm-boot"), 1700); } }
+      if (!wmBooted) { wmBooted = true; const left = BOOT_END - bootT();
+        if (left > 500 && !calmMotion()) { w.classList.add("wm-boot", "booted"); w.style.setProperty("--boot", left + "ms"); setTimeout(() => w.classList.remove("wm-boot"), left + 50); } }
       brand.appendChild(w); brand.classList.add("has-wm");
     };
     // swap in once its fonts are ready (the plain title shows meanwhile); give up waiting after 2.5 s
@@ -2558,20 +2574,36 @@ function bdayBar() {
 /** Countdown chips under the headline (Settings "Countdowns"); a date drops off once it has passed. */
 /** Just for fun: the first time the countdowns show after the app opens (or reloads), each number spins like a slot machine and settles.
  *  Re-renders during the spin pick up where the reels are; after that the numbers are plain. Skipped for "reduce motion". */
-let cdRollAt = 0;
+/** One clock for the opening animations (countdown spin, logo switching on, tear-off calendar): they all finish together, BOOT_END ms after the first one starts. */
+const BOOT_END = 1900;
+let bootAt = 0;
+const bootT = () => { const now = performance.now(); if (!bootAt) bootAt = now; return now - bootAt; };
+const calmMotion = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+/** Just for fun: the first time the countdowns show after the app opens (or reloads), each number spins like a slot machine; the digits stop left to right, the last one exactly at BOOT_END.
+ *  Re-renders during the spin pick up where the reels are; after that the numbers are plain. Skipped for "reduce motion". */
 function cdRoll(n) {
   const digits = String(n);
-  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return digits;
-  const now = performance.now();
-  if (!cdRollAt) cdRollAt = now;
-  const t = now - cdRollAt, dur = 1300, step = 300, total = dur + step * (digits.length - 1);
+  if (calmMotion()) return digits;
+  const t = bootT(), step = 300, total = BOOT_END;
   if (t > total + 200) return digits;
   clearTimeout(cdRoll.done); cdRoll.done = setTimeout(() => document.querySelectorAll(".reels").forEach(r => r.replaceWith(r.dataset.n)), total - t + 250);
   return `<span class="reels" role="img" aria-label="${digits}" data-n="${digits}">${[...digits].map((d, i) => {
     const seq = []; for (let k = 0; k < 2 + i; k++) for (let j = 0; j < 10; j++) seq.push(j);
     for (let j = 0; j <= +d; j++) seq.push(j);
-    return `<span class="reel" aria-hidden="true"><span class="reel-s" style="--n:${seq.length - 1};animation-duration:${dur + step * i}ms;animation-delay:${-Math.round(t)}ms">${seq.map(x => `<span>${x}</span>`).join("")}</span></span>`;
+    return `<span class="reel" aria-hidden="true"><span class="reel-s" style="--n:${seq.length - 1};animation-duration:${total - step * (digits.length - 1 - i)}ms;animation-delay:${-Math.round(t)}ms">${seq.map(x => `<span>${x}</span>`).join("")}</span></span>`;
   }).join("")}</span>`;
+}
+/** Phones: an old-school tear-off day calendar beside the headline. On opening, a few earlier days are ripped off one after another
+ *  (flip-book style) and it lands on today, the last page leaving exactly at BOOT_END. */
+function tearCal() {
+  const page = (d, cls, style) => `<span class="tc-p${cls}"${style ? ` style="${style}"` : ""}><span class="tc-m">${MON[d.getMonth()].toUpperCase()}</span><span class="tc-d">${d.getDate()}</span><span class="tc-w">${DOW[d.getDay()].toUpperCase()}</span></span>`;
+  const t = calmMotion() ? Infinity : bootT();
+  let flips = "";
+  if (t < BOOT_END) {
+    const n = 6, dur = 260, starts = Array.from({ length: n }, (_, k) => Math.round(150 + (BOOT_END - dur - 150) * Math.pow(k / (n - 1), 1.35)));   // speeds through, then slows into today
+    flips = starts.map((st, k) => page(new Date(today.getTime() - (n - k) * DAY), " rip", `z-index:${n - k + 1};animation-duration:${dur}ms;animation-delay:${Math.round(st - t)}ms`)).join("");
+  }
+  return `<span class="tearcal" role="img" aria-label="${esc(today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }))}">${page(today, " now", "z-index:1")}${flips}</span>`;
 }
 function countdowns(where) {
   const list = (S.countdowns || []).map(c => ({ ...c, days: Math.round((parseISO(c.date) - today) / 86400000) })).filter(c => c.days >= 0).sort((a, b) => a.days - b.days).slice(0, 4);
@@ -2615,7 +2647,7 @@ function viewHome() {
   <section class="hero">
     <div>
       <div class="eyetop"><div class="eyebrow">PM&amp;R Residency · ${esc(S.academicYear)}<span class="hero-date"> · ${d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span></div>${countdowns("top")}</div>
-      <h1>${heroHeadline()}</h1>
+      <div class="h1row"><h1>${heroHeadline()}</h1>${tearCal()}</div>
       ${S.heroSub !== "" ? `<p>${esc(S.heroSub || "Rotation guides, the didactic calendar, block schedules, policies and note templates for Larkin Community Hospital South Miami residents.")}</p>` : ""}
     </div>
     <div class="today"><span class="eyebrow">Today</span><b>${d.toLocaleDateString("en-US", { weekday: "long" })}, ${d.toLocaleDateString("en-US", { month: "long" })} <em>${d.getDate()}</em></b><span class="muted">Block month: ${MONTH_FULL[mi]}</span>${(h => h ? `<span class="hol">${esc(h.greet)}</span>` : "")(holidayNow())}</div>
