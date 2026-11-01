@@ -138,7 +138,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 a { color: var(--accent); text-underline-offset: 2px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.15; margin: 0; }
-@media (min-width: 1500px) { .wrap { max-width: 1240px !important; } }
+/* Computers: use the screen. The page grows with the window (up to 1760px); only long reading text keeps a comfortable line length. */
+@media (min-width: 1200px) { .wrap { max-width: min(calc(100vw - 64px), 1760px) !important; padding-left: 0; padding-right: 0; } }
 .wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .eyebrow { font: 600 12px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .muted { color: var(--muted); }
@@ -400,7 +401,7 @@ body.gated > :not(.gate) { visibility: hidden; }
 a.code:hover { outline: 1px solid hsl(var(--h) 50% 45%); }
 
 /* schedule */
-@media (min-width: 1240px) { .sched-wrap.wide { width: min(calc(100vw - 48px), 1500px); margin-left: calc(50% - min(calc(100vw - 48px), 1500px) / 2); }
+@media (min-width: 1240px) { .sched-wrap.wide { width: 100%; margin-left: 0; }
   .sched-wrap.wide table.sched th, .sched-wrap.wide table.sched td { padding: 5px 3px; } .sched-wrap.wide table.sched th.name { min-width: 0; padding-left: 12px; white-space: nowrap; }
   .sched-wrap.wide table.sched td .code { font-size: 11px; padding: 2px 5px; min-width: 0; } }
 .sched-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
@@ -1000,6 +1001,14 @@ table.sched td { position: relative; }
 .seg button.seg-pto[aria-pressed="true"] { background: var(--sun); color: var(--surface); box-shadow: none; }
 .seg-n { font: 700 11px/1 var(--mono); min-width: 18px; height: 18px; display: inline-grid; place-items: center; border-radius: 999px; background: var(--sun); color: var(--surface); padding: 0 5px; }
 .seg button.seg-pto[aria-pressed="true"] .seg-n { background: var(--surface); color: var(--sun); }
+/* wide screens: guides keep a readable text column, centered between the guide list and "On this page" */
+@media (min-width: 1200px) {
+  .guide-layout { grid-template-columns: 260px minmax(0, 940px); justify-content: center; column-gap: 48px; }
+  .guide-layout:has(> .gtoc:not([hidden])) { grid-template-columns: 260px minmax(0, 940px) 230px; column-gap: 48px; }
+  .prose { max-width: 80ch; }
+  .homegrid { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+}
+@media (min-width: 1600px) { .homegrid > .panel.wide.duo { grid-column: auto; } .ql-grid:has(> :nth-child(4):last-child) { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 </style>
 
 <button type="button" class="skip" onclick="document.getElementById('main').focus()">Skip to content</button>
