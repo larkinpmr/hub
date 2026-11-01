@@ -944,6 +944,16 @@ main:focus { outline: none; }
 .cdowns { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: -6px 0 16px; }
 .cdown { display: inline-flex; align-items: baseline; gap: 4px; padding: 5px 11px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
 .cdown b { font: 800 15px/1 var(--display); color: var(--accent); }
+.eyetop { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; }
+.cdowns.cd-top { margin: 0; } .cdowns.cd-top .cdown { padding: 3px 10px; font-size: 12.5px; } .cdowns.cd-top .cdown b { font-size: 13.5px; }
+@media (min-width: 641px) { .cdowns.cd-body { display: none; } }
+@media (max-width: 640px) { .cdowns.cd-top { display: none; } }
+.aw-more { display: none; font-weight: 600; text-decoration: none; white-space: nowrap; }
+@media (max-width: 640px) { .away.away { flex-wrap: nowrap; overflow: hidden; gap: 9px; padding: 8px 12px; margin-bottom: 12px; font-size: 13px; align-items: center; }
+  .away .aw-i.aw-x, .away .aw-w { display: none; } .aw-more { display: inline; margin-left: auto; flex: none; font-size: 13px; }
+  .away .aw-i { min-width: 0; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; display: inline-flex; align-items: center; gap: 5px; } .away .aw-h { flex: none; font-size: 10px; letter-spacing: .05em; }
+  .away .aw-t { order: -1; flex: none; width: 7px; height: 7px; padding: 0; border-radius: 50%; font-size: 0; background: var(--sun); } .away .aw-t.cme { background: var(--accent); } }
+@media (max-width: 400px) { .eyetop .eyebrow { letter-spacing: .04em; font-size: 11px; } }
 @media (max-width: 640px) { .cdowns { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: -4px 0 14px; padding-bottom: 2px; } .cdowns::-webkit-scrollbar { display: none; }
   .cdown { flex: none; padding: 4px 10px; font-size: 12.5px; } .cdown b { font-size: 14px; } }
 .fbcard { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px 14px; padding: 12px 16px; margin-bottom: 18px; border: 1px solid var(--line); border-left: 4px solid var(--sun); border-radius: var(--r); background: var(--surface); }
@@ -2428,10 +2438,10 @@ function bdayBar() {
   return `<div class="holbar bday" role="note"><span class="hb-e" aria-hidden="true">🎂</span><b>${mine ? `Happy birthday, ${esc(first(me.name))}!${list.length > 1 ? ` <span class="bd-also">Also celebrating: ${esc(list.filter(n => n !== first(me.name)).join(", "))}</span>` : ""}` : `Happy birthday, ${esc(who)}!`}</b><span class="hb-d" aria-hidden="true">🎉 🎈 🎁</span></div>`;
 }
 /** Countdown chips under the headline (Settings "Countdowns"); a date drops off once it has passed. */
-function countdowns() {
+function countdowns(where) {
   const list = (S.countdowns || []).map(c => ({ ...c, days: Math.round((parseISO(c.date) - today) / 86400000) })).filter(c => c.days >= 0).sort((a, b) => a.days - b.days).slice(0, 4);
   if (!list.length) return "";
-  return `<div class="cdowns">${list.map(c => `<span class="cdown"><b>${c.days === 0 ? "Today" : c.days}</b>${c.days === 0 ? "" : ` day${c.days === 1 ? "" : "s"} to`} ${esc(c.label)}</span>`).join("")}</div>`;
+  return `<div class="cdowns${where === "top" ? " cd-top" : " cd-body"}">${list.map(c => `<span class="cdown"><b>${c.days === 0 ? "Today" : c.days}</b>${c.days === 0 ? "" : ` day${c.days === 1 ? "" : "s"} to`} ${esc(c.label)}</span>`).join("")}</div>`;
 }
 /** Rotation feedback: in the last week of your rotation and the week after, a short card links to the chiefs' Google Form. */
 function feedbackCard() {
@@ -2469,7 +2479,7 @@ function viewHome() {
   return `
   <section class="hero">
     <div>
-      <div class="eyebrow">PM&amp;R Residency · ${esc(S.academicYear)}<span class="hero-date"> · ${d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span></div>
+      <div class="eyetop"><div class="eyebrow">PM&amp;R Residency · ${esc(S.academicYear)}<span class="hero-date"> · ${d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span></div>${countdowns("top")}</div>
       <h1>${heroHeadline()}</h1>
       ${S.heroSub !== "" ? `<p>${esc(S.heroSub || "Rotation guides, the didactic calendar, block schedules, policies and note templates for Larkin Community Hospital South Miami residents.")}</p>` : ""}
     </div>
@@ -2654,7 +2664,8 @@ function awayLine() {
   const item = x => { const s0 = x.start < todayISO ? todayISO : x.start, e0 = x.end || x.start, nm = x.other || !x.name.includes(" ") ? x.name : `${x.name.split(" ")[0]} ${x.name.split(" ").pop()[0]}.`;
     const when = x.start <= todayISO ? (e0 === todayISO ? "today" : e0 > endISO ? "all week" : "thru " + wd(e0)) : (s0 === e0 ? wd(s0) : `${wd(s0)}–${e0 > endISO ? "" : wd(e0)}`.replace(/–$/, " on"));
     return `<span class="aw-i">${x.other ? esc(nm) : `<a class="who-link" href="#res-${slug(x.name)}">${esc(nm)}</a>`} <span class="aw-t${ptoType(x) === "CME" ? " cme" : ""}">${ptoType(x)}</span> <span class="aw-w">${when}</span></span>`; };
-  return `<div class="away"><a class="aw-h" href="#schedule" data-showpto title="See the full time-off calendar">Away this week</a>${xs.map(item).join("")}</div>`;
+  const more = xs.length - 2;
+  return `<div class="away"><a class="aw-h" href="#schedule" data-showpto title="See the full time-off calendar">Away this week</a>${xs.map((x, i) => item(x).replace('class="aw-i"', `class="aw-i${i >= 2 ? " aw-x" : ""}"`)).join("")}${more > 0 ? `<a class="aw-more" href="#schedule" data-showpto aria-label="${more} more away this week">+${more}</a>` : ""}</div>`;
 }
 document.addEventListener("click", e => { if (e.target.closest("[data-showpto]")) sState.view = "pto"; });
 /** Resident Schedule ▸ Time off: a month calendar on computers, a list on phones. */
